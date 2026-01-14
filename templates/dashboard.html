@@ -1,0 +1,905 @@
+
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>We Win Algo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <style>
+    :root {
+      --bg-main: #000000;
+      --bg-card: rgba(10, 10, 15, 0.75);
+      --primary: #00f0ff;
+      --primary-glow: rgba(0, 240, 255, 0.6);
+      --danger: #ff2d55;
+      --warning: #ff9f1c;
+      --success: #00ff9d;
+      --text: #e0f7ff;
+      --text-muted: #94a3b8;
+    }
+
+    body {
+      background: var(--bg-main);
+      color: var(--text);
+      background-image: 
+        radial-gradient(circle at 15% 50%, rgba(0, 238, 255, 0.167) 0%, transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(7, 181, 240, 0.215) 0%, transparent 35%);
+      background-attachment: fixed;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    .glow-cyan {
+      box-shadow: 0 0 20px var(--primary-glow), 0 0 40px rgba(0, 240, 255, 0.25);
+    }
+
+    .glow-red {
+      box-shadow: 0 0 20px rgba(255, 45, 85, 0.5);
+    }
+
+    .glass {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 240, 255, 0.12);
+    }
+
+    .btn-glow {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .btn-glow::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.15),
+        transparent
+      );
+      transition: 0.6s;
+    }
+
+    .btn-glow:hover::before {
+      left: 100%;
+    }
+
+    .btn-glow:hover {
+      transform: translateY(-2px);
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    tr {
+      transition: all 0.2s ease;
+    }
+
+    tr:hover {
+      background: rgba(0, 240, 255, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .modal {
+      animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.85) translateY(40px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 0.25; transform: scale(1); }
+      50%      { opacity: 0.45; transform: scale(1.15); }
+    }
+    .animate-pulse-slow {
+      animation: pulse-slow 12s infinite ease-in-out;
+    }
+    .delay-1000 {
+      animation-delay: 1.5s;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- TOP BAR -->
+<header class="sticky top-0 z-50 glass border-b border-cyan-900/30">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-5">
+      <h1 class="text-3xl font-black tracking-tighter">
+        <span class="text-white">ALGO</span>
+        <span class="text-cyan-400">EDGE</span>
+      </h1>
+      <div class="px-3 py-1 rounded-full bg-cyan-950/40 text-cyan-300 text-xs font-medium glow-cyan">
+        <i class="fa-solid fa-user-astronaut mr-1.5"></i>{{USERNAME}} • {{USER_ID}}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <div id="status-badge" class="flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 border border-cyan-900/30 text-sm font-medium">
+        <span class="status-dot bg-gray-500"></span>Zerodha • …
+      </div>
+
+      <div id="market-badge" class="flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 border border-cyan-900/30 text-sm font-medium">
+        <span class="status-dot bg-gray-500"></span>Market • …
+      </div>
+
+      <div id="ws-badge" class="px-4 py-2 rounded-full bg-black/40 border border-cyan-900/30 text-sm font-medium">
+        WS • …
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="openCred()" class="btn-glow px-5 py-2.5 bg-cyan-900/30 hover:bg-cyan-800/50 border border-cyan-600/50 rounded-lg font-medium text-cyan-300 glow-cyan">
+          <i class="fa-solid fa-link mr-2"></i>Connect
+        </button>
+
+        <button onclick="squareoffAll()" class="btn-glow px-5 py-2.5 bg-amber-900/40 hover:bg-amber-800/50 border border-amber-600/50 rounded-lg font-medium text-amber-300">
+          <i class="fa-solid fa-arrows-rotate mr-2"></i>Square All
+        </button>
+
+        <button onclick="killSwitch()" class="btn-glow px-6 py-2.5 bg-red-900/50 hover:bg-red-800/60 border border-red-600/60 rounded-lg font-medium text-red-300 glow-red">
+          <i class="fa-solid fa-power-off mr-2"></i>KILL
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<main class="max-w-7xl mx-auto px-6 py-10 space-y-12">
+
+  <!-- ALERTS SECTION -->
+  <section>
+    <h2 class="text-2xl font-bold text-cyan-300 mb-6 flex items-center gap-3">
+      <i class="fa-solid fa-bolt-lightning text-yellow-400"></i>
+      Live Scan Signals
+    </h2>
+
+    <div class="glass rounded-2xl overflow-hidden shadow-2xl shadow-black/70">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-black/60">
+            <tr class="text-cyan-300/90 font-semibold">
+              <th class="p-5 text-left">Scan</th>
+              <th class="p-5">Time</th>
+              <th class="p-5">Symbol</th>
+              <th class="p-5">LTP</th>
+              <th class="p-5">% Chg</th>
+              <th class="p-5">From Open</th>
+              <th class="p-5">From H</th>
+              <th class="p-5">From L</th>
+              <th class="p-5">TBQ</th>
+              <th class="p-5">TSQ</th>
+              <th class="p-5">Buy Vol</th>
+              <th class="p-5">Sell Vol</th>
+              <th class="p-5 text-center">Trade</th>
+            </tr>
+          </thead>
+          <tbody id="alerts-body" class="divide-y divide-cyan-900/30">
+            <!-- JS fills content -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- LADDER POSITIONS -->
+  <section>
+    <h2 class="text-2xl font-bold text-cyan-300 mb-6 flex items-center gap-3">
+      <i class="fa-solid fa-cubes text-cyan-400"></i>
+      Active Ladders
+    </h2>
+
+    <div class="glass rounded-2xl overflow-hidden shadow-2xl shadow-black/70">
+      <table class="w-full text-sm">
+        <thead class="bg-black/60">
+          <tr class="text-cyan-300/90 font-semibold">
+            <th class="p-5 text-left">Symbol</th>
+            <th class="p-5">Cycle</th>
+            <th class="p-5">Leg</th>
+            <th class="p-5">Qty</th>
+            <th class="p-5">LTP</th>
+            <th class="p-5">Avg</th>
+            <th class="p-5">Extreme</th>
+            <th class="p-5">Next Add</th>
+            <th class="p-5">SL</th>
+            <th class="p-5">TSL</th>
+            <th class="p-5">PnL</th>
+            <th class="p-5">Status</th>
+            <th class="p-5 text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody id="ladderRows" class="divide-y divide-cyan-900/30">
+          <tr>
+            <td colspan="13" class="p-16 text-center text-cyan-900/70 italic text-lg">
+              No active ladder strategies
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- ================= TRADE MODAL ================= -->
+<div id="tradeModal" class="fixed inset-0 hidden bg-black/80 backdrop-blur-lg items-center justify-center z-50 modal">
+  <div class="glass border border-cyan-800/40 rounded-3xl p-10 w-full max-w-lg shadow-2xl shadow-cyan-950/70 glow-cyan">
+    <div class="flex justify-between items-center mb-8">
+      <h3 class="text-3xl font-black text-cyan-300 tracking-tight">
+        <i class="fa-solid fa-cubes mr-3"></i>⚙️ LADDER SETTINGS
+      </h3>
+      <button onclick="closeTradeModal()" class="text-cyan-500 hover:text-cyan-300 text-2xl transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="mb-8 p-4 bg-black/40 rounded-2xl border border-cyan-900/30 text-center">
+      <span id="tm-symbol" class="text-2xl font-bold text-cyan-300"></span>
+      <span id="tm-side" class="ml-4 px-4 py-2 rounded-full text-lg font-black"></span>
+    </div>
+
+    <!-- Form fields with better spacing & labels -->
+    <div class="grid grid-cols-2 gap-6 mb-8">
+      <div>
+        <label class="block text-sm text-cyan-400/80 mb-2 font-medium">Mode</label>
+        <select id="ls-mode" class="w-full bg-black/60 border border-cyan-900/50 rounded-xl px-5 py-3 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-600/40">
+          <option value="UNIVERSAL">Universal</option>
+          <option value="STOCK">Stock Specific</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm text-cyan-400/80 mb-2 font-medium">Qty Mode</label>
+        <select id="ls-qtymode" class="w-full bg-black/60 border border-cyan-900/50 rounded-xl px-5 py-3 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-600/40">
+          <option value="CAPITAL">Capital Based</option>
+          <option value="QTY">Fixed Quantity</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-5 mb-6">
+      <div>
+        <label class="block text-xs text-slate-400 mb-1.5">Capital (₹)</label>
+        <input id="ls-capital" type="number" value="25000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1.5">Quantity</label>
+        <input id="ls-qty" type="number" value="50" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-5 mb-8">
+      <div>
+        <label class="block text-xs text-slate-400 mb-1.5">Threshold %</label>
+        <input id="ls-threshold" type="number" step="0.01" value="0.8" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1.5">Stop Loss %</label>
+        <input id="ls-sl" type="number" step="0.01" value="1.2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1.5">Trailing %</label>
+        <input id="ls-tsl" type="number" step="0.01" value="0.9" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+      </div>
+    <div>
+        <label class="block text-xs text-slate-400 mb-1.5">Cycles</label>
+        <input id="ls-cycles" type="number" value="1"
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+      </div>
+
+      <div>
+        <label class="block text-xs text-slate-400 mb-1.5">Max Adds</label>
+        <input id="ls-maxadds" type="number" value="2"
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+      </div>
+    </div>
+
+    <div class="flex gap-5 mt-10">
+      <button onclick="confirmTrade()" class="flex-1 btn-glow py-4 bg-gradient-to-r from-cyan-600 to-cyan-400 hover:from-cyan-500 hover:to-cyan-300 rounded-2xl font-bold text-lg shadow-2xl shadow-cyan-900/70">
+        <i class="fa-solid fa-rocket-launch mr-2"></i>LAUNCH STRATEGY
+      </button>
+      <button onclick="closeTradeModal()" class="flex-1 py-4 bg-black/60 border border-cyan-900/50 hover:bg-cyan-950/50 rounded-2xl font-medium text-lg">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast / Message -->
+<div id="msg-box" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden px-6 py-3 rounded-xl text-sm font-medium shadow-2xl z-50 transition-all duration-300"></div>
+
+<!-- ================= CREDENTIALS MODAL - Professional Style ================= -->
+<div id="credModal" class="fixed inset-0 hidden bg-black/75 backdrop-blur-md flex items-center justify-center z-50">
+  <div class="bg-[#0f172a] rounded-2xl p-10 w-full max-w-md border border-slate-700/50 shadow-2xl shadow-black/40">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="text-2xl font-semibold text-cyan-400 flex items-center gap-3">
+        <i class="fa-solid fa-shield-halved text-cyan-500"></i>
+        Zerodha API Credentials
+      </h2>
+      <button 
+        onclick="closeCred()" 
+        class="text-slate-400 hover:text-slate-200 transition-colors text-xl"
+        title="Close"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Description -->
+    <p class="text-sm text-slate-400 mb-8 leading-relaxed">
+      Securely connect your Zerodha account. 
+    </p>
+
+    <!-- Form -->
+    <form class="space-y-6">
+
+      <!-- API Key -->
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-2">
+          API Key
+        </label>
+        <div class="relative">
+          <input 
+            id="api_key" 
+            type="password" 
+            placeholder="xxxxxxxxxxxxxxxxxxxxxxxx"
+            class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-5 py-3.5 text-slate-200 
+                   placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 
+                   transition-all duration-200 outline-none"
+          />
+          <button 
+            type="button"
+            onclick="toggleVisibility('api_key', this)"
+            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors"
+            title="Show/Hide"
+          >
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- API Secret -->
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-2">
+          API Secret
+        </label>
+        <div class="relative">
+          <input 
+            id="api_secret" 
+            type="password" 
+            placeholder="xxxxxxxxxxxxxxxxxxxxxxxx"
+            class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-5 py-3.5 text-slate-200 
+                   placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 
+                   transition-all duration-200 outline-none"
+          />
+          <button 
+            type="button"
+            onclick="toggleVisibility('api_secret', this)"
+            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors"
+            title="Show/Hide"
+          >
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-4 mt-8">
+        <button 
+          type="button"
+          onclick="saveCred()" 
+          class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3.5 rounded-lg 
+                 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30"
+        >
+          <i class="fa-solid fa-floppy-disk"></i>
+          Save Credentials
+        </button>
+
+        <button 
+          type="button"
+          onclick="connectZerodha()" 
+          class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3.5 rounded-lg 
+                 transition-all duration-200 flex items-center justify-center gap-2"
+        >
+          <i class="fa-solid fa-right-to-bracket"></i>
+          Login to Kite
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+<script>
+  /* ---------- STATE ---------- */
+  const USER_ID = "{{USER_ID}}";
+  let subscribed = new Set();
+let tmSymbol = null;
+let tmSide = null;
+
+let MARKET_OPEN = false;
+let alertsInterval = null;
+let LAST_ALERTS_HTML = null;
+
+/* ---------- WS ---------- */
+let TICK_WS = null;
+let WS_READY = false;
+let WS_RETRY = 1500;
+
+let TICK_BUFFER = {};
+let TICK_FLUSH_TIMER = null;
+
+function toggleVisibility(inputId, button) {
+  const input = document.getElementById(inputId);
+  const icon = button.querySelector('i');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+
+/* ---------- UI HELPERS ---------- */
+function setWs(ok, txt){
+  const b = document.getElementById("ws-badge");
+  b.innerText = txt;
+  b.className = "px-3 py-1 text-xs rounded " +
+    (ok ? "bg-green-600/20 text-green-400" : "bg-red-600/20 text-red-400");
+}
+
+function wsUrl(){
+  const p = location.protocol === "https:" ? "wss" : "ws";
+  return `${p}://${location.host}/ws/ticks?user_id=${USER_ID}`;
+}
+
+
+
+/* ---------- WS START ---------- */
+function startTickWS(){
+  if(TICK_WS && TICK_WS.readyState <= 1) return;
+
+  setWs(false,"WS: Connecting");
+  TICK_WS = new WebSocket(wsUrl());
+
+  TICK_WS.onopen = () => {
+    WS_READY = true;
+    setWs(true,"WS: LIVE");
+  };
+
+  TICK_WS.onclose = () => {
+    WS_READY = false;
+    setWs(false,"WS: Reconnecting");
+    setTimeout(startTickWS, WS_RETRY);
+  };
+
+  TICK_WS.onerror = () => {
+    try{ TICK_WS.close(); }catch{}
+  };
+
+  TICK_WS.onmessage = ev => {
+  let d;
+  try{ d = JSON.parse(ev.data); }catch{ return; }
+
+  // ✅ snapshot support
+  if(d.type === "snapshot" && Array.isArray(d.ticks)){
+    for(const t of d.ticks){
+      if(!t.symbol) continue;
+      TICK_BUFFER[String(t.symbol).toUpperCase()] = t;
+    }
+    if(!TICK_FLUSH_TIMER){
+      TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
+    }
+    return;
+  }
+  // normal tick
+  if(!d.symbol) return;
+  TICK_BUFFER[String(d.symbol).toUpperCase()] = d;
+  if(!TICK_FLUSH_TIMER){
+    TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
+  }
+};
+
+}
+
+/* ---------- FLUSH ---------- */
+function flushTickUI(){
+  for(const s in TICK_BUFFER){
+    const d = TICK_BUFFER[s];
+    const ltp = Number(d.ltp||0);
+    const prev = Number(d.prev||ltp);
+    const open = Number(d.open||prev||ltp);
+    const high = Number(d.high||ltp);
+    const low  = Number(d.low||ltp);
+
+    const el = id => document.getElementById(id);
+
+    if(!el(`ltp-${s}`)) continue;
+
+    el(`ltp-${s}`).innerText = ltp.toFixed(2);
+    el(`pct-${s}`).innerText = (((ltp-prev)/prev)*100).toFixed(2)+"%";
+    el(`fo-${s}`).innerText  = open ? (((ltp-open)/open)*100).toFixed(2)+"%" : "--";
+    el(`fh-${s}`).innerText  = (((ltp-high)/high)*100).toFixed(2)+"%";
+    el(`fl-${s}`).innerText  = (((ltp-low)/low)*100).toFixed(2)+"%";
+    el(`tbq-${s}`).innerText = d.tbq||0;
+    el(`tsq-${s}`).innerText = d.tsq||0;
+    el(`bto-${s}`).innerText = Math.round(ltp*(d.tbq||0));
+    el(`sto-${s}`).innerText = Math.round(ltp*(d.tsq||0));
+  }
+  TICK_BUFFER = {};
+  TICK_FLUSH_TIMER = null;
+}
+
+
+/* ================= SESSION + STATUS ================= */
+async function checkSession(){
+  const r = await fetch("/api/zerodha-status");
+  if(!r.ok){
+    alert("Login first!");
+    window.location.href = "/";
+    return false;
+  }
+  return true;
+}
+
+function checkMarketStatus(){
+  fetch("/api/market-status")
+    .then(r => r.json())
+    .then(d => {
+      const badge = document.getElementById("market-badge");
+
+      if(d.market_open){
+        MARKET_OPEN = true;
+        badge.innerText = "🟢 Market OPEN";
+        badge.className = "px-3 py-1 text-xs rounded-full bg-green-600/20 text-green-400";
+        startAlertsPolling();
+      } else {
+        MARKET_OPEN = false;
+        badge.innerText = "🔴 Market CLOSED";
+        badge.className = "px-3 py-1 text-xs rounded-full bg-red-600/20 text-red-400 animate-pulse";
+        stopAlertsPolling();
+      }
+    });
+}
+
+async function refreshStatus(){
+  const badge = document.getElementById("status-badge");
+
+  try {
+    const res = await fetch("/api/zerodha-status");
+    const z = await res.json();
+
+    if (z.connected || z.status === "connected") {
+      badge.innerHTML = "🟢 Zerodha CONNECTED";
+      badge.className =
+        "px-3 py-1 text-xs font-semibold rounded-full bg-green-600/20 text-green-400 shadow shadow-green-500/20";
+    } else {
+      badge.innerHTML = "🔴 Zerodha DISCONNECTED";
+      badge.className =
+        "px-3 py-1 text-xs font-semibold rounded-full bg-red-600/20 text-red-400 shadow shadow-red-500/20";
+    }
+  } catch (e) {
+    badge.innerHTML = "🔴 Zerodha DISCONNECTED";
+    badge.className =
+      "px-3 py-1 text-xs font-semibold rounded-full bg-red-600/20 text-red-400";
+  }
+}
+
+
+
+/* ================= ALERTS (30s ONLY) ================= */
+function startAlertsPolling(){
+  if(alertsInterval) return;
+  loadAlerts(); // immediate
+  alertsInterval = setInterval(() => {
+    if(MARKET_OPEN){
+      loadAlerts();
+    }
+  }, 30000);
+}
+
+function stopAlertsPolling(){
+  if(alertsInterval) clearInterval(alertsInterval);
+  alertsInterval = null;
+}
+
+async function loadAlerts(){
+  const r = await fetch("/api/alerts");
+  const data = await r.json();
+  let html = "";
+  const oldSyms = new Set(subscribed);
+  subscribed.clear();
+
+  if(data.length === 0){
+    if(LAST_ALERTS_HTML){
+      document.getElementById("alerts-body").innerHTML = LAST_ALERTS_HTML;
+      // even if empty, keep old subscription
+      subscribed = oldSyms;
+      return;
+    }
+  } else {
+    data.forEach(a=>{
+      a.stocks.forEach(s=>{
+        s = String(s||"").toUpperCase();
+        if(!s) return;
+        subscribed.add(s);
+        html += `
+        <tr class="hover:bg-slate-800/60">
+          <td class="p-3 text-cyan-300">${a.scan}</td>
+          <td class="p-3 text-gray-400">${a.time}</td>
+          <td class="p-3 font-semibold">${s}</td>
+          <td class="p-3 text-cyan-400" id="ltp-${s}">--</td>
+          <td class="p-3 text-center" id="pct-${s}">--</td>
+          <td class="p-3 text-center" id="fo-${s}">--</td>
+          <td class="p-3 text-center" id="fh-${s}">--</td>
+          <td class="p-3 text-center" id="fl-${s}">--</td>
+          <td class="p-3" id="tbq-${s}">--</td>
+          <td class="p-3" id="tsq-${s}">--</td>
+          <td class="p-3 text-green-400" id="bto-${s}">--</td>
+          <td class="p-3 text-red-400" id="sto-${s}">--</td>
+          <td class="p-3">
+            <button onclick="openTradeModal('${s}','BUY')" class="bg-green-600 px-2 py-1 rounded">BUY</button>
+            <button onclick="openTradeModal('${s}','SELL')" class="bg-red-600 px-2 py-1 rounded ml-1">SELL</button>
+          </td>
+        </tr>`;
+      });
+    });
+  }
+
+  document.getElementById("alerts-body").innerHTML = html;
+  LAST_ALERTS_HTML = html;}
+
+
+/* ================= TRADE MODAL ================= */
+function openTradeModal(s,side){
+  tmSymbol=s; tmSide=side;
+  document.getElementById("tm-symbol").innerText=s;
+  document.getElementById("tm-side").innerText=side;
+  document.getElementById("tradeModal").classList.remove("hidden");
+}
+function closeTradeModal(){
+  document.getElementById("tradeModal").classList.add("hidden");
+}
+
+async function confirmTrade(){
+  const mode = document.getElementById("ls-mode").value;
+  const qtyMode = document.getElementById("ls-qtymode").value;
+
+  const settings = {
+    qty_mode: qtyMode,
+    per_trade_capital: parseFloat(document.getElementById("ls-capital").value || "0"),
+    per_trade_qty: parseInt(document.getElementById("ls-qty").value || "1"),
+    threshold_pct: parseFloat(document.getElementById("ls-threshold").value || "1"),
+    stop_loss_pct: parseFloat(document.getElementById("ls-sl").value || "1"),
+    trailing_sl_pct: parseFloat(document.getElementById("ls-tsl").value || "1"),
+    ladder_cycles: parseInt(document.getElementById("ls-cycles").value || "1"),
+    max_adds_per_leg: parseInt(document.getElementById("ls-maxadds").value || "2"),
+  };
+
+  fetch("/api/ladder/start", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      symbol: tmSymbol,
+      side: tmSide,
+      settings_mode: mode,
+      settings: settings
+    })
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.error){
+      showMsg("❌ " + d.error, true);
+      return;
+    }
+    showMsg("✅ Ladder started: " + tmSymbol + " (" + tmSide + ")", false);
+    closeTradeModal();
+    loadLadderState();
+  })
+  .catch(()=> showMsg("❌ Ladder start failed", true));
+}
+
+/* ================= CREDENTIALS ================= */
+function openCred(){ credModal.classList.remove("hidden"); }
+function closeCred(){ credModal.classList.add("hidden"); }
+function saveCred(){
+  fetch("/api/save-credentials",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({api_key:api_key.value, api_secret:api_secret.value})
+  }).then(()=>closeCred());
+}
+function connectZerodha(){ window.location="/connect/zerodha"; }
+function logout(){ window.location="/logout"; }
+
+/* ================= LADDER STATE ================= */
+function loadLadderState(){
+  fetch("/api/ladder/state")
+    .then(r=>r.json())
+    .then(rows=>{
+      const tbody = document.getElementById("ladderRows");
+      if(!rows || rows.length===0){
+        tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-gray-500 text-center">No ladders running</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = "";
+      rows.forEach(s=>{
+        const ls = s.leg_state || {};
+        const hiLo = (ls.side==="BUY")
+          ? (ls.highest ? Number(ls.highest).toFixed(2) : "-")
+          : (ls.lowest ? Number(ls.lowest).toFixed(2) : "-");
+        const ltp = s.ltp ? Number(s.ltp).toFixed(2) : "-";
+        const pnl = (ls.unrealized_pnl!=null) ? Number(ls.unrealized_pnl).toFixed(2) : "0.00";
+        let nextAdd = "-";
+        let sl = "-";
+        let tsl = "-";
+
+        if(ls.avg_price && s.settings){
+          const avg = Number(ls.avg_price);
+          const last = Number(ls.last_add_price || avg);
+          const th = Number(s.settings.threshold_pct);
+          const slp = Number(s.settings.stop_loss_pct);
+          const tslp = Number(s.settings.trailing_sl_pct);
+
+          if(ls.side === "BUY"){
+            nextAdd = (last * (1 + th/100)).toFixed(2);
+            sl = (avg * (1 - slp/100)).toFixed(2);
+            if(ls.highest) tsl = (Number(ls.highest) * (1 - tslp/100)).toFixed(2);
+          } else {
+            nextAdd = (last * (1 - th/100)).toFixed(2);
+            sl = (avg * (1 + slp/100)).toFixed(2);
+            if(ls.lowest) tsl = (Number(ls.lowest) * (1 + tslp/100)).toFixed(2);
+          }
+        }
+
+      let st = ls.status || "UNKNOWN";
+      if(ls.reason){
+        st += " (" + ls.reason + ")";
+      }
+      let stColor = "text-slate-400";
+
+      if(st.includes("WAIT")) stColor = "text-yellow-400";
+      else if(st.startsWith("RUNNING")) stColor = "text-green-400";
+      else if(st.startsWith("DONE")) stColor = "text-slate-400";
+      else if(st.startsWith("ERROR")) stColor = "text-red-500";
+      else if(st.startsWith("EXIT")) stColor = "text-orange-400";
+
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-3 text-left font-semibold">${s.symbol}</td>
+            <td class="p-3 text-center">${(s.cycle_index+1)} / ${s.cycle_total}</td>
+            <td class="p-3 text-center">${s.leg}</td>
+            <td class="p-3 text-center">${ls.qty || 0}</td>
+            <td class="p-3 text-center" id="ladder-ltp-${s.symbol}">${ltp}</td>
+            <td class="p-3 text-center">${ls.avg_price ? Number(ls.avg_price).toFixed(2) : "-"}</td>
+            <td class="p-3 text-center">${hiLo}</td>
+            <td class="p-3 text-center text-cyan-400">${nextAdd}</td>
+            <td class="p-3 text-center text-red-400">${sl}</td>
+            <td class="p-3 text-center text-yellow-400">${tsl}</td>
+            <td class="p-3 text-center font-semibold">${pnl}</td>
+            <td class="p-3 text-center font-semibold ${stColor}">${st}</td>
+            <td class="p-3 text-center">
+              <button onclick="squareoffLadder('${s.symbol}')"
+                class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-semibold">
+                Squareoff
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    })
+    .catch(()=>{});
+}
+
+function squareoffLadder(symbol){
+  fetch("/api/ladder/squareoff", {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({symbol})
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.error){
+      showMsg("❌ " + d.error, true);
+      return;
+    }
+    showMsg("✅ Squareoff done: " + symbol, false);
+    loadLadderState();
+  })
+  .catch(()=>showMsg("❌ Squareoff failed", true));
+}
+
+function killSwitch(){
+  if(!confirm("KILL SWITCH: This will square-off ALL positions and stop WS + trading. Continue?")) return;
+  fetch("/api/kill-switch", {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({enabled:true})
+  })
+  .then(()=> {
+    showMsg("🛑 Kill switch activated", true);
+    loadLadderState();
+  })
+  .catch(()=>showMsg("❌ Kill switch failed", true));
+}
+
+function squareoffAll(){
+  if(!confirm("Squareoff ALL positions (MIS Market)? Continue?")) return;
+
+  fetch("/api/squareoff_all", { method:"POST" })
+    .then(r => r.json())
+    .then(d => {
+      if(d.error){
+        showMsg("❌ " + d.error, true);
+        return;
+      }
+      showMsg(`✅ Squareoff all placed (${d.count})`, false);
+
+      // refresh ladder state after a moment
+      setTimeout(() => {
+        loadLadderState();
+      }, 1200);
+    })
+    .catch(() => showMsg("❌ Squareoff all failed", true));
+}
+
+/* ================= MSG ================= */
+function showMsg(txt, isErr = false) {
+    const box = document.getElementById("msg-box");
+    box.textContent = txt;
+    box.className = `px-6 py-3 rounded-xl text-sm font-medium shadow-2xl z-50 transition-all duration-300 ${
+      isErr 
+        ? 'bg-red-900/80 text-red-100 border border-red-700/50' 
+        : 'bg-emerald-900/80 text-emerald-100 border border-emerald-700/50'
+    }`;
+    box.classList.remove("hidden");
+    box.classList.add("animate-bounce-once");
+
+    setTimeout(() => {
+      box.classList.add("opacity-0", "translate-y-4");
+      setTimeout(() => box.classList.add("hidden"), 400);
+    }, 2800);
+  }
+
+
+  
+/* ================= INIT ================= */
+document.addEventListener("DOMContentLoaded", async ()=>{
+  if(!(await checkSession())) return;
+
+  refreshStatus();
+  checkMarketStatus();
+
+  startTickWS(); // ✅ ONLY ONE WS
+
+  setInterval(refreshStatus, 5000);
+  setInterval(checkMarketStatus, 60000);
+
+  loadLadderState();
+  setInterval(loadLadderState, 30000);
+});
+
+</script>
+</body>
+</html>

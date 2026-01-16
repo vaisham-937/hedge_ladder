@@ -112,6 +112,7 @@
     .delay-1000 {
       animation-delay: 1.5s;
     }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -141,7 +142,7 @@
       <div id="ws-badge" class="px-4 py-2 rounded-full bg-black/40 border border-cyan-900/30 text-sm font-medium">
         WS • …
       </div>
-
+      
       <div class="flex gap-3">
         <button onclick="openCred()" class="btn-glow px-5 py-2.5 bg-cyan-900/30 hover:bg-cyan-800/50 border border-cyan-600/50 rounded-lg font-medium text-cyan-300 glow-cyan">
           <i class="fa-solid fa-link mr-2"></i>Connect
@@ -166,7 +167,7 @@
   <section>
     <h2 class="text-2xl font-bold text-cyan-300 mb-6 flex items-center gap-3">
       <i class="fa-solid fa-bolt-lightning text-yellow-400"></i>
-      Live Scan Signals
+      Live Chartink Alert Signals
     </h2>
 
     <div class="glass rounded-2xl overflow-hidden shadow-2xl shadow-black/70">
@@ -178,8 +179,10 @@
               <th class="p-5">Time</th>
               <th class="p-5">Symbol</th>
               <th class="p-5">LTP</th>
+              <th class="p-5">⬆ UC</th>
+              <th class="p-5">⬇ LC</th>
               <th class="p-5">% Chg</th>
-              <th class="p-5">From Open</th>
+              <th class="p-5">From O</th>
               <th class="p-5">From H</th>
               <th class="p-5">From L</th>
               <th class="p-5">TBQ</th>
@@ -190,7 +193,6 @@
             </tr>
           </thead>
           <tbody id="alerts-body" class="divide-y divide-cyan-900/30">
-            <!-- JS fills content -->
           </tbody>
         </table>
       </div>
@@ -198,41 +200,71 @@
   </section>
 
   <!-- LADDER POSITIONS -->
-  <section>
-    <h2 class="text-2xl font-bold text-cyan-300 mb-6 flex items-center gap-3">
-      <i class="fa-solid fa-cubes text-cyan-400"></i>
-      Active Ladders
-    </h2>
+<section>
+  <h2 class="text-2xl font-bold text-cyan-300 mb-6 flex items-center gap-3">
+    <i class="fa-solid fa-cubes text-cyan-400"></i>
+    Active Ladders Positions
+  </h2>
 
-    <div class="glass rounded-2xl overflow-hidden shadow-2xl shadow-black/70">
-      <table class="w-full text-sm">
-        <thead class="bg-black/60">
-          <tr class="text-cyan-300/90 font-semibold">
-            <th class="p-5 text-left">Symbol</th>
-            <th class="p-5">Cycle</th>
-            <th class="p-5">Leg</th>
-            <th class="p-5">Qty</th>
-            <th class="p-5">LTP</th>
-            <th class="p-5">Avg</th>
-            <th class="p-5">Extreme</th>
-            <th class="p-5">Next Add</th>
-            <th class="p-5">SL</th>
-            <th class="p-5">TSL</th>
-            <th class="p-5">PnL</th>
-            <th class="p-5">Status</th>
-            <th class="p-5 text-center">Action</th>
-          </tr>
-        </thead>
-        <tbody id="ladderRows" class="divide-y divide-cyan-900/30">
-          <tr>
-            <td colspan="13" class="p-16 text-center text-cyan-900/70 italic text-lg">
-              No active ladder strategies
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- Overall PnL pill + Total ladders -->
+  <div class="mb-4 flex items-center justify-between">
+    <div
+      id="ladder-pnl-pill"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-full
+             bg-emerald-900/20 border border-emerald-600/40
+             text-emerald-300 font-semibold shadow shadow-emerald-900/30"
+    >
+      <i class="fa-solid fa-chart-line"></i>
+      <span>Overall PnL</span>
+      <span class="text-emerald-200 tabular-nums">•</span>
+      <span id="overall-pnl-ladders" class="tabular-nums text-emerald-200">0.00</span>
     </div>
-  </section>
+
+    <div class="text-xs text-slate-500 flex items-center gap-3">
+      <span
+        id="ladder-count-badge"
+        class="inline-flex items-center gap-2 px-3 py-1 rounded-full
+               bg-cyan-900/20 border border-cyan-600/30 text-cyan-300"
+      >
+        <i class="fa-solid fa-layer-group"></i>
+        <span>Total Ladders:</span>
+        <span id="ladder-count" class="tabular-nums">0</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="glass rounded-2xl overflow-hidden shadow-2xl shadow-black/70">
+    <table class="w-full text-sm">
+      <thead class="bg-black/60">
+        <tr class="text-cyan-300/90 font-semibold">
+          <th class="p-5 text-left">Symbol</th>
+          <th class="p-5">Cycle</th>
+          <th class="p-5">Leg</th>
+          <th class="p-5">Qty</th>
+          <th class="p-5">LTP</th>
+          <th class="p-5">Avg</th>
+          <th class="p-5">Extreme</th>
+          <th class="p-5">Next Add</th>
+          <th class="p-5">SL</th>
+          <th class="p-5">TSL</th>
+          <th class="p-5">PnL</th>
+          <th class="p-5">Status</th>
+          <th class="p-5 text-center">Action</th>
+        </tr>
+      </thead>
+
+      <tbody id="ladderRows" class="divide-y divide-cyan-900/30">
+        <tr>
+          <td colspan="13" class="p-16 text-center text-cyan-900/70 italic text-lg">
+            No active ladder strategies
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
 </main>
 
 <!-- ================= TRADE MODAL ================= -->
@@ -274,26 +306,26 @@
     <div class="grid grid-cols-2 gap-5 mb-6">
       <div>
         <label class="block text-xs text-slate-400 mb-1.5">Capital (₹)</label>
-        <input id="ls-capital" type="number" value="25000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+        <input id="ls-capital" type="number" value="1000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
       </div>
       <div>
         <label class="block text-xs text-slate-400 mb-1.5">Quantity</label>
-        <input id="ls-qty" type="number" value="50" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+        <input id="ls-qty" type="number" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
       </div>
     </div>
 
     <div class="grid grid-cols-3 gap-5 mb-8">
       <div>
         <label class="block text-xs text-slate-400 mb-1.5">Threshold %</label>
-        <input id="ls-threshold" type="number" step="0.01" value="0.8" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+        <input id="ls-threshold" type="number" step="0.01" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
       </div>
       <div>
         <label class="block text-xs text-slate-400 mb-1.5">Stop Loss %</label>
-        <input id="ls-sl" type="number" step="0.01" value="1.2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+        <input id="ls-sl" type="number" step="0.01" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
       </div>
       <div>
         <label class="block text-xs text-slate-400 mb-1.5">Trailing %</label>
-        <input id="ls-tsl" type="number" step="0.01" value="0.9" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
+        <input id="ls-tsl" type="number" step="0.01" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
       </div>
     <div>
         <label class="block text-xs text-slate-400 mb-1.5">Cycles</label>
@@ -428,17 +460,31 @@
 
 
 <script>
-  /* ---------- STATE ---------- */
-  const USER_ID = "{{USER_ID}}";
-  let subscribed = new Set();
+/* ---------- STATE ---------- */
+const USER_ID = "{{USER_ID}}";
+// ===== Live ladder PnL meta store (for continuous updates) =====
+const LADDER_META = {}; 
+// ===== recompute overall ladder pnl from live values =====
+let overallLive = 0;
+for(const s in LADDER_META){
+  const m = LADDER_META[s];
+  const pnl = calcUnrealizedPnl(m.side, m.qty, m.avg, m.ltp);
+  overallLive += pnl;
+}
+setOverallPnl(overallLive);
+
+
+// alerts
+let subscribed = new Set();
+let alertsInterval = null;
+let LAST_ALERTS_RENDER = null;   // last JSON signature to avoid rebuild
+let ALERT_ROW_KEYS = new Set();  // currently rendered unique keys
+
+// trade modal
 let tmSymbol = null;
 let tmSide = null;
 
-let MARKET_OPEN = false;
-let alertsInterval = null;
-let LAST_ALERTS_HTML = null;
-
-/* ---------- WS ---------- */
+// ws
 let TICK_WS = null;
 let WS_READY = false;
 let WS_RETRY = 1500;
@@ -446,10 +492,24 @@ let WS_RETRY = 1500;
 let TICK_BUFFER = {};
 let TICK_FLUSH_TIMER = null;
 
+/* ---------- HELPERS ---------- */
+function $(id){ return document.getElementById(id); }
+
+function setWs(ok, txt){
+  const b = $("ws-badge");
+  b.innerText = txt;
+  b.className = "px-3 py-1 text-xs rounded " +
+    (ok ? "bg-green-600/20 text-green-400" : "bg-red-600/20 text-red-400");
+}
+
+function wsUrl(){
+  const p = location.protocol === "https:" ? "wss" : "ws";
+  return `${p}://${location.host}/ws/ticks?user_id=${USER_ID}`;
+}
+
 function toggleVisibility(inputId, button) {
   const input = document.getElementById(inputId);
   const icon = button.querySelector('i');
-  
   if (input.type === 'password') {
     input.type = 'text';
     icon.classList.remove('fa-eye');
@@ -461,20 +521,105 @@ function toggleVisibility(inputId, button) {
   }
 }
 
-/* ---------- UI HELPERS ---------- */
-function setWs(ok, txt){
-  const b = document.getElementById("ws-badge");
-  b.innerText = txt;
-  b.className = "px-3 py-1 text-xs rounded " +
-    (ok ? "bg-green-600/20 text-green-400" : "bg-red-600/20 text-red-400");
+// IST time parts
+function istHM(){
+  const parts = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).formatToParts(new Date());
+  let h=0,m=0;
+  for(const p of parts){
+    if(p.type==="hour") h = parseInt(p.value,10);
+    if(p.type==="minute") m = parseInt(p.value,10);
+  }
+  return {h,m};
 }
 
-function wsUrl(){
-  const p = location.protocol === "https:" ? "wss" : "ws";
-  return `${p}://${location.host}/ws/ticks?user_id=${USER_ID}`;
+/**
+ * Freeze window: market close ke baad 15:31 -> next day 09:00 tak
+ *  - 15:31-23:59 => freeze
+ *  - 00:00-08:59 => freeze
+ *  - 09:00-15:30 => allow
+ */
+function isAlertFreezeWindow(){
+  const {h,m} = istHM();
+  if(h < 9) return true;
+  if(h > 15) return true;
+  if(h === 15 && m >= 31) return true;
+  return false;
 }
 
+/* ---------- SESSION + STATUS ---------- */
+async function checkSession(){
+  const r = await fetch("/api/zerodha-status");
+  if(!r.ok){
+    alert("Login first!");
+    window.location.href = "/";
+    return false;
+  }
+  return true;
+}
 
+async function refreshStatus(){
+  const badge = $("status-badge");
+  try {
+    const res = await fetch("/api/zerodha-status");
+    const z = await res.json();
+
+    if (z.connected || z.status === "connected") {
+      badge.innerHTML = "🟢 Zerodha CONNECTED";
+      badge.className =
+        "px-3 py-1 text-xs font-semibold rounded-full bg-green-600/20 text-green-400 shadow shadow-green-500/20";
+    } else {
+      badge.innerHTML = "🔴 Zerodha DISCONNECTED";
+      badge.className =
+        "px-3 py-1 text-xs font-semibold rounded-full bg-red-600/20 text-red-400 shadow shadow-red-500/20";
+    }
+  } catch (e) {
+    badge.innerHTML = "🔴 Zerodha DISCONNECTED";
+    badge.className = "px-3 py-1 text-xs font-semibold rounded-full bg-red-600/20 text-red-400";
+  }
+}
+
+function updateMarketBadge(marketOpen){
+  const badge = $("market-badge");
+  if(marketOpen){
+    badge.innerText = "🟢 Market OPEN";
+    badge.className = "px-3 py-1 text-xs rounded-full bg-green-600/20 text-green-400";
+  } else {
+    badge.innerText = "🔴 Market CLOSED";
+    badge.className = "px-3 py-1 text-xs rounded-full bg-red-600/20 text-red-400";
+  }
+}
+
+/**
+ * Alerts gate:
+ * - Freeze window me polling OFF
+ * - 09:00 ke baad polling ON (market open ho ya na ho)
+ */
+function manageAlertsPolling(){
+  if(isAlertFreezeWindow()){
+    stopAlertsPolling();
+    return;
+  }
+  startAlertsPolling();
+}
+
+function checkMarketStatus(){
+  fetch("/api/market-status")
+    .then(r => r.json())
+    .then(d => {
+      updateMarketBadge(!!d.market_open);
+      // ✅ independent alert gate (your requirement)
+      manageAlertsPolling();
+    })
+    .catch(()=> {
+      // even if api fails, still apply time gate
+      manageAlertsPolling();
+    });
+}
 
 /* ---------- WS START ---------- */
 function startTickWS(){
@@ -499,121 +644,111 @@ function startTickWS(){
   };
 
   TICK_WS.onmessage = ev => {
-  let d;
-  try{ d = JSON.parse(ev.data); }catch{ return; }
+    let d;
+    try{ d = JSON.parse(ev.data); }catch{ return; }
 
-  // ✅ snapshot support
-  if(d.type === "snapshot" && Array.isArray(d.ticks)){
-    for(const t of d.ticks){
-      if(!t.symbol) continue;
-      TICK_BUFFER[String(t.symbol).toUpperCase()] = t;
+    // snapshot support
+    if(d.type === "snapshot" && Array.isArray(d.ticks)){
+      for(const t of d.ticks){
+        if(!t.symbol) continue;
+        TICK_BUFFER[String(t.symbol).toUpperCase()] = t;
+      }
+      if(!TICK_FLUSH_TIMER){
+        TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
+      }
+      return;
     }
+
+    if(!d.symbol) return;
+    TICK_BUFFER[String(d.symbol).toUpperCase()] = d;
     if(!TICK_FLUSH_TIMER){
       TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
     }
-    return;
-  }
-  // normal tick
-  if(!d.symbol) return;
-  TICK_BUFFER[String(d.symbol).toUpperCase()] = d;
-  if(!TICK_FLUSH_TIMER){
-    TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
-  }
-};
-
+  };
 }
 
-/* ---------- FLUSH ---------- */
+/* ---------- NO-BLINK TICK FLUSH (updates all cells by data-sym) ---------- */
+function setTextIfChanged(el, txt){
+  if(!el) return;
+  if(el.textContent !== txt) el.textContent = txt;
+}
+function calcUnrealizedPnl(side, qty, avg, ltp){
+  if(!qty || !avg || !ltp) return 0;
+  if(side === "SELL") return (avg - ltp) * qty;
+  return (ltp - avg) * qty; // BUY default
+}
+
+function paintPnlCell(el, pnl){
+  if(!el) return;
+  el.classList.remove("text-emerald-300","text-red-300","text-slate-200");
+  if(pnl > 0) el.classList.add("text-emerald-300");
+  else if(pnl < 0) el.classList.add("text-red-300");
+  else el.classList.add("text-slate-200");
+}
+
+
 function flushTickUI(){
-  for(const s in TICK_BUFFER){
-    const d = TICK_BUFFER[s];
-    const ltp = Number(d.ltp||0);
+  for(const sym in TICK_BUFFER){
+    const d = TICK_BUFFER[sym];
+    const ltp  = Number(d.ltp||0);
+    if(ltp <= 0) continue;
+
     const prev = Number(d.prev||ltp);
     const open = Number(d.open||prev||ltp);
     const high = Number(d.high||ltp);
     const low  = Number(d.low||ltp);
+    const uc = (d.upper_circuit != null && d.upper_circuit !== "") ? Number(d.upper_circuit) : 0;
+    const lc = (d.lower_circuit != null && d.lower_circuit !== "") ? Number(d.lower_circuit) : 0;
+    
+    // ALERTS table: update ALL rows having data-sym=sym
+    const nodes = document.querySelectorAll(`[data-sym="${sym}"]`);
+    nodes.forEach(node => {
+      const field = node.getAttribute("data-field");
+      if(!field) return;
 
-    const el = id => document.getElementById(id);
+      if(field === "ltp") setTextIfChanged(node, ltp.toFixed(2));
+      if(field === "uc") setTextIfChanged(node, uc > 0 ? uc.toFixed(2) : "--");
+      if(field === "lc") setTextIfChanged(node, lc > 0 ? lc.toFixed(2) : "--");
+      if(field === "pct") setTextIfChanged(node, (((ltp-prev)/prev)*100).toFixed(2) + "%");
+      if(field === "fo")  setTextIfChanged(node, open ? (((ltp-open)/open)*100).toFixed(2)+"%" : "--");
+      if(field === "fh")  setTextIfChanged(node, (((ltp-high)/high)*100).toFixed(2) + "%");
+      if(field === "fl")  setTextIfChanged(node, (((ltp-low)/low)*100).toFixed(2) + "%");
+      if(field === "tbq") setTextIfChanged(node, String(d.tbq||0));
+      if(field === "tsq") setTextIfChanged(node, String(d.tsq||0));
+      if(field === "bto") setTextIfChanged(node, String(Math.round(ltp*(d.tbq||0))));
+      if(field === "sto") setTextIfChanged(node, String(Math.round(ltp*(d.tsq||0))));
+    });
 
-    if(!el(`ltp-${s}`)) continue;
+    // LADDER table LTP (no blink)
+    const ladderLtp = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="ltp"]`);
+    ladderLtp.forEach(node => setTextIfChanged(node, ltp.toFixed(2)));
+    // ===== LIVE LADDER PnL update (continuous) =====
+if(LADDER_META[sym]){
+  LADDER_META[sym].ltp = ltp;
 
-    el(`ltp-${s}`).innerText = ltp.toFixed(2);
-    el(`pct-${s}`).innerText = (((ltp-prev)/prev)*100).toFixed(2)+"%";
-    el(`fo-${s}`).innerText  = open ? (((ltp-open)/open)*100).toFixed(2)+"%" : "--";
-    el(`fh-${s}`).innerText  = (((ltp-high)/high)*100).toFixed(2)+"%";
-    el(`fl-${s}`).innerText  = (((ltp-low)/low)*100).toFixed(2)+"%";
-    el(`tbq-${s}`).innerText = d.tbq||0;
-    el(`tsq-${s}`).innerText = d.tsq||0;
-    el(`bto-${s}`).innerText = Math.round(ltp*(d.tbq||0));
-    el(`sto-${s}`).innerText = Math.round(ltp*(d.tsq||0));
+  const {avg, qty, side} = LADDER_META[sym];
+  const pnl = calcUnrealizedPnl(side, qty, avg, ltp);
+
+  const pnlNodes = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="pnl"]`);
+  pnlNodes.forEach(node => {
+    setTextIfChanged(node, pnl.toFixed(2));
+    paintPnlCell(node, pnl);
+  });
+}
+
+
   }
+
   TICK_BUFFER = {};
   TICK_FLUSH_TIMER = null;
 }
 
-
-/* ================= SESSION + STATUS ================= */
-async function checkSession(){
-  const r = await fetch("/api/zerodha-status");
-  if(!r.ok){
-    alert("Login first!");
-    window.location.href = "/";
-    return false;
-  }
-  return true;
-}
-
-function checkMarketStatus(){
-  fetch("/api/market-status")
-    .then(r => r.json())
-    .then(d => {
-      const badge = document.getElementById("market-badge");
-
-      if(d.market_open){
-        MARKET_OPEN = true;
-        badge.innerText = "🟢 Market OPEN";
-        badge.className = "px-3 py-1 text-xs rounded-full bg-green-600/20 text-green-400";
-        startAlertsPolling();
-      } else {
-        MARKET_OPEN = false;
-        badge.innerText = "🔴 Market CLOSED";
-        badge.className = "px-3 py-1 text-xs rounded-full bg-red-600/20 text-red-400 animate-pulse";
-        stopAlertsPolling();
-      }
-    });
-}
-
-async function refreshStatus(){
-  const badge = document.getElementById("status-badge");
-
-  try {
-    const res = await fetch("/api/zerodha-status");
-    const z = await res.json();
-
-    if (z.connected || z.status === "connected") {
-      badge.innerHTML = "🟢 Zerodha CONNECTED";
-      badge.className =
-        "px-3 py-1 text-xs font-semibold rounded-full bg-green-600/20 text-green-400 shadow shadow-green-500/20";
-    } else {
-      badge.innerHTML = "🔴 Zerodha DISCONNECTED";
-      badge.className =
-        "px-3 py-1 text-xs font-semibold rounded-full bg-red-600/20 text-red-400 shadow shadow-red-500/20";
-    }
-  } catch (e) {
-    badge.innerHTML = "🔴 Zerodha DISCONNECTED";
-    badge.className =
-      "px-3 py-1 text-xs font-semibold rounded-full bg-red-600/20 text-red-400";
-  }
-}
-
-
-
-/* ================= ALERTS (30s ONLY) ================= */
+/* ================= ALERTS (NO REBUILD = NO BLINK) ================= */
 function startAlertsPolling(){
   if(alertsInterval) return;
   loadAlerts(); // immediate
   alertsInterval = setInterval(() => {
-    if(MARKET_OPEN){
+    if(!isAlertFreezeWindow()){
       loadAlerts();
     }
   }, 30000);
@@ -624,40 +759,74 @@ function stopAlertsPolling(){
   alertsInterval = null;
 }
 
+/**
+ * Stable render:
+ * - if same alert payload signature, DO NOTHING (no rebuild)
+ * - if changed, rebuild once
+ * - tick updates happen via WS on data-sym cells
+ */
 async function loadAlerts(){
-  const r = await fetch("/api/alerts");
-  const data = await r.json();
-  let html = "";
-  const oldSyms = new Set(subscribed);
-  subscribed.clear();
+  try{
+    const r = await fetch("/api/alerts");
+    const data = await r.json();
 
-  if(data.length === 0){
-    if(LAST_ALERTS_HTML){
-      document.getElementById("alerts-body").innerHTML = LAST_ALERTS_HTML;
-      // even if empty, keep old subscription
+    // freeze window => don't change UI (keep last)
+    if(isAlertFreezeWindow()){
+      return;
+    }
+
+    // signature to avoid needless rebuild
+    const sig = JSON.stringify(data || []);
+    if(LAST_ALERTS_RENDER === sig){
+      return;
+    }
+    LAST_ALERTS_RENDER = sig;
+
+    // rebuild only on change
+    const tbody = $("alerts-body");
+    let html = "";
+    const oldSyms = new Set(subscribed);
+    subscribed.clear();
+
+    // if empty, keep last visible rows (don’t blank => no blink)
+    if(!data || data.length === 0){
+      // keep old subscription
       subscribed = oldSyms;
       return;
     }
-  } else {
+
+    // unique rows by (scan|time|symbol)
+    ALERT_ROW_KEYS.clear();
+
     data.forEach(a=>{
-      a.stocks.forEach(s=>{
+      (a.stocks || []).forEach(s=>{
         s = String(s||"").toUpperCase();
         if(!s) return;
+
         subscribed.add(s);
+        const key = `${a.scan}|${a.time}|${s}`;
+        if(ALERT_ROW_KEYS.has(key)) return;
+        ALERT_ROW_KEYS.add(key);
+
         html += `
         <tr class="hover:bg-slate-800/60">
           <td class="p-3 text-cyan-300">${a.scan}</td>
           <td class="p-3 text-gray-400">${a.time}</td>
           <td class="p-3 font-semibold">${s}</td>
-          <td class="p-3 text-cyan-400" id="ltp-${s}">--</td>
-          <td class="p-3 text-center" id="pct-${s}">--</td>
-          <td class="p-3 text-center" id="fo-${s}">--</td>
-          <td class="p-3 text-center" id="fh-${s}">--</td>
-          <td class="p-3 text-center" id="fl-${s}">--</td>
-          <td class="p-3" id="tbq-${s}">--</td>
-          <td class="p-3" id="tsq-${s}">--</td>
-          <td class="p-3 text-green-400" id="bto-${s}">--</td>
-          <td class="p-3 text-red-400" id="sto-${s}">--</td>
+
+          <td class="p-3 text-cyan-400 tabular-nums" data-sym="${s}" data-field="ltp">--</td>
+          <td class="p-3 text-emerald-300 tabular-nums" data-sym="${s}" data-field="uc">--</td>
+          <td class="p-3 text-rose-300 tabular-nums" data-sym="${s}" data-field="lc">--</td>
+          <td class="p-3 text-center tabular-nums" data-sym="${s}" data-field="pct">--</td>
+          <td class="p-3 text-center tabular-nums" data-sym="${s}" data-field="fo">--</td>
+          <td class="p-3 text-center tabular-nums" data-sym="${s}" data-field="fh">--</td>
+          <td class="p-3 text-center tabular-nums" data-sym="${s}" data-field="fl">--</td>
+
+          <td class="p-3 tabular-nums" data-sym="${s}" data-field="tbq">--</td>
+          <td class="p-3 tabular-nums" data-sym="${s}" data-field="tsq">--</td>
+          <td class="p-3 text-green-400 tabular-nums" data-sym="${s}" data-field="bto">--</td>
+          <td class="p-3 text-red-400 tabular-nums" data-sym="${s}" data-field="sto">--</td>
+
           <td class="p-3">
             <button onclick="openTradeModal('${s}','BUY')" class="bg-green-600 px-2 py-1 rounded">BUY</button>
             <button onclick="openTradeModal('${s}','SELL')" class="bg-red-600 px-2 py-1 rounded ml-1">SELL</button>
@@ -665,36 +834,37 @@ async function loadAlerts(){
         </tr>`;
       });
     });
+
+    tbody.innerHTML = html;
+  }catch(e){
+    // ignore
   }
-
-  document.getElementById("alerts-body").innerHTML = html;
-  LAST_ALERTS_HTML = html;}
-
+}
 
 /* ================= TRADE MODAL ================= */
 function openTradeModal(s,side){
   tmSymbol=s; tmSide=side;
-  document.getElementById("tm-symbol").innerText=s;
-  document.getElementById("tm-side").innerText=side;
-  document.getElementById("tradeModal").classList.remove("hidden");
+  $("tm-symbol").innerText=s;
+  $("tm-side").innerText=side;
+  $("tradeModal").classList.remove("hidden");
 }
 function closeTradeModal(){
-  document.getElementById("tradeModal").classList.add("hidden");
+  $("tradeModal").classList.add("hidden");
 }
 
 async function confirmTrade(){
-  const mode = document.getElementById("ls-mode").value;
-  const qtyMode = document.getElementById("ls-qtymode").value;
+  const mode = $("ls-mode").value;
+  const qtyMode = $("ls-qtymode").value;
 
   const settings = {
     qty_mode: qtyMode,
-    per_trade_capital: parseFloat(document.getElementById("ls-capital").value || "0"),
-    per_trade_qty: parseInt(document.getElementById("ls-qty").value || "1"),
-    threshold_pct: parseFloat(document.getElementById("ls-threshold").value || "1"),
-    stop_loss_pct: parseFloat(document.getElementById("ls-sl").value || "1"),
-    trailing_sl_pct: parseFloat(document.getElementById("ls-tsl").value || "1"),
-    ladder_cycles: parseInt(document.getElementById("ls-cycles").value || "1"),
-    max_adds_per_leg: parseInt(document.getElementById("ls-maxadds").value || "2"),
+    per_trade_capital: parseFloat($("ls-capital").value || "0"),
+    per_trade_qty: parseInt($("ls-qty").value || "1"),
+    threshold_pct: parseFloat($("ls-threshold").value || "1"),
+    stop_loss_pct: parseFloat($("ls-sl").value || "1"),
+    trailing_sl_pct: parseFloat($("ls-tsl").value || "1"),
+    ladder_cycles: parseInt($("ls-cycles").value || "1"),
+    max_adds_per_leg: parseInt($("ls-maxadds").value || "2"),
   };
 
   fetch("/api/ladder/start", {
@@ -733,24 +903,122 @@ function saveCred(){
 function connectZerodha(){ window.location="/connect/zerodha"; }
 function logout(){ window.location="/logout"; }
 
-/* ================= LADDER STATE ================= */
+/* ================= OVERALL PNL ================= */
+function setOverallPnl(val){
+  const pnl = Number(val || 0);
+
+  // top bar (agar aap rakhna chahte ho)
+  const elTop = document.getElementById("overall-pnl");
+  if(elTop) elTop.textContent = pnl.toFixed(2);
+
+  // ✅ Active Ladders pill
+  const elBox = document.getElementById("overall-pnl-ladders");
+  if(elBox) elBox.textContent = pnl.toFixed(2);
+
+  // ✅ color logic for pill
+  const pill = document.getElementById("ladder-pnl-pill");
+  if(!pill) return;
+
+  // reset
+  pill.classList.remove(
+    "bg-emerald-900/20","border-emerald-600/40","text-emerald-300",
+    "bg-red-900/20","border-red-600/40","text-red-300",
+    "bg-cyan-900/20","border-cyan-600/40","text-cyan-300"
+  );
+
+  if(pnl > 0){
+    pill.classList.add("bg-emerald-900/20","border-emerald-600/40","text-emerald-300");
+  }else if(pnl < 0){
+    pill.classList.add("bg-red-900/20","border-red-600/40","text-red-300");
+  }else{
+    pill.classList.add("bg-cyan-900/20","border-cyan-600/40","text-cyan-300");
+  }
+}
+function setLadderCount(n){
+  const el = document.getElementById("ladder-count");
+  if(el) el.textContent = String(Number(n||0));
+}
+
+
+
+/* ================= LADDER STATE (HIDE DONE + CLEAR ON SQUAREOFF ALL) ================= */
+function ladderEmptyUI(){
+  const tbody = $("ladderRows");
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="13" class="p-16 text-center text-cyan-900/70 italic text-lg">
+        No active ladder strategies
+      </td>
+    </tr>`;
+  setOverallPnl(0);
+  setLadderCount(0);
+}
+
 function loadLadderState(){
   fetch("/api/ladder/state")
     .then(r=>r.json())
     .then(rows=>{
-      const tbody = document.getElementById("ladderRows");
+      const tbody = $("ladderRows");
       if(!rows || rows.length===0){
-        tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-gray-500 text-center">No ladders running</td></tr>`;
+        ladderEmptyUI();
         return;
       }
-      tbody.innerHTML = "";
-      rows.forEach(s=>{
+
+      // ✅ filter: DONE + qty=0 rows hide (so Squareoff ke baad clear dikhenga)
+      const filtered = rows.filter(s=>{
         const ls = s.leg_state || {};
+        const status = String(ls.status||"");
+        const qty = Number(ls.qty||0);
+
+        // show if active OR running-like OR qty>0 OR waiting feed
+        if(s.active) return true;
+        if(qty > 0) return true;
+        if(status === "RUNNING" || status === "EXITING") return true;
+        if(status === "IDLE" && (ls.reason || "").includes("WAIT")) return true;
+
+        // otherwise hide (DONE etc)
+        return false;
+      });
+
+      if(filtered.length === 0){
+        ladderEmptyUI();
+        return;
+      }
+      setLadderCount(filtered.length);
+
+
+      // rebuild ladder table (less frequent) but NO LTP blink now (WS updates LTP by data-lsym)
+      tbody.innerHTML = "";
+
+      let overall = 0;
+
+      filtered.forEach(s=>{
+        const ls = s.leg_state || {};
+        const SYM = String(s.symbol || "").toUpperCase();
+const avgv = ls.avg_price ? Number(ls.avg_price) : 0;
+const qtyv = Number(ls.qty || 0);
+const sidev = String(ls.side || "").toUpperCase();
+
+// store latest ladder meta for live pnl calculation
+LADDER_META[SYM] = {
+  avg: avgv,
+  qty: qtyv,
+  side: sidev,
+  ltp: LADDER_META[SYM]?.ltp || (s.ltp ? Number(s.ltp) : 0),
+};
+
         const hiLo = (ls.side==="BUY")
           ? (ls.highest ? Number(ls.highest).toFixed(2) : "-")
           : (ls.lowest ? Number(ls.lowest).toFixed(2) : "-");
+
+        // LTP shown from WS ticks if available; fallback to API ltp
         const ltp = s.ltp ? Number(s.ltp).toFixed(2) : "-";
-        const pnl = (ls.unrealized_pnl!=null) ? Number(ls.unrealized_pnl).toFixed(2) : "0.00";
+
+        const pnlNum = (ls.unrealized_pnl!=null) ? Number(ls.unrealized_pnl) : 0;
+        overall += pnlNum;
+
+        const pnl = pnlNum.toFixed(2);
+
         let nextAdd = "-";
         let sl = "-";
         let tsl = "-";
@@ -773,31 +1041,35 @@ function loadLadderState(){
           }
         }
 
-      let st = ls.status || "UNKNOWN";
-      if(ls.reason){
-        st += " (" + ls.reason + ")";
-      }
-      let stColor = "text-slate-400";
-
-      if(st.includes("WAIT")) stColor = "text-yellow-400";
-      else if(st.startsWith("RUNNING")) stColor = "text-green-400";
-      else if(st.startsWith("DONE")) stColor = "text-slate-400";
-      else if(st.startsWith("ERROR")) stColor = "text-red-500";
-      else if(st.startsWith("EXIT")) stColor = "text-orange-400";
+        let st = ls.status || "UNKNOWN";
+        if(ls.reason){
+          st += " (" + ls.reason + ")";
+        }
+        let stColor = "text-slate-400";
+        if(st.includes("WAIT")) stColor = "text-yellow-400";
+        else if(st.startsWith("RUNNING")) stColor = "text-green-400";
+        else if(st.startsWith("DONE")) stColor = "text-slate-400";
+        else if(st.startsWith("ERROR")) stColor = "text-red-500";
+        else if(st.startsWith("EXIT")) stColor = "text-orange-400";
 
         tbody.innerHTML += `
           <tr>
             <td class="p-3 text-left font-semibold">${s.symbol}</td>
             <td class="p-3 text-center">${(s.cycle_index+1)} / ${s.cycle_total}</td>
             <td class="p-3 text-center">${s.leg}</td>
-            <td class="p-3 text-center">${ls.qty || 0}</td>
-            <td class="p-3 text-center" id="ladder-ltp-${s.symbol}">${ltp}</td>
-            <td class="p-3 text-center">${ls.avg_price ? Number(ls.avg_price).toFixed(2) : "-"}</td>
-            <td class="p-3 text-center">${hiLo}</td>
-            <td class="p-3 text-center text-cyan-400">${nextAdd}</td>
-            <td class="p-3 text-center text-red-400">${sl}</td>
-            <td class="p-3 text-center text-yellow-400">${tsl}</td>
-            <td class="p-3 text-center font-semibold">${pnl}</td>
+            <td class="p-3 text-center tabular-nums">${ls.qty || 0}</td>
+
+            <td class="p-3 text-center tabular-nums"
+                data-lsym="${String(s.symbol).toUpperCase()}"
+                data-lfield="ltp">${ltp}</td>
+
+            <td class="p-3 text-center tabular-nums">${ls.avg_price ? Number(ls.avg_price).toFixed(2) : "-"}</td>
+            <td class="p-3 text-center tabular-nums">${hiLo}</td>
+            <td class="p-3 text-center text-cyan-400 tabular-nums">${nextAdd}</td>
+            <td class="p-3 text-center text-red-400 tabular-nums">${sl}</td>
+            <td class="p-3 text-center text-yellow-400 tabular-nums">${tsl}</td>
+            <td class="p-3 text-center font-semibold tabular-nums"
+    data-lsym="${String(s.symbol).toUpperCase()}" data-lfield="pnl">${pnl}</td>
             <td class="p-3 text-center font-semibold ${stColor}">${st}</td>
             <td class="p-3 text-center">
               <button onclick="squareoffLadder('${s.symbol}')"
@@ -805,9 +1077,10 @@ function loadLadderState(){
                 Squareoff
               </button>
             </td>
-          </tr>
-        `;
+          </tr>`;
       });
+
+      setOverallPnl(overall);
     })
     .catch(()=>{});
 }
@@ -825,7 +1098,9 @@ function squareoffLadder(symbol){
       return;
     }
     showMsg("✅ Squareoff done: " + symbol, false);
-    loadLadderState();
+
+    // refresh now
+    setTimeout(loadLadderState, 500);
   })
   .catch(()=>showMsg("❌ Squareoff failed", true));
 }
@@ -839,11 +1114,12 @@ function killSwitch(){
   })
   .then(()=> {
     showMsg("🛑 Kill switch activated", true);
-    loadLadderState();
+    setTimeout(loadLadderState, 700);
   })
   .catch(()=>showMsg("❌ Kill switch failed", true));
 }
 
+// ✅ Squareoff ALL => clear UI immediately + overall pnl 0
 function squareoffAll(){
   if(!confirm("Squareoff ALL positions (MIS Market)? Continue?")) return;
 
@@ -856,50 +1132,52 @@ function squareoffAll(){
       }
       showMsg(`✅ Squareoff all placed (${d.count})`, false);
 
-      // refresh ladder state after a moment
+      // ✅ immediate clear (your requirement)
+      ladderEmptyUI();
+
+      // refresh in background to sync actual state
       setTimeout(() => {
         loadLadderState();
-      }, 1200);
+      }, 1500);
     })
     .catch(() => showMsg("❌ Squareoff all failed", true));
 }
 
 /* ================= MSG ================= */
 function showMsg(txt, isErr = false) {
-    const box = document.getElementById("msg-box");
-    box.textContent = txt;
-    box.className = `px-6 py-3 rounded-xl text-sm font-medium shadow-2xl z-50 transition-all duration-300 ${
-      isErr 
-        ? 'bg-red-900/80 text-red-100 border border-red-700/50' 
-        : 'bg-emerald-900/80 text-emerald-100 border border-emerald-700/50'
-    }`;
-    box.classList.remove("hidden");
-    box.classList.add("animate-bounce-once");
+  const box = $("msg-box");
+  box.textContent = txt;
+  box.className = `px-6 py-3 rounded-xl text-sm font-medium shadow-2xl z-50 transition-all duration-300 ${
+    isErr
+      ? 'bg-red-900/80 text-red-100 border border-red-700/50'
+      : 'bg-emerald-900/80 text-emerald-100 border border-emerald-700/50'
+  }`;
+  box.classList.remove("hidden");
 
-    setTimeout(() => {
-      box.classList.add("opacity-0", "translate-y-4");
-      setTimeout(() => box.classList.add("hidden"), 400);
-    }, 2800);
-  }
+  setTimeout(() => {
+    box.classList.add("opacity-0", "translate-y-4");
+    setTimeout(() => box.classList.add("hidden"), 400);
+  }, 2800);
+}
 
-
-  
 /* ================= INIT ================= */
 document.addEventListener("DOMContentLoaded", async ()=>{
   if(!(await checkSession())) return;
 
   refreshStatus();
-  checkMarketStatus();
+  checkMarketStatus();   // also manages alert gate
 
-  startTickWS(); // ✅ ONLY ONE WS
+  startTickWS();         // ✅ ONLY ONE WS
 
   setInterval(refreshStatus, 5000);
   setInterval(checkMarketStatus, 60000);
 
   loadLadderState();
   setInterval(loadLadderState, 30000);
-});
 
+  // extra: at exact 09:00 IST window, gate will open automatically on next checkMarketStatus tick
+});
 </script>
+
 </body>
 </html>

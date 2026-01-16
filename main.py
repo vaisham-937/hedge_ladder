@@ -76,6 +76,8 @@ def load_instruments_file():
 load_instruments_file()
 
 
+
+
 # ============================================================
 # ✅ WS Tokens Control (if your kite_ws_worker reads tokens list)
 # NOTE: if your worker still reads redis ws:{user_id}:tokens, keep that logic too.
@@ -107,11 +109,6 @@ def api_ws_tokens(request: Request, user_id: int = Query(None)):
 
     toks = sorted(list(WS_TOKENS_RAM.get(uid, set())))
     return {"user_id": uid, "tokens": toks}
-
-
-
-
-
 
 
 class TickHub:
@@ -173,8 +170,75 @@ class TickHub:
             }
         return out
 
-
 TICK_HUB = TickHub()
+
+async def circuit_prefetch_loop():
+    """
+    Background loop: fetch circuit for active symbols in WS tokens set.
+    Uses get_kite_for_user(user_id) so per-user auth works.
+    """
+    while True:
+        try:
+            # every 60 sec check
+            await asyncio.sleep(60)
+
+            if not _is_market_time_for_circuit():
+                continue
+
+            # for each user, find symbols we are tracking (from RAM token map)
+            for uid, tokmap in TOKEN_SYMBOL_RAM.items():
+                if not tokmap:
+                    continue
+
+                # pick unique symbols from token->symbol map
+                syms = set([s for s in tokmap.values() if s])
+
+                if not syms:
+                    continue
+
+                # fetch circuits in small batches (avoid heavy calls)
+                kite = None
+                try:
+                    kite = get_kite_for_user(int(uid))
+                except:
+                    continue
+                # Kite quote supports multiple instruments  We fetch only those missing/expired
+                to_fetch = []
+                for sym in list(syms)[:200]:
+                    c = get_cached_circuit(sym)
+                    if not c or (time.time() - float(c.get("ts", 0) or 0)) > CIRCUIT_TTL_SEC:
+                        to_fetch.append(f"NSE:{sym}")
+
+                if not to_fetch:
+                    continue
+
+                # chunk to avoid huge payload
+                CHUNK = 50
+                for i in range(0, len(to_fetch), CHUNK):
+                    batch = to_fetch[i:i+CHUNK]
+                    try:
+                        q = kite.quote(batch)  # dict keyed by "NSE:SYMBOL"
+                        for k, v in (q or {}).items():
+                            sym = str(k).split(":")[-1].upper()
+                            upper = v.get("upper_circuit_limit")
+                            lower = v.get("lower_circuit_limit")
+                            payload = {
+                                "upper": float(upper) if upper is not None else None,
+                                "lower": float(lower) if lower is not None else None,
+                                "ts": time.time()
+                            }
+                            CIRCUIT_RAM[sym] = payload
+                            r.setex(f"circuit:{sym}", CIRCUIT_TTL_SEC, json.dumps(payload))
+                    except:
+                        continue
+
+        except Exception:
+            continue
+
+@app.on_event("startup")
+async def _startup_tasks():
+    asyncio.create_task(circuit_prefetch_loop(), name="circuit_prefetch_loop")
+
 
 # ------------------------------------------------- 
 # WebSocket route for dashboard ticks (NO Redis) 
@@ -193,8 +257,19 @@ async def ws_ticks(ws: WebSocket):
     # ✅ NEW: Push snapshot immediately so UI shows LTP without waiting
     try:
         snap = TICK_HUB.get_snapshot_for_user(uid)  # symbol -> payload
-        # send as a single packet (less spam)
-        await ws.send_json({"type": "snapshot", "ticks": list(snap.values())})
+
+        # ✅ add circuit values into snapshot
+        ticks = []
+        for t in snap.values():
+            sym = (t.get("symbol") or "").upper()
+            if sym:
+                c = get_cached_circuit(sym)
+                t["upper_circuit"] = c.get("upper")
+                t["lower_circuit"] = c.get("lower")
+            ticks.append(t)
+
+        await ws.send_json({"type": "snapshot", "ticks": ticks})
+
     except Exception:
         pass
 
@@ -206,7 +281,6 @@ async def ws_ticks(ws: WebSocket):
     finally:
         TICK_HUB.unregister(uid, ws)
         print("🔴 Dashboard WS closed:", uid)
-
 
 
 @app.websocket("/ws/ingest")
@@ -302,15 +376,20 @@ async def ws_ingest(ws: WebSocket):
 
                 # ---------- DASHBOARD WS ----------
                 if sym:
+                    c = get_cached_circuit(sym)
+                    upper = c.get("upper")
+                    lower = c.get("lower")
                     await TICK_HUB.broadcast(uid, {
                         "symbol": sym,
                         "ltp": ltp,
                         "tbq": tbq,
                         "tsq": tsq,
                         "prev": prev,
-                        "open": op,     # ✅ added
+                        "open": op,     
                         "high": hi,
                         "low": lo,
+                        "upper_circuit": upper,  
+                        "lower_circuit": lower,
                     })
     except Exception:
         ws_log.exception("❌ INGEST WS crashed user=%s", uid)
@@ -382,6 +461,52 @@ if REDIS_URL:
     r = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 else:
     r = redis.Redis(host="127.0.0.1", port=6379, db=0, decode_responses=True)
+
+# ============================================================
+# ✅ CIRCUIT CACHE (Redis + in-memory TTL)
+# ============================================================
+CIRCUIT_RAM: Dict[str, Dict[str, Any]] = {}   # symbol -> {"upper":..,"lower":..,"ts":..}
+CIRCUIT_TTL_SEC = 30 * 60                     # 30 min (same day ok)
+
+def _now_ist():
+    ist = pytz.timezone("Asia/Kolkata")
+    return datetime.datetime.now(ist)
+
+def _is_market_time_for_circuit():
+    # circuit values once/day, but we keep it simple
+    now = _now_ist()
+    if now.weekday() >= 5:
+        return False
+    return True
+
+def get_cached_circuit(symbol: str) -> Dict[str, Any]:
+    """
+    Fast path: RAM -> Redis.
+    Returns dict: {"upper": float|None, "lower": float|None, "ts": epoch}
+    """
+    sym = symbol.upper().strip()
+    if not sym:
+        return {}
+
+    # 1) RAM cache
+    c = CIRCUIT_RAM.get(sym)
+    if c and (time.time() - float(c.get("ts", 0) or 0)) < CIRCUIT_TTL_SEC:
+        return c
+
+    # 2) Redis cache
+    raw = r.get(f"circuit:{sym}")
+    if raw:
+        try:
+            d = json.loads(raw)
+            # keep in RAM too
+            CIRCUIT_RAM[sym] = d
+            return d
+        except:
+            pass
+
+    return {}
+
+
 
 # ------------------------------------------------
 # PASSWORD HASH

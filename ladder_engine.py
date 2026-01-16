@@ -31,7 +31,7 @@ import logging
 import math
 import os
 import sys
-import time
+import time, datetime
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import Any, Dict, Optional, Literal, List, Tuple
@@ -178,13 +178,11 @@ class LadderSettings:
         s.max_adds_per_leg = int(max(1, int(s.max_adds_per_leg)))
         return s
 
-
 @dataclass
 class Circuit:
     upper: Optional[float] = None
     lower: Optional[float] = None
     ts: float = 0.0  # unix seconds
-
 
 @dataclass
 class LegState:
@@ -198,7 +196,6 @@ class LegState:
     lowest: float = 0.0   # for SELL
     unrealized_pnl: float = 0.0
     reason: str = ""
-
 
 @dataclass
 class LadderSession:
@@ -464,79 +461,37 @@ class LadderEngine:
         await push_event(self.redis, self.user_id, symbol, "CIRCUIT_FETCHED", {"upper": c.upper, "lower": c.lower})
         return c
 
-    # ------------ public API ------------
-    # async def start_ladder(
-    #     self,
-    #     symbol: str,
-    #     started_side: Side,
-    #     settings_mode: SettingsMode,
-    #     settings_payload: Optional[Dict[str, Any]] = None, ) -> Dict[str, Any]:
-    #     """Start ladder session on symbol. If already running, returns existing state.Fixed qty step logic (Option 1)."""
-    #     symbol = symbol.strip().upper()
-    #     if await self._is_kill():
-    #         logger.error("START_LADDER blocked by KILL user=%s symbol=%s", self.user_id, symbol)
-    #         await push_event(self.redis, self.user_id, symbol, "START_BLOCKED_KILL", {})
-    #         return {"error": "KILL_SWITCH_ACTIVE"}
+    # ================ *Order average price fetch* =================== #
+    async def _get_executed_avg_price(self, order_id: str, timeout_sec: float = 3.0) -> Optional[float]:
+        """
+        Zerodha ke order_history se actual executed average_price nikalta hai.
+        Market order me ye LTP se different ho sakta hai.
+        """
+        def _fetch(api_key: str, access_token: str, oid: str):
+            kite = KiteConnect(api_key=api_key)
+            kite.set_access_token(access_token)
+            return kite.order_history(oid)
 
-    #     logger.info("START_LADDER user=%s symbol=%s side=%s mode=%s payload=%s",
-    #                 self.user_id, symbol, started_side, settings_mode, settings_payload or {})
-    #     await push_event(self.redis, self.user_id, symbol, "START_LADDER", {
-    #         "side": started_side, "mode": settings_mode, "settings_payload": settings_payload or {}
-    #     })
-    #     if self.SYMBOL_TOKEN_RAM is None:
-    #         self.SYMBOL_TOKEN_RAM = {}
+        t0 = time.time()
+        while time.time() - t0 < timeout_sec:
+            try:
+                hist = await asyncio.to_thread(_fetch, self.api_key, self.access_token, order_id)
+                # history list hoti hai; last state me avg_price hota hai
+                if isinstance(hist, list) and hist:
+                    last = hist[-1]
+                    avg = last.get("average_price")
+                    status = (last.get("status") or "").upper()
+                    if avg and float(avg) > 0:
+                        return float(avg)
+                    # agar order complete hua but avg 0 aaya to retry small delay
+                    if status in ("COMPLETE", "REJECTED", "CANCELLED"):
+                        return float(avg) if avg else None
+            except Exception:
+                pass
+            await asyncio.sleep(0.2)
 
-    #     token_raw = self.SYMBOL_TOKEN_RAM.get(self.user_id, {}).get(symbol)
+        return None
 
-    #     # 🔥 If feed not yet ready, create WAIT_FEED session
-    #             # 🔥 If feed not yet ready, create WAIT_FEED session
-    #     if not token_raw:
-    #         logger.warning(
-    #             "WAIT_FEED user=%s symbol=%s token_in_ram=%s",
-    #             self.user_id,
-    #             symbol,
-    #             self.SYMBOL_TOKEN_RAM.get(self.user_id, {}).get(symbol),
-    #         )
-    #         # token is available -> start immediately
-    #         token = int(token_raw)
-
-    #         settings = await self.load_settings(settings_mode, symbol)
-    #         if settings_payload:
-    #             settings = LadderSettings.from_dict({**asdict(settings), **settings_payload})
-    #             await self.save_settings(settings_mode, symbol, settings)
-            
-    #         sess = self.sessions.get(symbol)
-    #         if sess and sess.active:
-    #             # already running -> just return state
-    #             return {"status": "already_running", "session": sess.to_public_dict()}
-
-    #         sess = LadderSession(
-    #             user_id=self.user_id,
-    #             symbol=symbol,
-    #             token=0,  # unknown yet
-    #             started_side=started_side,
-    #             settings_mode=settings_mode,
-    #             settings=settings,
-    #             cycle_index=0,
-    #             leg=started_side,
-    #             leg_state=LegState(side=started_side, status="IDLE", reason="WAIT_FEED"),
-    #             active=True,
-    #             created_ts=time.time(),
-    #             updated_ts=time.time(),
-    #         )
-    #         self.sessions[symbol] = sess
-    #         await self._snapshot(sess)
-    #         # If LTP already known, enter instantly
-    #         if self.ticks.get(token):
-    #             await self._enter_leg(sess)
-    #             await self._snapshot(sess)
-
-    #         return {
-    #             "status": "waiting_for_feed",
-    #             "session": sess.to_public_dict(),
-    #             "symbol": symbol,
-    #             "message": "Waiting for Zerodha WebSocket price feed...",
-    #         }
 
     async def start_ladder(
         self,
@@ -621,9 +576,12 @@ class LadderEngine:
             self.sessions[symbol] = sess
             await self._snapshot(sess)
 
-            logger.warning("WAIT_FEED created user=%s symbol=%s", self.user_id, symbol)
+            logger.warning(
+            f"\033[93m⏳ WAITING FOR FEED\033[0m  "
+            f"\033[1m[{symbol}]\033[0m  "
+            f"USER={self.user_id}"
+        )
             await push_event(self.redis, self.user_id, symbol, "WAIT_FEED", {})
-
             return {
                 "status": "waiting_for_feed",
                 "message": "Waiting for WebSocket token + LTP...",
@@ -652,6 +610,13 @@ class LadderEngine:
 
         # 6) If LTP already present -> enter instantly
         ltp = float(self.ticks.get(token, 0.0) or 0.0)
+        logger.info(
+    "\033[92m⚡ INSTANT ENTRY\033[0m   "
+    + ("\033[92m▲ BUY " if started_side == "BUY" else "\033[91m▼ SELL ")
+    + f"\033[1m[{symbol}]\033[0m  "
+    + f"LTP={ltp:.2f}"
+)
+
         if ltp > 0:
             await self._enter_leg(sess)
             await self._snapshot(sess)
@@ -663,8 +628,7 @@ class LadderEngine:
             "message": "Token ready, waiting for first tick...",
             "session": sess.to_public_dict(),
         }
-
-        
+    
 
     async def squareoff_symbol(self, symbol: str, reason: str = "MANUAL_SQUAREOFF") -> Dict[str, Any]:
         symbol = symbol.strip().upper()
@@ -772,12 +736,19 @@ class LadderEngine:
 
         oid = await self._place_mis_market(symbol=symbol, side=side, qty=qty)
 
+        exec_avg = await self._get_executed_avg_price(str(oid))
+        base_price = exec_avg if (exec_avg and exec_avg > 0) else float(ltp)
+        logger.info(
+            "ENTRY_FILL user=%s symbol=%s oid=%s ltp=%.2f exec_avg=%s base=%.2f",
+            self.user_id, symbol, oid, float(ltp), str(exec_avg), float(base_price)
+        )
         sess.leg_state.qty = qty
-        sess.leg_state.avg_price = float(ltp)
+        sess.leg_state.avg_price = float(base_price)         # ✅ real base
         sess.leg_state.entries = 1
-        sess.leg_state.last_add_price = float(ltp)
-        sess.leg_state.highest = float(ltp)
-        sess.leg_state.lowest = float(ltp)
+        sess.leg_state.last_add_price = float(base_price)    # ✅ threshold base
+        sess.leg_state.highest = float(base_price)
+        sess.leg_state.lowest = float(base_price)
+
         sess.leg_state.reason = ""
 
         logger.info("ENTRY_PLACED user=%s symbol=%s side=%s qty=%s ltp=%s oid=%s",
@@ -839,9 +810,7 @@ class LadderEngine:
 
     
     async def _place_mis_market(self, symbol: str, side: Side, qty: int) -> str:
-        """
-        Place MIS market order via Kite in the order worker.
-        """
+        """Place MIS market order via Kite in the order worker."""
         def _place(api_key: str, access_token: str, sym: str, s: Side, q: int) -> str:
             kite = KiteConnect(api_key=api_key)
             kite.set_access_token(access_token)
@@ -854,9 +823,15 @@ class LadderEngine:
                 product=kite.PRODUCT_MIS,
                 order_type=kite.ORDER_TYPE_MARKET,
             )
-
         try:
-            logger.info("ORDER_SEND user=%s %s %s qty=%s", self.user_id, side, symbol, qty)
+            logger.info(
+    "\033[94m📤 ORDER SENT\033[0m   "
+    + ("\033[92m▲ BUY " if side == "BUY" else "\033[91m▼ SELL ")
+    + f"\033[1m[{symbol}]\033[0m  "
+    + f"QTY={qty}  USER={self.user_id}  "
+    + f"TIME={datetime.now().strftime('%H:%M:%S')}"
+)
+            t0 = time.perf_counter()
             oid = await self.order_worker.submit(
                 _place,
                 api_key=self.api_key,
@@ -865,10 +840,27 @@ class LadderEngine:
                 s=side,
                 q=qty
             )
+            latency = (time.perf_counter() - t0) * 1000
+            logger.info(
+            "\033[92m✅ ORDER PLACED\033[0m  "
+            + ("\033[92m▲ BUY " if side == "BUY" else "\033[91m▼ SELL ")
+            + f"\033[1m[{symbol}]\033[0m  "
+            + f"QTY={qty}  "
+            + f"OID={oid}  "
+            + f"LATENCY={latency:.1f}ms  "
+            + f"TIME={datetime.now().strftime('%H:%M:%S')}"
+        )
             return str(oid)
         except Exception as e:
-            logger.error("❌ ORDER_FAILED user=%s %s %s qty=%s err=%s",
-                         self.user_id, side, symbol, qty, e, exc_info=True)
+            logger.error(
+            "\033[91m❌ ORDER FAILED\033[0m  "
+            + ("\033[92m▲ BUY " if side == "BUY" else "\033[91m▼ SELL ")
+            + f"\033[1m[{symbol}]\033[0m  "
+            + f"QTY={qty}  ERR={e}  "
+            + f"TIME={datetime.now().strftime('%H:%M:%S')}",
+            exc_info=True
+        )
+
             await push_event(self.redis, self.user_id, symbol, "ORDER_FAILED",
                              {"side": side, "qty": qty, "err": str(e)})
             raise
@@ -1006,46 +998,59 @@ class LadderEngine:
 
         await self._update_pnl(sess)
 
-        # --- stop loss ---
+        # --- 🧯 STOP LOSS ---
         if st.avg_price > 0:
             if st.side == "BUY":
                 sl_price = st.avg_price * (1.0 - s.stop_loss_pct / 100.0)
                 if ltp <= sl_price:
-                    logger.warning("STOP_LOSS HIT user=%s symbol=%s ltp=%s sl=%s", self.user_id, sym, ltp, sl_price)
+                    logger.warning(
+                f"\033[91m❌ STOP LOSS HIT ▲  [{sym}]  "
+                f"LTP={ltp:.2f}  SL={sl_price:.2f}\033[0m"
+            )
                     await self._exit_leg(sess, reason="STOP_LOSS")
                     await self._start_next_leg_or_finish(sess)
                     return
             else:
                 sl_price = st.avg_price * (1.0 + s.stop_loss_pct / 100.0)
                 if ltp >= sl_price:
-                    logger.warning("STOP_LOSS HIT user=%s symbol=%s ltp=%s sl=%s", self.user_id, sym, ltp, sl_price)
+                    logger.warning(
+                    f"\033[91m❌ STOP LOSS HIT ▼  [{sym}]  "
+                    f"LTP={ltp:.2f}  SL={sl_price:.2f}\033[0m"
+                )
                     await self._exit_leg(sess, reason="STOP_LOSS")
                     await self._start_next_leg_or_finish(sess)
                     return
 
-        # --- target circuit ---
+        # --- ⚡ CIRCUIT TARGET ---
         if circuit and circuit.upper and st.side == "BUY":
             if ltp >= float(circuit.upper) * 0.9995:
-                logger.warning("UPPER_CIRCUIT_TARGET user=%s symbol=%s ltp=%s upper=%s",
-                               self.user_id, sym, ltp, circuit.upper)
+                logger.warning(
+                f"\033[92m🎯 UPPER CIRCUIT TARGET  ▲  [{sym}]  "
+                f"LTP={ltp:.2f}  UPPER={circuit.upper}\033[0m"
+            )
                 await self._exit_leg(sess, reason="UPPER_CIRCUIT_TARGET")
                 await self._start_next_leg_or_finish(sess)
                 return
 
         if circuit and circuit.lower and st.side == "SELL":
             if ltp <= float(circuit.lower) * 1.0005:
-                logger.warning("LOWER_CIRCUIT_TARGET user=%s symbol=%s ltp=%s lower=%s",
-                               self.user_id, sym, ltp, circuit.lower)
+                logger.warning(
+                f"\033[92m🎯 LOWER CIRCUIT TARGET ▼  [{sym}]  "
+                f"LTP={ltp:.2f}  LOWER={circuit.lower}\033[0m"
+            )
+
                 await self._exit_leg(sess, reason="LOWER_CIRCUIT_TARGET")
                 await self._start_next_leg_or_finish(sess)
                 return
 
-        # --- trailing stop ---
+        # --- 🔥 TRAILING STOP LOSS ---
         if st.side == "BUY" and st.highest:
             tsl_price = st.highest * (1.0 - s.trailing_sl_pct / 100.0)
             if ltp <= tsl_price:
-                logger.warning("TRAILING_SL HIT user=%s symbol=%s ltp=%s tsl=%s highest=%s",
-                               self.user_id, sym, ltp, tsl_price, st.highest)
+                logger.warning(
+                f"\033[91m🛑 TRAILING STOP LOSS HIT ▲  [{sym}]  "
+                f"LTP={ltp:.2f}  TSL={tsl_price:.2f}  HIGH={st.highest:.2f}\033[0m"
+            )
                 await self._exit_leg(sess, reason="TRAILING_SL")
                 await self._start_next_leg_or_finish(sess)
                 return
@@ -1053,8 +1058,10 @@ class LadderEngine:
         if st.side == "SELL" and st.lowest:
             tsl_price = st.lowest * (1.0 + s.trailing_sl_pct / 100.0)
             if ltp >= tsl_price:
-                logger.warning("TRAILING_SL HIT user=%s symbol=%s ltp=%s tsl=%s lowest=%s",
-                               self.user_id, sym, ltp, tsl_price, st.lowest)
+                logger.warning(
+                f"\033[91m🛑 TRAILING STOP LOSS HIT ▼  [{sym}]  "
+                f"LTP={ltp:.2f}  TSL={tsl_price:.2f}  LOW={st.lowest:.2f}\033[0m"
+            )
                 await self._exit_leg(sess, reason="TRAILING_SL")
                 await self._start_next_leg_or_finish(sess)
                 return
@@ -1063,63 +1070,42 @@ class LadderEngine:
         if st.entries < (1 + s.max_adds_per_leg):
             if st.side == "BUY":
                 next_add = st.last_add_price * (1.0 + s.threshold_pct / 100.0) if st.last_add_price else 0.0
-                logger.debug(
-                "ADD_CHECK BUY user=%s symbol=%s ltp=%.2f last_add=%.2f threshold=%.2f%% next_add=%.2f",
-                self.user_id, sym, ltp, st.last_add_price, s.threshold_pct, next_add )
+                logger.info(
+                "\033[90m────────────────────────────────────────\033[0m\n"
+                + "\033[96m🔍 ADD CHECK\033[0m   "
+                + ("\033[92m▲ BUY " if st.side == "BUY" else "\033[91m▼ SELL ")
+                + f"\033[1m[{sym}]\033[0m\n"
+                + f"   LTP       : {ltp:.2f}\n"
+                + f"   LAST ADD  : {st.last_add_price:.2f}\n"
+                + f"   THRESHOLD : {s.threshold_pct:.2f}%\n"
+                + f"   NEXT ADD  : \033[93m{next_add:.2f}\033[0m\n"
+            )
                 if next_add and ltp >= next_add:
-                    logger.info("ADD_TRIGGER BUY user=%s symbol=%s ltp=%s next_add=%s",
-                                self.user_id, sym, ltp, next_add)
+                    logger.info(
+                ("\033[92m🚀 ADD EXECUTED ▲ " if st.side == "BUY" else "\033[91m🚀 ADD EXECUTED ▼ ")
+                + f"\033[1m[{sym}]\033[0m  "
+                + f"LTP={ltp:.2f}  ➜  NEXT={next_add:.2f}\033[0m"
+            )
                     await self._add_position(sess, ltp)
                     return
             else:
                 next_add = st.last_add_price * (1.0 - s.threshold_pct / 100.0) if st.last_add_price else 0.0
-                logger.debug(
-                "ADD_CHECK SELL user=%s symbol=%s ltp=%.2f last_add=%.2f threshold=%.2f%% next_add=%.2f",
-                self.user_id, sym, ltp, st.last_add_price, s.threshold_pct, next_add)
+                logger.info(
+                "\033[90m────────────────────────────────────────\033[0m\n"
+                f"\033[96m🔍 ADD CHECK\033[0m   \033[91m▼ SELL\033[0m  "
+                f"\033[1m[{sym}]\033[0m\n"
+                f"   LTP       : {ltp:.2f}\n"
+                f"   LAST ADD  : {st.last_add_price:.2f}\n"
+                f"   THRESHOLD : {s.threshold_pct:.2f}%\n"
+                f"   NEXT ADD  : \033[93m{next_add:.2f}\033[0m\n"
+            )
                 if next_add and ltp <= next_add:
-                    logger.info("ADD_TRIGGER SELL user=%s symbol=%s ltp=%s next_add=%s",
-                                self.user_id, sym, ltp, next_add)
+                    logger.info(
+                    f"\033[91m🚀 ADD EXECUTED ▼  [{sym}]  "
+                    f"LTP={ltp:.2f}  ➜  NEXT={next_add:.2f}\033[0m"
+                )
                     await self._add_position(sess, ltp)
                     return
-
-    # async def _add_position(self, sess: LadderSession, ltp: float) -> None:
-    #     st = sess.leg_state
-    #     if not st or st.status != "RUNNING":
-    #         return
-
-    #     lock = await self._lock(sess.symbol, "add", ttl_ms=900)
-    #     if lock != 1:
-    #         await push_event(self.redis, self.user_id, sess.symbol, "ADD_BLOCKED", {"reason": "LOCK_BUSY_OR_KILL"})
-    #         return
-
-    #     qty_step = self._calc_step_qty(sess.settings, ltp)
-    #     if qty_step <= 0:
-    #         return
-
-    #     logger.info("ADD_PLACE user=%s symbol=%s side=%s add_qty=%s ltp=%s",
-    #                 self.user_id, sess.symbol, st.side, qty_step, ltp)
-
-    #     oid = await self._place_mis_market(symbol=sess.symbol, side=st.side, qty=qty_step)
-
-    #     new_qty = st.qty + qty_step
-    #     if new_qty > 0:
-    #         st.avg_price = ((st.avg_price * st.qty) + (ltp * qty_step)) / new_qty
-    #     st.qty = new_qty
-    #     st.entries += 1
-    #     st.last_add_price = float(ltp)
-
-    #     if st.side == "BUY":
-    #         st.highest = max(st.highest, ltp)
-    #     else:
-    #         st.lowest = min(st.lowest, ltp)
-
-    #     sess.updated_ts = time.time()
-    #     await self._snapshot(sess)
-
-    #     logger.info("ADD_PLACED user=%s symbol=%s side=%s oid=%s new_qty=%s new_avg=%s entries=%s",
-    #                 self.user_id, sess.symbol, st.side, oid, st.qty, st.avg_price, st.entries)
-    #     await push_event(self.redis, self.user_id, sess.symbol, "ADD_PLACED",
-    #                      {"side": st.side, "order_id": oid, "add_qty": qty_step, "new_qty": st.qty, "new_avg": st.avg_price, "ltp": ltp})
 
     async def _add_position(self, sess: LadderSession, ltp: float) -> None:
         st = sess.leg_state
@@ -1134,12 +1120,14 @@ class LadderEngine:
         qty_step = self._calc_step_qty(sess.settings, ltp)
         if qty_step <= 0:
             return
-
         logger.info("ADD_PLACE user=%s symbol=%s side=%s add_qty=%s ltp=%s",
                     self.user_id, sess.symbol, st.side, qty_step, ltp)
-
         try:
             oid = await self._place_mis_market(symbol=sess.symbol, side=st.side, qty=qty_step)
+
+            exec_avg = await self._get_executed_avg_price(str(oid))
+            fill_price = exec_avg if (exec_avg and exec_avg > 0) else float(ltp)
+
         except Exception as e:
             logger.error("ADD_ORDER_FAILED user=%s symbol=%s err=%s", self.user_id, sess.symbol, e, exc_info=True)
             await push_event(self.redis, self.user_id, sess.symbol, "ADD_FAILED", {"err": str(e)})
@@ -1147,14 +1135,17 @@ class LadderEngine:
             sess.updated_ts = time.time()
             await self._snapshot(sess)
             return
-
         new_qty = st.qty + qty_step
         if new_qty > 0:
-            st.avg_price = ((st.avg_price * st.qty) + (ltp * qty_step)) / new_qty
+            st.avg_price = ((st.avg_price * st.qty) + (fill_price * qty_step)) / new_qty
         st.qty = new_qty
         st.entries += 1
-        st.last_add_price = float(ltp)
-
+        st.last_add_price = float(fill_price)
+        logger.info(
+            "ADD_FILL user=%s symbol=%s oid=%s ltp=%.2f exec_avg=%s fill=%.2f new_avg=%.2f qty=%s entries=%s",
+            self.user_id, sess.symbol, oid, float(ltp), str(exec_avg), float(fill_price),
+            float(st.avg_price), int(st.qty), int(st.entries)
+        )
         if st.side == "BUY":
             st.highest = max(st.highest, ltp)
         else:
@@ -1173,11 +1164,9 @@ class LadderEngine:
         st = sess.leg_state
         if not st or st.qty <= 0 or st.avg_price <= 0:
             return
-
         ltp = self.ticks.get(sess.token, 0.0)
         if not ltp:
             return
-
         if st.side == "BUY":
             st.unrealized_pnl = (ltp - st.avg_price) * st.qty
         else:

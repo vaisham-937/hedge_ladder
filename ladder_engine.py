@@ -35,14 +35,15 @@ import time, datetime
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import Any, Dict, Optional, Literal, List, Tuple
+from kiteconnect import KiteConnect
 
 try:
     import redis.asyncio as aioredis  # redis-py >= 4.2
 except Exception:  # pragma: no cover
     aioredis = None  # type: ignore
 
-from kiteconnect import KiteConnect
 
+start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # ==========================================================
 # Logging (Terminal-friendly)
@@ -106,6 +107,22 @@ Side = Literal["BUY", "SELL"]
 QtyMode = Literal["CAPITAL", "QTY"]
 SettingsMode = Literal["UNIVERSAL", "STOCK"]
 
+def _supports_color() -> bool:
+    if (os.getenv("NO_COLOR") or "").strip():
+        return False
+    if (os.getenv("LADDER_NO_COLOR") or "").strip() in ("1", "TRUE", "YES"):
+        return False
+    try:
+        return sys.stdout.isatty()
+    except Exception:
+        return False
+
+
+def _c(text: str, code: str = "0") -> str:
+    if not _supports_color():
+        return str(text)
+    return f"\033[{code}m{text}\033[0m"
+
 
 # ==========================================================
 # Redis keys
@@ -158,7 +175,7 @@ class LadderSettings:
     threshold_pct: float = 1.0       # add threshold per step (%)
     stop_loss_pct: float = 1.0            # immediate SL from avg (%)
     trailing_sl_pct: float = 1.0          # trailing from peak/low (%)
-    ladder_cycles: int = 1                # 1 cycle = 1 buy ladder + 1 sell ladder
+    ladder_cycles: int = 5               # 1 cycle = 1 buy ladder + 1 sell ladder
     max_adds_per_leg: int = 2             # safety cap
     slippage_bps: float = 0.0             # optional, not used for MIS market in this version
 
@@ -540,10 +557,32 @@ class LadderEngine:
             self.SYMBOL_TOKEN_RAM = {}
 
         token_raw = self.SYMBOL_TOKEN_RAM.get(self.user_id, {}).get(symbol)
-        logger.info(
-            "START_LADDER user=%s symbol=%s side=%s mode=%s token_in_ram=%s payload=%s",
-            self.user_id, symbol, started_side, settings_mode, token_raw, settings_payload or {}
+        # logger.info(
+        #     "START_LADDER user=%s symbol=%s side=%s mode=%s token_in_ram=%s payload=%s",
+        #     self.user_id, symbol, started_side, settings_mode, token_raw, settings_payload or {}
+        # )
+        msg = (
+            "\n"
+            + _c("╔══════════════════════════════════════════════════╗", "90") + "\n"
+            + _c("║ 🚀  START LADDER ENGINE  🚀                     ║", "96") + "\n"
+            + _c("╠══════════════════════════════════════════════════╣", "90") + "\n"
+            + _c(f"║ ⏱  Started At : {start_time:<32} ║", "94") + "\n"
+            + _c(f"║ 👤 User ID    : {self.user_id:<6}                     ║", "97") + "\n"
+            # 🔥 SYMBOL HIGHLIGHT
+            + _c(
+                f"║ 📈 Symbol     : "
+                f"{_c(f'[{symbol}]', '1;92')}   "
+                f"Side : {_c(started_side, '1;91' if started_side=='SELL' else '1;92')}"
+                f"     ║",
+                "97"
+            ) + "\n"
+            + _c(f"║ ⚙️  Mode       : {settings_mode:<8} Token: {str(token_raw):<10} ║", "93") + "\n"
+            + _c("╠══════════════════════════════════════════════════╣", "90") + "\n"
+            + _c(f"║ 📦 Payload    : {settings_payload or {}}", "90") + "\n"
+            + _c("╚══════════════════════════════════════════════════╝", "90")
         )
+        logger.info(msg)
+
         await push_event(self.redis, self.user_id, symbol, "START_LADDER", {
             "side": started_side,
             "mode": settings_mode,
@@ -1070,7 +1109,7 @@ class LadderEngine:
         if st.entries < (1 + s.max_adds_per_leg):
             if st.side == "BUY":
                 next_add = st.last_add_price * (1.0 + s.threshold_pct / 100.0) if st.last_add_price else 0.0
-                logger.info(
+                logger.info("\n"
                 "\033[90m────────────────────────────────────────\033[0m\n"
                 + "\033[96m🔍 ADD CHECK\033[0m   "
                 + ("\033[92m▲ BUY " if st.side == "BUY" else "\033[91m▼ SELL ")
@@ -1090,7 +1129,7 @@ class LadderEngine:
                     return
             else:
                 next_add = st.last_add_price * (1.0 - s.threshold_pct / 100.0) if st.last_add_price else 0.0
-                logger.info(
+                logger.info("\n"
                 "\033[90m────────────────────────────────────────\033[0m\n"
                 f"\033[96m🔍 ADD CHECK\033[0m   \033[91m▼ SELL\033[0m  "
                 f"\033[1m[{sym}]\033[0m\n"

@@ -162,107 +162,183 @@
 
 <!-- MAIN CONTENT -->
 <main class="max-w-7xl mx-auto px-6 py-10 space-y-12">
+<!-- ALERTS SECTION -->
+<section>
+  <h2
+  class="relative text-2xl font-semibold mb-6
+         flex items-center gap-4
+         text-cyan-300 tracking-wide"
+>
 
-  <!-- ALERTS SECTION -->
-  <section>
-    <h2 class="text-2xl font-bold text-cyan-300 mb-6 flex items-center gap-3">
-      <i class="fa-solid fa-bolt-lightning text-yellow-400"></i>
-      Live Chartink Alert Signals
-    </h2>
+  <!-- Icon Pill -->
+  <span
+    class="relative inline-flex items-center justify-center
+           w-11 h-11 rounded-full
+           bg-gradient-to-br from-yellow-400/25 via-yellow-300/10 to-transparent
+           border border-yellow-400/40
+           shadow-xl shadow-yellow-400/30"
+  >
+    <i class="fa-solid fa-bolt-lightning text-yellow-300 text-lg"></i>
 
-    <div class="glass rounded-2xl overflow-hidden shadow-2xl shadow-black/70">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-black/60">
-            <tr class="text-cyan-300/90 font-semibold">
-              <th class="p-5 text-left">Scan</th>
-              <th class="p-5">Time</th>
-              <th class="p-5">Symbol</th>
-              <th class="p-5">LTP</th>
-              <th class="p-5">⬆ UC</th>
-              <th class="p-5">⬇ LC</th>
-              <th class="p-5">% Chg</th>
-              <th class="p-5">From O</th>
-              <th class="p-5">From H</th>
-              <th class="p-5">From L</th>
-              <th class="p-5">TBQ</th>
-              <th class="p-5">TSQ</th>
-              <th class="p-5">Buy Vol</th>
-              <th class="p-5">Sell Vol</th>
-              <th class="p-5 text-center">Trade</th>
-            </tr>
-          </thead>
-          <tbody id="alerts-body" class="divide-y divide-cyan-900/30">
-          </tbody>
-        </table>
-      </div>
+    <!-- soft glow ring -->
+    <span
+      class="absolute inset-0 rounded-full
+             ring-2 ring-yellow-400/20"
+    ></span>
+  </span>
+
+  <span
+  class="font-bold
+         bg-gradient-to-r from-cyan-200 via-cyan-300 to-cyan-400 bg-clip-text text-transparent">
+  Live Chartink Alert Signals
+</span>
+</h2>
+  <!-- Table Wrapper -->
+  <div
+    class="glass rounded-2xl overflow-hidden
+           shadow-2xl shadow-black/70
+           border border-cyan-900/40">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <!-- HEADER -->
+        <thead
+          class="sticky top-0 z-10
+                 bg-gradient-to-r from-black/80 via-black/70 to-black/80
+                 border-b border-cyan-900/40" >
+          <tr
+            class="text-cyan-300/90 font-semibold tracking-wide">
+            <th class="p-5 text-left">Scan</th>
+            <th class="p-5">Time</th>
+            <th class="p-5">Symbol</th>
+            <th class="p-5">LTP</th>
+            <th class="p-5 text-emerald-400">⬆ UC</th>
+            <th class="p-5 text-red-400">⬇ LC</th>
+            <th class="p-5">% Chg</th>
+            <th class="p-5">From O</th>
+            <th class="p-5">From H</th>
+            <th class="p-5">From L</th>
+            <th class="p-5">TBQ</th>
+            <th class="p-5">TSQ</th>
+            <th class="p-5">Buy Vol</th>
+            <th class="p-5">Sell Vol</th>
+            <th class="p-5 text-center">Trade</th>
+          </tr>
+        </thead>
+        <!-- BODY -->
+        <tbody
+          id="alerts-body"
+          class="divide-y divide-cyan-900/30 bg-black/40">
+          <!-- rows injected by JS -->
+        </tbody>
+      </table>
     </div>
-  </section>
+  </div>
+</section>
 
   <!-- LADDER POSITIONS -->
 <section>
-  <h2 class="text-2xl font-bold text-cyan-300 mb-6 flex items-center gap-3">
+<h2 class="text-2xl font-bold mb-6 flex items-center gap-3 text-cyan-300 tracking-wide">
     <i class="fa-solid fa-cubes text-cyan-400"></i>
     Active Ladders Positions
   </h2>
 
   <!-- Overall PnL pill + Total ladders -->
-  <div class="mb-4 flex items-center justify-between">
-    <div
-      id="ladder-pnl-pill"
-      class="inline-flex items-center gap-2 px-4 py-2 rounded-full
-             bg-emerald-900/20 border border-emerald-600/40
-             text-emerald-300 font-semibold shadow shadow-emerald-900/30"
-    >
-      <i class="fa-solid fa-chart-line"></i>
-      <span>Overall PnL</span>
-      <span class="text-emerald-200 tabular-nums">•</span>
-      <span id="overall-pnl-ladders" class="tabular-nums text-emerald-200">0.00</span>
-    </div>
-
-    <div class="text-xs text-slate-500 flex items-center gap-3">
-      <span
-        id="ladder-count-badge"
-        class="inline-flex items-center gap-2 px-3 py-1 rounded-full
-               bg-cyan-900/20 border border-cyan-600/30 text-cyan-300"
-      >
-        <i class="fa-solid fa-layer-group"></i>
-        <span>Total Ladders:</span>
-        <span id="ladder-count" class="tabular-nums">0</span>
-      </span>
-    </div>
+<div class="mb-4 flex items-center justify-between">
+  <!-- Overall PnL -->
+  <div
+    id="ladder-pnl-pill"
+    class="group inline-flex items-center gap-3 px-5 py-2.5 rounded-full
+           bg-gradient-to-r from-emerald-900/30 via-emerald-800/20 to-emerald-900/30
+           border border-emerald-500/40
+           text-emerald-300 font-semibold
+           shadow-lg shadow-emerald-900/40
+           hover:shadow-emerald-700/50 hover:scale-[1.02]
+           transition-all duration-200">
+    <i class="fa-solid fa-chart-line text-emerald-400 group-hover:text-emerald-300"></i>
+    <span class="tracking-wide">Overall PnL</span>
+    <span class="text-emerald-400/70">•</span>
+    <span
+      id="overall-pnl-ladders"
+      class="tabular-nums text-emerald-200 text-sm">
+      0.00
+    </span>
   </div>
+  <!-- Total Ladders -->
+<div class="text-sm flex items-center gap-4">
+  <span
+    id="ladder-count-badge"
+    class="group inline-flex items-center gap-3
+           px-5 py-2 rounded-full
+           bg-gradient-to-r from-cyan-900/30 to-cyan-800/20
+           border border-cyan-500/40
+           text-cyan-300
+           shadow-lg shadow-cyan-900/50
+           hover:shadow-cyan-700/50 hover:scale-[1.05]
+           transition-all duration-200"
+  >
+    <i class="fa-solid fa-layer-group text-cyan-400 text-base group-hover:text-cyan-300"></i>
+
+    <span class="tracking-wide font-medium">
+      Total Ladders
+    </span>
+
+    <span
+      id="ladder-count"
+      class="tabular-nums text-cyan-200 font-semibold text-base"
+    >
+      0
+    </span>
+  </span>
+</div>
+</div>
+
 
   <!-- Table -->
-  <div class="glass rounded-2xl overflow-hidden shadow-2xl shadow-black/70">
-    <table class="w-full text-sm">
-      <thead class="bg-black/60">
-        <tr class="text-cyan-300/90 font-semibold">
-          <th class="p-5 text-left">Symbol</th>
-          <th class="p-5">Cycle</th>
-          <th class="p-5">Leg</th>
-          <th class="p-5">Qty</th>
-          <th class="p-5">LTP</th>
-          <th class="p-5">Avg</th>
-          <th class="p-5">Extreme</th>
-          <th class="p-5">Next Add</th>
-          <th class="p-5">SL</th>
-          <th class="p-5">TSL</th>
-          <th class="p-5">PnL</th>
-          <th class="p-5">Status</th>
-          <th class="p-5 text-center">Action</th>
-        </tr>
-      </thead>
+  <!-- Table -->
+<div
+  class="glass rounded-2xl overflow-hidden
+         shadow-2xl shadow-black/70
+         border border-cyan-900/40"
+>
 
-      <tbody id="ladderRows" class="divide-y divide-cyan-900/30">
-        <tr>
-          <td colspan="13" class="p-16 text-center text-cyan-900/70 italic text-lg">
-            No active ladder strategies
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <table class="w-full text-sm">
+    <!-- HEADER -->
+    <thead class="bg-gradient-to-r from-black/80 via-black/70 to-black/80 sticky top-0 z-10">
+      <tr
+        class="text-cyan-300/90 font-semibold tracking-wide
+               border-b border-cyan-900/40">
+        <th class="p-5 text-left">Symbol</th>
+        <th class="p-5">Cycle</th>
+        <th class="p-5">Leg</th>
+        <th class="p-5">Qty</th>
+        <th class="p-5">LTP</th>
+        <th class="p-5">Avg</th>
+        <th class="p-5">Extreme</th>
+        <th class="p-5">Next Add</th>
+        <th class="p-5">SL</th>
+        <th class="p-5">TSL</th>
+        <th class="p-5">PnL</th>
+        <th class="p-5">Status</th>
+        <th class="p-5 text-center">Action</th>
+      </tr>
+    </thead>
+    <!-- BODY -->
+    <tbody
+      id="ladderRows"
+      class="divide-y divide-cyan-900/30 bg-black/40" >
+      <!-- EMPTY STATE -->
+      <tr>
+        <td
+          colspan="13"
+          class="p-16 text-center
+                 text-cyan-400/70 italic text-lg
+                 tracking-wide">  No active ladder strategies
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 </section>
 
 </main>
@@ -828,9 +904,16 @@ async function loadAlerts(){
           <td class="p-3 text-red-400 tabular-nums" data-sym="${s}" data-field="sto">--</td>
 
           <td class="p-3">
-            <button onclick="openTradeModal('${s}','BUY')" class="bg-green-600 px-2 py-1 rounded">BUY</button>
-            <button onclick="openTradeModal('${s}','SELL')" class="bg-red-600 px-2 py-1 rounded ml-1">SELL</button>
-          </td>
+        <div class="flex gap-2">
+          <button onclick="openTradeModal('${s}','BUY')" class="bg-green-600 px-2 py-1 rounded text-white">
+            BUY
+          </button>
+          <button onclick="openTradeModal('${s}','SELL')" class="bg-red-600 px-2 py-1 rounded text-white">
+            SELL
+          </button>
+        </div>
+      </td>
+
         </tr>`;
       });
     });

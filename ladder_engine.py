@@ -311,6 +311,15 @@ class LadderEngine:
         self.SYMBOL_TOKEN_RAM = None
         self.order_worker = OrderWorker()
         self._kill_handled = False
+        self._sym_locks: Dict[str, asyncio.Lock] = {}
+
+    def _sym_lock(self, symbol: str) -> asyncio.Lock:
+        symbol = (symbol or "").strip().upper()
+        lock = self._sym_locks.get(symbol)
+        if lock is None:
+            lock = asyncio.Lock()
+            self._sym_locks[symbol] = lock
+        return lock
 
 
     def log_state(self, sess, msg):
@@ -347,7 +356,7 @@ class LadderEngine:
 
         self._poll_task = asyncio.create_task(self._poller(), name=f"ladder_poller:{self.user_id}")
 
-        logger.info("✅ LadderEngine started for user_id=%s", self.user_id)
+        logger.info("✅✅ LadderEngine started for user_id=%s", self.user_id)
         await push_event(self.redis, self.user_id, "-", "ENGINE_STARTED", {"user_id": self.user_id})
 
 
@@ -649,14 +658,14 @@ class LadderEngine:
 
         # 6) If LTP already present -> enter instantly
         ltp = float(self.ticks.get(token, 0.0) or 0.0)
-        logger.info(
-    "\033[92m⚡ INSTANT ENTRY\033[0m   "
-    + ("\033[92m▲ BUY " if started_side == "BUY" else "\033[91m▼ SELL ")
-    + f"\033[1m[{symbol}]\033[0m  "
-    + f"LTP={ltp:.2f}"
-)
 
         if ltp > 0:
+            logger.info(
+                "\033[92m⚡ INSTANT ENTRY\033[0m   "
+                + ("\033[92m▲ BUY " if started_side == "BUY" else "\033[91m▼ SELL ")
+                + f"\033[1m[{symbol}]\033[0m  "
+                + f"LTP={ltp:.2f}"
+            )
             await self._enter_leg(sess)
             await self._snapshot(sess)
             return {"status": "started", "session": sess.to_public_dict()}
@@ -734,6 +743,8 @@ class LadderEngine:
         return int(max(1, math.floor(settings.per_trade_capital / ltp)))
 
     async def _enter_leg(self, sess: LadderSession) -> None:
+        if sess.leg_state and sess.leg_state.status in ("RUNNING", "EXITING"):
+            return
         if not sess.active:
             return
         symbol = sess.symbol
@@ -800,52 +811,110 @@ class LadderEngine:
         asyncio.create_task(self.get_circuit(symbol), name=f"circuit_prefetch:{self.user_id}:{symbol}")
 
 
+    # async def _exit_leg(self, sess: LadderSession, reason: str) -> None:
+    #     symbol = sess.symbol
+    #     st = sess.leg_state
+    #     if not st or st.status not in ("RUNNING", "EXITING"):
+    #         return
+
+    #     if st.qty <= 0:
+    #         st.status = "DONE"
+    #         st.reason = reason
+    #         logger.info("EXIT_SKIP qty=0 user=%s symbol=%s reason=%s", self.user_id, symbol, reason)
+    #         await push_event(self.redis, self.user_id, symbol, "EXIT_SKIP_QTY0", {"reason": reason})
+    #         return
+
+    #     lock = await self._lock(symbol, "exit", ttl_ms=1500)
+    #     if lock != 1:
+    #         st.reason = "KILLED" if lock == -2 else "EXIT_LOCKED"
+    #         st.status = "ERROR" if lock == -2 else st.status
+    #         logger.warning("EXIT_BLOCKED user=%s symbol=%s reason=%s", self.user_id, symbol, st.reason)
+    #         await push_event(self.redis, self.user_id, symbol, "EXIT_BLOCKED", {"reason": st.reason})
+    #         await self._snapshot(sess)
+    #         return
+
+    #     logger.warning("EXIT_TRIGGER user=%s symbol=%s reason=%s side=%s qty=%s avg=%s",
+    #                    self.user_id, symbol, reason, st.side, st.qty, st.avg_price)
+    #     await push_event(self.redis, self.user_id, symbol, "EXIT_TRIGGER",
+    #                      {"reason": reason, "side": st.side, "qty": st.qty, "avg": st.avg_price})
+
+    #     st.status = "EXITING"
+    #     st.reason = reason
+    #     await self._snapshot(sess)
+
+    #     exit_side: Side = "SELL" if st.side == "BUY" else "BUY"
+    #     qty = int(st.qty)
+    #     oid = await self._place_mis_market(symbol=symbol, side=exit_side, qty=qty)
+
+    #     logger.info("EXIT_PLACED user=%s symbol=%s exit_side=%s qty=%s oid=%s",
+    #                 self.user_id, symbol, exit_side, qty, oid)
+    #     await push_event(self.redis, self.user_id, symbol, "EXIT_PLACED",
+    #                      {"exit_side": exit_side, "qty": qty, "order_id": oid})
+
+    #     st.status = "DONE"
+    #     st.qty = 0
+    #     await self._snapshot(sess)
+
+    #     logger.info("LEG_DONE user=%s symbol=%s reason=%s", self.user_id, symbol, reason)
+    #     await push_event(self.redis, self.user_id, symbol, "LEG_DONE", {"reason": reason})
+
     async def _exit_leg(self, sess: LadderSession, reason: str) -> None:
         symbol = sess.symbol
         st = sess.leg_state
-        if not st or st.status not in ("RUNNING", "EXITING"):
+
+        # ✅ EXIT only once: if already EXITING/DONE, do nothing
+        if not st or st.status != "RUNNING":
+            return
+
+        # ✅ mark EXITING immediately (race close)
+        st.status = "EXITING"
+        st.reason = reason
+        await self._snapshot(sess)
+
+        # ✅ redis lock (extra safety across tasks/process)
+        lock = await self._lock(symbol, "exit", ttl_ms=1500)
+        if lock == 0:
+            # someone else already exiting
+            return
+        if lock == -2:
+            st.status = "ERROR"
+            st.reason = "KILLED"
+            await push_event(self.redis, self.user_id, symbol, "EXIT_BLOCKED", {"reason": "KILLED"})
+            await self._snapshot(sess)
             return
 
         if st.qty <= 0:
             st.status = "DONE"
             st.reason = reason
-            logger.info("EXIT_SKIP qty=0 user=%s symbol=%s reason=%s", self.user_id, symbol, reason)
             await push_event(self.redis, self.user_id, symbol, "EXIT_SKIP_QTY0", {"reason": reason})
-            return
-
-        lock = await self._lock(symbol, "exit", ttl_ms=1500)
-        if lock != 1:
-            st.reason = "KILLED" if lock == -2 else "EXIT_LOCKED"
-            st.status = "ERROR" if lock == -2 else st.status
-            logger.warning("EXIT_BLOCKED user=%s symbol=%s reason=%s", self.user_id, symbol, st.reason)
-            await push_event(self.redis, self.user_id, symbol, "EXIT_BLOCKED", {"reason": st.reason})
             await self._snapshot(sess)
             return
 
-        logger.warning("EXIT_TRIGGER user=%s symbol=%s reason=%s side=%s qty=%s avg=%s",
-                       self.user_id, symbol, reason, st.side, st.qty, st.avg_price)
+        logger.warning(
+            "EXIT_TRIGGER user=%s symbol=%s reason=%s side=%s qty=%s avg=%s",
+            self.user_id, symbol, reason, st.side, st.qty, st.avg_price
+        )
         await push_event(self.redis, self.user_id, symbol, "EXIT_TRIGGER",
-                         {"reason": reason, "side": st.side, "qty": st.qty, "avg": st.avg_price})
-
-        st.status = "EXITING"
-        st.reason = reason
-        await self._snapshot(sess)
+                        {"reason": reason, "side": st.side, "qty": st.qty, "avg": st.avg_price})
 
         exit_side: Side = "SELL" if st.side == "BUY" else "BUY"
         qty = int(st.qty)
+
         oid = await self._place_mis_market(symbol=symbol, side=exit_side, qty=qty)
 
         logger.info("EXIT_PLACED user=%s symbol=%s exit_side=%s qty=%s oid=%s",
                     self.user_id, symbol, exit_side, qty, oid)
         await push_event(self.redis, self.user_id, symbol, "EXIT_PLACED",
-                         {"exit_side": exit_side, "qty": qty, "order_id": oid})
+                        {"exit_side": exit_side, "qty": qty, "order_id": oid, "reason": reason})
 
+        # ✅ mark done
         st.status = "DONE"
         st.qty = 0
         await self._snapshot(sess)
 
         logger.info("LEG_DONE user=%s symbol=%s reason=%s", self.user_id, symbol, reason)
         await push_event(self.redis, self.user_id, symbol, "LEG_DONE", {"reason": reason})
+
 
     
     async def _place_mis_market(self, symbol: str, side: Side, qty: int) -> str:

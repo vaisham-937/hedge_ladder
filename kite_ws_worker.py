@@ -35,10 +35,20 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | WS | USER=%(user)s | %(message)s"
 )
-log = logging.LoggerAdapter(
-    logging.getLogger("KITE_WS"),
-    {"user": USER_ID}
-)
+
+class EnsureUserFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not hasattr(record, "user"):
+            record.user = USER_ID  # ensures 3rd-party logs don't crash formatter
+        return True
+
+# add filter to all handlers (root)
+root = logging.getLogger()
+for h in root.handlers:
+    h.addFilter(EnsureUserFilter())
+
+log = logging.LoggerAdapter(logging.getLogger("KITE_WS"), {"user": USER_ID})
+
 
 
 # -------------------------------------------------
@@ -66,7 +76,6 @@ if not API_KEY or not ACCESS_TOKEN:
     )
 
 log.info("🔐 Zerodha token loaded from Redis")
-
 
 # -------------------------------------------------
 # KITE WS
@@ -162,6 +171,7 @@ def on_close(ws, code, reason):
     global WS_CONNECTED
     WS_CONNECTED = False
     log.warning(f"❌ Kite WS closed | {code} | {reason}")
+    time.sleep(1.0)
 
 
 def on_error(ws, code, reason):

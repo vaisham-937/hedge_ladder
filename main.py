@@ -620,6 +620,167 @@ async def save_credentials(request: Request):
     return {"status": "saved"}
 
 # ------------------------------------------------
+# AUTOMATION MODE PREFERENCE
+# ------------------------------------------------
+@app.post("/api/automation-mode")
+async def save_automation_mode(request: Request):
+    """Save user's automation mode preference (MANUAL/AUTO)"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, 401)
+    
+    data = await request.json()
+    mode = (data.get("mode") or "MANUAL").strip().upper()
+    
+    if mode not in ("MANUAL", "AUTO"):
+        return JSONResponse({"error": "mode must be MANUAL or AUTO"}, 400)
+    
+    r.set(f"automation:mode:{user_id}", mode)
+    return {"status": "saved", "mode": mode}
+
+@app.get("/api/automation-mode")
+async def get_automation_mode(request: Request):
+    """Retrieve user's automation mode preference"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, 401)
+    
+    mode = r.get(f"automation:mode:{user_id}") or "MANUAL"
+    return {"mode": mode}
+
+# ------------------------------------------------
+# UNIVERSAL LADDER SETTINGS
+# ------------------------------------------------
+@app.post("/api/universal-settings")
+async def save_universal_settings(request: Request):
+    """Save universal ladder settings for user"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, 401)
+    
+    data = await request.json()
+    settings = data.get("settings", {})
+    
+    # Validate required fields
+    required = ["qty_mode", "per_trade_capital", "per_trade_qty", "threshold_pct", 
+                "stop_loss_pct", "trailing_sl_pct", "ladder_cycles", "max_adds_per_leg"]
+    
+    for field in required:
+        if field not in settings:
+            return JSONResponse({"error": f"Missing field: {field}"}, 400)
+    
+    r.set(f"universal:settings:{user_id}", json.dumps(settings))
+    return {"status": "saved"}
+
+@app.get("/api/universal-settings")
+async def get_universal_settings(request: Request):
+    """Retrieve universal ladder settings"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, 401)
+    
+    raw = r.get(f"universal:settings:{user_id}")
+    if raw:
+        try:
+            settings = json.loads(raw)
+            return {"settings": settings}
+        except:
+            pass
+    
+    # Return default values
+    return {
+        "settings": {
+            "qty_mode": "CAPITAL",
+            "per_trade_capital": 1000,
+            "per_trade_qty": 1,
+            "threshold_pct": 1.0,
+            "stop_loss_pct": 1.0,
+            "trailing_sl_pct": 1.0,
+            "ladder_cycles": 1,
+            "max_adds_per_leg": 2
+        }
+    }
+
+# ------------------------------------------------
+# STOCK-WISE LADDER SETTINGS
+# ------------------------------------------------
+@app.post("/api/stock-settings")
+async def save_stock_settings(request: Request):
+    """Save stock-specific ladder settings"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, 401)
+    
+    data = await request.json()
+    symbol = (data.get("symbol") or "").strip().upper()
+    settings = data.get("settings", {})
+    
+    if not symbol:
+        return JSONResponse({"error": "Symbol required"}, 400)
+    
+    r.set(f"stock:settings:{user_id}:{symbol}", json.dumps(settings))
+    return {"status": "saved", "symbol": symbol}
+
+@app.get("/api/stock-settings")
+async def get_stock_settings(request: Request, symbol: str):
+    """Retrieve stock-specific settings for a symbol"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, 401)
+    
+    symbol = symbol.strip().upper()
+    raw = r.get(f"stock:settings:{user_id}:{symbol}")
+    
+    if raw:
+        try:
+            settings = json.loads(raw)
+            return {"symbol": symbol, "settings": settings}
+        except:
+            pass
+    
+    return {"symbol": symbol, "settings": None}
+
+@app.get("/api/stock-settings/list")
+async def list_stock_settings(request: Request):
+    """List all configured stock-wise settings for user"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, 401)
+    
+    pattern = f"stock:settings:{user_id}:*"
+    keys = r.keys(pattern)
+    
+    result = []
+    for key in keys:
+        symbol = key.split(":")[-1]
+        raw = r.get(key)
+        if raw:
+            try:
+                settings = json.loads(raw)
+                result.append({"symbol": symbol, "settings": settings})
+            except:
+                continue
+    
+    return {"stocks": result}
+
+@app.delete("/api/stock-settings")
+async def delete_stock_settings(request: Request):
+    """Delete stock-specific settings"""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, 401)
+    
+    data = await request.json()
+    symbol = (data.get("symbol") or "").strip().upper()
+    
+    if not symbol:
+        return JSONResponse({"error": "Symbol required"}, 400)
+    
+    r.delete(f"stock:settings:{user_id}:{symbol}")
+    return {"status": "deleted", "symbol": symbol}
+
+
+# ------------------------------------------------
 # ZERODHA LOGIN (Kite)
 # ------------------------------------------------
 @app.get("/connect/zerodha")
@@ -763,47 +924,6 @@ def market_status():
         "open_at": int(open_dt.timestamp()),
         "close_at": int(close_dt.timestamp())
     }
-
-
-# ------------------------------------------------
-# API TICKS 
-# ------------------------------------------------
-# @app.get("/api/ticks")
-# def get_ticks(request: Request, symbols: str):
-#     user_id = request.session["user_id"]  # Add this
-#     result = {}
-#     for s in symbols.split(","):
-#         token = r.get(f"symbol_token:{s}")
-#         upper = r.get(f"circuit:{s}")
-#         if not token:
-#             continue
-#         d = r.hgetall(f"tick:{user_id}:{token}")  # Fix key to include user_id
-#         if d:
-#             ltp = float(d.get("ltp", 0))
-#             tbq = int(d.get("tbq", 0))
-#             tsq = int(d.get("tsq", 0))
-#             openp = float(d.get("prev", ltp))
-#             high = float(d.get("high", ltp))
-#             low  = float(d.get("low", ltp))
-#             pct_from_open = round(((ltp - openp) / openp) * 100, 2) if openp else 0
-#             pct_from_high = round(((ltp - high) / high) * 100, 2) if high else 0
-#             pct_from_low  = round(((ltp - low) / low) * 100, 2) if low else 0
-#             result[s] = {
-#                 "ltp": ltp,
-#                 "tbq": tbq,
-#                 "tsq": tsq,
-#                 "bto": round(ltp * tbq),
-#                 "sto": round(ltp * tsq),
-#                 "pct": round(((ltp - openp) / openp) * 100, 2) if openp else 0,
-#                 "from_open": pct_from_open,
-#                 "from_high": pct_from_high,
-#                 "from_low": pct_from_low,
-#                 "high": high,
-#                 "low": low,
-#             }
-#     return result
-
-
 
 
 @app.get("/api/circuit/{symbol}")
@@ -1126,6 +1246,13 @@ async def api_squareoff_all(request: Request):
 
         placed = []
         symbols_to_cleanup = set()
+
+        # ✅ CRITICAL FIX: Also include any active sessions from RAM, 
+        # even if Zerodha has no open position (e.g. IDLE / WAIT_FEED state)
+        eng = ENGINE_HUB.get(user_id)
+        if eng and hasattr(eng, "sessions"):
+            for s in eng.sessions.keys():
+                symbols_to_cleanup.add(s)
 
         # 1) Place squareoff orders for all open positions
         for p in pos:

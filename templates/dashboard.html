@@ -1,1266 +1,2963 @@
-
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>We Win Algo</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
 
   <style>
     :root {
-      --bg-main: #000000;
-      --bg-card: rgba(10, 10, 15, 0.75);
-      --primary: #00f0ff;
-      --primary-glow: rgba(0, 240, 255, 0.6);
-      --danger: #ff2d55;
-      --warning: #ff9f1c;
-      --success: #00ff9d;
-      --text: #e0f7ff;
+      /* --- CYBERPUNK FINTECH PALETTE --- */
+      --bg-main: #030712;
+      /* Ultra Deep Navy/Black */
+
+      /* Surface Tones */
+      --bg-surface-1: #0f172a;
+      /* Slate 900 */
+      --bg-surface-2: #1e293b;
+      /* Slate 800 */
+
+      /* Neons & Accents */
+      --primary: #0ea5e9;
+      /* Sky Blue Neon */
+      --primary-glow: rgba(14, 165, 233, 0.5);
+
+      --secondary: #6366f1;
+      /* Indigo Neon */
+      --secondary-glow: rgba(99, 102, 241, 0.5);
+
+      --accent: #2dd4bf;
+      /* Teal Neon */
+      --accent-glow: rgba(45, 212, 191, 0.5);
+
+      /* Semantic Colors */
+      --success: #10b981;
+      /* Emerald */
+      --success-glow: rgba(16, 185, 129, 0.4);
+
+      --danger: #ef4444;
+      /* Red */
+      --danger-glow: rgba(239, 68, 68, 0.4);
+
+      --warning: #f59e0b;
+      /* Amber */
+
+      /* Text */
+      --text-main: #f8fafc;
       --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
+      /* Glassmorphism */
+      --glass-bg: rgba(15, 23, 42, 0.6);
+      --glass-border: rgba(255, 255, 255, 0.05);
+      /* Ultra subtle */
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
 
     body {
-      background: var(--bg-main);
-      color: var(--text);
-      background-image: 
-        radial-gradient(circle at 15% 50%, rgba(0, 238, 255, 0.167) 0%, transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(7, 181, 240, 0.215) 0%, transparent 35%);
-      background-attachment: fixed;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
-
-    .glow-cyan {
-      box-shadow: 0 0 20px var(--primary-glow), 0 0 40px rgba(0, 240, 255, 0.25);
-    }
-
-    .glow-red {
-      box-shadow: 0 0 20px rgba(255, 45, 85, 0.5);
-    }
-
-    .glass {
-      background: var(--bg-card);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(0, 240, 255, 0.12);
-    }
-
-    .btn-glow {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
       position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
     }
 
-    .btn-glow::before {
-      content: '';
+    /* --- DEEP SPACE MESH BACKGROUND --- */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(45, 212, 191, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.1) 0%, transparent 60%);
+      filter: blur(60px);
+      animation: pulse-mesh 10s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse-mesh {
+      0% {
+        opacity: 0.6;
+        transform: scale(1);
+      }
+
+      100% {
+        opacity: 0.9;
+        transform: scale(1.1);
+      }
+    }
+
+    /* --- Advanced Glassmorphism --- */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      position: relative;
+    }
+
+    header.glass {
+      background: rgba(3, 7, 18, 0.85);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* --- Card Container with Top Shine --- */
+    .glass::after {
+      content: "";
       position: absolute;
       top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255,255,255,0.15),
-        transparent
-      );
-      transition: 0.6s;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
     }
 
-    .btn-glow:hover::before {
-      left: 100%;
+    /* --- Magic Animated Borders --- */
+    .magic-border-container {
+      position: relative;
+      padding: 1px;
+      border-radius: 1.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      overflow: hidden;
     }
 
-    .btn-glow:hover {
-      transform: translateY(-2px);
+    .magic-border-container::before {
+      content: "";
+      position: absolute;
+      inset: -150%;
+      background: conic-gradient(from var(--border-angle), transparent 70%, var(--primary) 90%, var(--accent));
+      animation: spin-border 10s linear infinite;
+      opacity: 0.3;
+      filter: blur(20px);
+      /* Soft glow */
     }
 
-    .status-dot {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-right: 8px;
-      box-shadow: 0 0 10px currentColor;
+    .magic-border-container>.glass {
+      border: none;
+      border-radius: 1.45rem;
     }
 
+    /* --- Typography Refinement --- */
+    h1,
+    h2,
+    h3 {
+      letter-spacing: -0.02em;
+    }
+
+    /* --- Premium Row Hover --- */
     tr {
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     tr:hover {
-      background: rgba(0, 240, 255, 0.08);
-      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.03) !important;
+      transform: translateX(4px);
+    }
+
+    /* --- Magic Animated Borders --- */
+    .magic-border {
+      position: relative;
+      background: var(--bg-slate-900);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .magic-border::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: conic-gradient(from var(--border-angle), transparent 70%, var(--primary) 90%, var(--accent));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.6;
+      animation: spin-border 8s linear infinite;
+    }
+
+    /* --- NUMERIC DATA FONT --- */
+    .tabular-nums,
+    .font-mono,
+    td.text-right,
+    th.text-right {
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.03em;
+    }
+
+    @property --border-angle {
+      syntax: "<angle>";
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    @keyframes spin-border {
+      to {
+        --border-angle: 360deg;
+      }
+    }
+
+    /* ─── STATUS PILL – MODERN GLASS + NEON UPGRADE ─────────────── */
+    .status-pill {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-radius: 9999px;
+      border: 2px solid transparent;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      box-shadow:
+        inset 0 1px 5px rgba(255, 255, 255, 0.08),
+        0 8px 24px rgba(0, 0, 0, 0.55);
+      overflow: hidden;
+      transition: all 0.35s ease;
+      z-index: 1;
+    }
+
+    .status-pill::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, transparent 60%);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* ─── PULSE RING – BIGGER & MORE VISIBLE ────────────────────── */
+    .pulse-ring {
+      position: relative;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      box-shadow: 0 0 14px currentColor, inset 0 1px 4px rgba(255, 255, 255, 0.5);
+      transition: all 0.4s ease;
+    }
+
+    /* Active / Connected → breathing outer ring */
+    .pulse-ring.connected::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2.5px solid currentColor;
+      opacity: 0.7;
+      animation: pulse-ring-connected 2.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-ring-connected {
+      0% {
+        transform: scale(0.85);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scale(1.9);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(2.4);
+        opacity: 0;
+      }
+    }
+
+    /* Connecting / Retrying → faster amber pulse */
+    .pulse-ring.connecting::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      opacity: 0.85;
+      animation: pulse-ring-amber 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse-ring-amber {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 0.9;
+      }
+
+      50% {
+        transform: scale(1.65);
+        opacity: 0.3;
+      }
+    }
+
+    /* ─── ZERODHA – GREEN when connected ────────────────────────── */
+    #status-badge.connected,
+    #status-badge.badge-green {
+      border-color: #10b98180;
+      color: #34d399;
+      background: linear-gradient(145deg, rgba(16, 185, 129, 0.22), rgba(16, 185, 129, 0.08));
+      box-shadow:
+        0 0 32px rgba(16, 185, 129, 0.55),
+        inset 0 2px 10px rgba(16, 185, 129, 0.30);
+      text-shadow: 0 0 9px rgba(52, 211, 153, 0.7);
+    }
+
+    #status-badge.connected .status-dot,
+    #status-badge.badge-green .status-dot {
+      background: #10b981;
+      box-shadow: 0 0 18px #10b981, 0 0 32px rgba(16, 185, 129, 0.75);
+    }
+
+    /* Zerodha – Red when disconnected */
+    #status-badge.badge-red {
+      border-color: #ef444480;
+      color: #f87171;
+      background: linear-gradient(145deg, rgba(239, 68, 68, 0.20), rgba(239, 68, 68, 0.08));
+      box-shadow: 0 0 32px rgba(239, 68, 68, 0.50);
+    }
+
+    /* ─── WS – INDIGO/PURPLE when live (most important) ─────────── */
+    #ws-badge.connected,
+    #ws-badge.badge-green {
+      border-color: #818cf880;
+      color: #c7d2fe;
+      background: linear-gradient(145deg, rgba(99, 102, 241, 0.28), rgba(99, 102, 241, 0.10));
+      box-shadow:
+        0 0 38px rgba(99, 102, 241, 0.65),
+        inset 0 2px 12px rgba(99, 102, 241, 0.35);
+      animation: subtle-breathe-indigo 5.5s ease-in-out infinite;
+      text-shadow: 0 0 10px rgba(165, 180, 252, 0.8);
+    }
+
+    #ws-badge.connected .status-dot,
+    #ws-badge.badge-green .status-dot {
+      background: #a5b4fc;
+      box-shadow: 0 0 20px #a5b4fc, 0 0 38px rgba(99, 102, 241, 0.85);
+    }
+
+    @keyframes subtle-breathe-indigo {
+
+      0%,
+      100% {
+        box-shadow: 0 0 38px rgba(99, 102, 241, 0.65);
+      }
+
+      50% {
+        box-shadow: 0 0 55px rgba(99, 102, 241, 0.90);
+      }
+    }
+
+    /* WS – Amber connecting / retry */
+    #ws-badge.connecting,
+    #ws-badge.badge-amber {
+      border-color: #f59e0b90;
+      color: #fde047;
+      background: linear-gradient(145deg, rgba(245, 158, 11, 0.25), rgba(245, 158, 11, 0.10));
+      animation: pulse-amber-glow 2.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse-amber-glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 32px rgba(245, 158, 11, 0.55);
+      }
+
+      50% {
+        box-shadow: 0 0 50px rgba(245, 158, 11, 0.80);
+      }
+    }
+
+    /* ─── MARKET – GREEN when open ──────────────────────────────── */
+    #market-badge.connected,
+    #market-badge.badge-green {
+      border-color: #22c55e80;
+      color: #86efac;
+      background: linear-gradient(145deg, rgba(34, 197, 94, 0.22), rgba(34, 197, 94, 0.09));
+      box-shadow: 0 0 32px rgba(34, 197, 94, 0.55);
+    }
+
+    #market-badge.connected .status-dot,
+    #market-badge.badge-green .status-dot {
+      background: #22c55e;
+      box-shadow: 0 0 18px #22c55e, 0 0 34px rgba(34, 197, 94, 0.70);
+    }
+
+    /* Market – Red when closed */
+    #market-badge.badge-red {
+      border-color: #dc262680;
+      color: #fca5a5;
+      background: linear-gradient(145deg, rgba(220, 38, 38, 0.20), rgba(220, 38, 38, 0.08));
+      box-shadow: 0 0 32px rgba(220, 38, 38, 0.50);
+    }
+
+    /* ─── AUTOMATION – GREEN when AUTO mode (active) ────────────── */
+    #automation-badge.badge-green {
+      border-color: #10b98180;
+      color: #34d399;
+      background: linear-gradient(145deg, rgba(16, 185, 129, 0.22), rgba(16, 185, 129, 0.08));
+      box-shadow:
+        0 0 32px rgba(16, 185, 129, 0.55),
+        inset 0 2px 10px rgba(16, 185, 129, 0.30);
+      text-shadow: 0 0 9px rgba(52, 211, 153, 0.7);
+    }
+
+    #automation-badge.badge-green .status-dot {
+      background: #10b981;
+      box-shadow: 0 0 18px #10b981, 0 0 32px rgba(16, 185, 129, 0.75);
+    }
+
+    /* Automation – Red when MANUAL mode (inactive) */
+    #automation-badge.badge-red {
+      border-color: #ef444480;
+      color: #f87171;
+      background: linear-gradient(145deg, rgba(239, 68, 68, 0.20), rgba(239, 68, 68, 0.08));
+      box-shadow: 0 0 32px rgba(239, 68, 68, 0.50);
+      text-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+    }
+
+    #automation-badge.badge-red .status-dot {
+      background: #ef4444;
+      box-shadow: 0 0 18px #ef4444, 0 0 32px rgba(239, 68, 68, 0.70);
+    }
+
+    /* ─── HOVER – subtle lift & glow boost ──────────────────────── */
+    .status-pill:hover {
+      transform: translateY(-1px) scale(1.04);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65);
+    }
+
+    /* ─── LABEL TEXT ────────────────────────────────────────────── */
+    .badge-label {
+      font-weight: 700;
+      letter-spacing: 0.7px;
     }
 
     .modal {
-      animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation: modalEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @keyframes modalPop {
-      from { opacity: 0; transform: scale(0.85) translateY(40px); }
-      to   { opacity: 1; transform: scale(1) translateY(0); }
+    @keyframes modalEntrance {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
     }
-    @keyframes pulse-slow {
-      0%, 100% { opacity: 0.25; transform: scale(1); }
-      50%      { opacity: 0.45; transform: scale(1.15); }
+
+    /* --- Noise Texture Overlay --- */
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0.025;
+      background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+      filter: contrast(150%) brightness(1000%);
     }
-    .animate-pulse-slow {
-      animation: pulse-slow 12s infinite ease-in-out;
+
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
     }
-    .delay-1000 {
-      animation-delay: 1.5s;
+
+    /* --- Custom Scrollbar --- */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-    .tabular-nums { font-variant-numeric: tabular-nums; }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 189, 248, 0.3);
+    }
+
+    /* --- Gradient Text --- */
+    .text-gradient {
+      background: linear-gradient(to right, #f8fafc, #38bdf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* --- Animations --- */
+    @keyframes shimmer {
+      0% {
+        background-position: -200% 0;
+      }
+
+      100% {
+        background-position: 200% 0;
+      }
+    }
+
+    .shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 3s infinite;
+    }
+
+    /* Pulse for Status indicators */
+    .pulse-glow-green {
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    }
+
+    .pulse-glow-red {
+      box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+    }
+
+    /* Fix table cell alignment */
+    th,
+    td {
+      vertical-align: middle;
+    }
+
+    /* Scan name wrapping styling */
+    .scan-name-wrap {
+      max-width: 120px;
+      word-wrap: break-word;
+      white-space: normal;
+      line-height: 1.3;
+    }
+
+
+    @keyframes bell-shake {
+      0% {
+        transform: rotate(0);
+      }
+
+      15% {
+        transform: rotate(15deg);
+      }
+
+      30% {
+        transform: rotate(-15deg);
+      }
+
+      45% {
+        transform: rotate(10deg);
+      }
+
+      60% {
+        transform: rotate(-10deg);
+      }
+
+      75% {
+        transform: rotate(5deg);
+      }
+
+      100% {
+        transform: rotate(0);
+      }
+    }
+
+    .bell-shake {
+      animation: bell-shake 0.6s ease-in-out;
+      transform-origin: top center;
+    }
+
+    /* ===== Premium Action Buttons (NEON GLOW) ===== */
+    /* ─── BASE ──────────────────────────────────────────────── */
+    .btn-primary,
+    .btn-danger,
+    .btn-warning {
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 24px;
+      min-width: 120px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      border: 2px solid;
+      border-radius: 12px;
+      background: transparent;
+      color: inherit;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
+      z-index: 1;
+    }
+
+    /* ─── CONNECT (Sky/Blue Neon) ───────────────────────────── */
+    .btn-primary {
+      border-color: #38bdf8;
+      color: #7dd3fc;
+      text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+      box-shadow:
+        0 0 20px rgba(56, 189, 248, 0.45),
+        inset 0 0 12px rgba(56, 189, 248, 0.15);
+      animation: subtle-breathe-primary 6s ease-in-out infinite;
+    }
+
+    .btn-primary:hover {
+      color: white;
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%);
+      transform: scale(1.06) translateY(-2px);
+      box-shadow:
+        0 12px 40px rgba(14, 165, 233, 0.7),
+        inset 0 3px 12px rgba(255, 255, 255, 0.25);
+      text-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
+    }
+
+    /* ─── SQUARE ALL (Amber/Gold Neon) ──────────────────────── */
+    .btn-warning {
+      border-color: #fbbf24;
+      color: #fde047;
+      text-shadow: 0 0 8px rgba(251, 191, 36, 0.65);
+      box-shadow:
+        0 0 22px rgba(251, 191, 36, 0.45),
+        inset 0 0 12px rgba(251, 191, 36, 0.18);
+      animation: subtle-breathe-warning 7s ease-in-out infinite;
+    }
+
+    .btn-warning:hover {
+      color: white;
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #b45309 100%);
+      transform: scale(1.06) translateY(-2px);
+      box-shadow:
+        0 14px 45px rgba(245, 158, 11, 0.75),
+        inset 0 3px 14px rgba(255, 255, 255, 0.22);
+      text-shadow: 0 0 14px rgba(255, 255, 255, 0.6);
+    }
+
+    /* ─── KILL (Red/Crimson Danger) ─────────────────────────── */
+    .btn-danger {
+      border-color: #f87171;
+      color: #fca5a5;
+      text-shadow: 0 0 9px rgba(248, 113, 113, 0.7);
+      box-shadow:
+        0 0 28px rgba(239, 68, 68, 0.55),
+        inset 0 0 14px rgba(239, 68, 68, 0.2);
+      animation: subtle-breathe-danger 5s ease-in-out infinite;
+    }
+
+    .btn-danger:hover {
+      color: white;
+      background: linear-gradient(135deg, #f87171 0%, #ef4444 45%, #b91c1c 100%);
+      transform: scale(1.06) translateY(-2px);
+      box-shadow:
+        0 16px 50px rgba(239, 68, 68, 0.85),
+        inset 0 4px 16px rgba(255, 255, 255, 0.18);
+      text-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
+    }
+
+    /* ─── SHINE SWEEP EFFECT (stronger & faster) ────────────── */
+    .btn-primary::before,
+    .btn-warning::before,
+    .btn-danger::before {
+      content: "";
+      position: absolute;
+      inset: -100%;
+      background: linear-gradient(120deg,
+          transparent 30%,
+          rgba(255, 255, 255, 0.45) 50%,
+          transparent 70%);
+      transform: translateX(-120%) rotate(30deg);
+      transition: transform 0.65s ease-out;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .btn-primary:hover::before,
+    .btn-warning:hover::before,
+    .btn-danger:hover::before {
+      transform: translateX(120%) rotate(30deg);
+    }
+
+    /* ─── CLICK FEEDBACK (depress slightly) ─────────────────── */
+    .btn-primary:active,
+    .btn-warning:active,
+    .btn-danger:active {
+      transform: scale(0.97) translateY(1px) !important;
+      transition: transform 0.12s ease;
+    }
+
+    /* ─── SUBTLE BREATHE / PULSE ANIMATIONS ─────────────────── */
+    @keyframes subtle-breathe-primary {
+
+      0%,
+      100% {
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.45), inset 0 0 12px rgba(56, 189, 248, 0.15);
+      }
+
+      50% {
+        box-shadow: 0 0 32px rgba(56, 189, 248, 0.65), inset 0 0 16px rgba(56, 189, 248, 0.25);
+      }
+    }
+
+    @keyframes subtle-breathe-warning {
+
+      0%,
+      100% {
+        box-shadow: 0 0 22px rgba(251, 191, 36, 0.45), inset 0 0 12px rgba(251, 191, 36, 0.18);
+      }
+
+      50% {
+        box-shadow: 0 0 36px rgba(251, 191, 36, 0.68), inset 0 0 18px rgba(251, 191, 36, 0.28);
+      }
+    }
+
+    @keyframes subtle-breathe-danger {
+
+      0%,
+      100% {
+        box-shadow: 0 0 28px rgba(239, 68, 68, 0.55), inset 0 0 14px rgba(239, 68, 68, 0.2);
+      }
+
+      50% {
+        box-shadow: 0 0 45px rgba(239, 68, 68, 0.8), inset 0 0 20px rgba(239, 68, 68, 0.3);
+      }
+    }
+
+    /* ===== Trade buttons (GLOWING NEON) ===== */
+    .trade-btn {
+      height: 34px;
+      padding: 0 20px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Buy: Emerald/Teal Gradient */
+    .trade-buy {
+      background: rgba(16, 185, 129, 0.14);
+      color: #6ee7b7;
+      border: 1.5px solid rgba(52, 211, 153, 0.4);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+    }
+
+    .trade-buy:hover {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      transform: scale(1.12);
+      box-shadow: 0 0 28px rgba(16, 185, 129, 0.7);
+    }
+
+    .trade-sell {
+      background: rgba(244, 63, 94, 0.14);
+      color: #fb7185;
+      border: 2px solid rgba(251, 113, 133, 0.5);
+      box-shadow: 0 0 14px rgba(244, 63, 94, 0.35);
+      box-sizing: border-box;
+    }
+
+    .trade-sell:hover {
+      background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+      color: white;
+      transform: scale(1.12);
+      box-shadow: 0 0 28px rgba(244, 63, 94, 0.7);
+    }
+
+    /* Squareoff Button - Sleek & Modern */
+    .squareoff-btn {
+      background: rgba(244, 63, 94, 0.1);
+      color: #fb7185;
+      border: 2px solid rgba(251, 113, 133, 0.5);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      min-width: 80px;
+      display: inline-block;
+      box-sizing: border-box;
+    }
+
+    .squareoff-btn:hover {
+      background: #ab035a;
+      border-color: #e11d48;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(225, 29, 72, 0.5);
+      transform: translateY(-1px);
+    }
+
+    /* No Scrollbar + Responsive Fixes */
+    @media (max-width: 1200px) {
+      table {
+        font-size: 0.7rem !important;
+      }
+
+      th,
+      td {
+        padding: 0.25rem 0.5rem !important;
+      }
+
+      .trade-btn {
+        min-width: 40px;
+        font-size: 0.65rem;
+        padding: 0.25rem 0.5rem;
+      }
+    }
+
+    /* Tablet: Hide secondary data columns */
+    @media (max-width: 768px) {
+
+      th:nth-child(8),
+      th:nth-child(9),
+      th:nth-child(10),
+      /* Fr O/H/L */
+      th:nth-child(11),
+      th:nth-child(12),
+      /* TBQ/TSQ */
+      td:nth-child(8),
+      td:nth-child(9),
+      td:nth-child(10),
+      td:nth-child(11),
+      td:nth-child(12) {
+        display: none;
+      }
+
+      .sticky {
+        right: auto !important;
+      }
+
+      .alerts-table {
+        min-width: 100% !important;
+        /* Allow shrinking */
+      }
+
+    }
+
+    /* Mobile: Aggressive hiding to fit screen */
+    @media (max-width: 640px) {
+
+      /* Hide: Time(2), LC(5), UC(6), BuyV(13), SellV(14) */
+      th:nth-child(2),
+      th:nth-child(5),
+      th:nth-child(6),
+      th:nth-child(13),
+      th:nth-child(14),
+      td:nth-child(2),
+      td:nth-child(5),
+      td:nth-child(6),
+      td:nth-child(13),
+      td:nth-child(14) {
+        display: none;
+      }
+
+      /* Further reduce padding */
+      th,
+      td {
+        padding: 8px 4px !important;
+        font-size: 11px !important;
+      }
+
+      /* Make sure trade column stays visible and functional */
+      th:last-child,
+      td:last-child {
+        width: auto !important;
+        min-width: auto !important;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    /* ✅ HARD STOP: no horizontal scroll anywhere */
+    html,
+    body {
+      overflow-x: hidden !important;
+    }
+
+    .alerts-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden !important;
+    }
+
+    .alerts-table {
+      width: 100%;
+      min-width: 1250px;
+      /* ✅ table wide, so rows not squeezed */
+      table-layout: auto;
+      /* ✅ columns take natural space */
+    }
+
+
+    /* compact cells with better height */
+    .alerts-table th,
+    .alerts-table td {
+      padding: 12px 10px !important;
+      font-size: 12.5px !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.5;
+    }
+
+    /* Trade action cells - prevent border cutoff */
+    .alerts-table td:last-child,
+    table td:last-child {
+      overflow: visible !important;
+    }
+
+    /* Header row - slightly taller */
+    .alerts-table th {
+      padding: 15px 12px !important;
+      font-size: 14px !important;
+      font-weight: 700;
+    }
+
+    /* Scan column: allow wrap so width bache */
+    .alerts-table td.scan-cell {
+      white-space: normal !important;
+      line-height: 1.2 !important;
+    }
+
+    /* ✅ sticky without px mismatch */
+    :root {
+      --tradeW: 150px;
+      /* Increased from 90px */
+      --sellW: 100px;
+      /* Increased from 80px */
+    }
+
+    .sticky-trade {
+      /* Removed sticky */
+    }
+
+    .sticky-sell {
+      /* Removed sticky */
+    }
+
+    /* Trade buttons vertical -> narrow */
+    .trade-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .trade-btn {
+      min-width: 30px;
+      height: 32px;
+      /* slightly taller → better touch target */
+      padding: 0 12px;
+      /* symmetric padding, no wasted vertical space */
+      font-size: 11px;
+      font-weight: 700;
+      /* usually enough – 900 can look too heavy */
+      line-height: 1;
+      /* let padding control vertical centering */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      white-space: nowrap;
+      /* prevents text wrapping */
+      user-select: none;
+      /* better button feel */
+    }
+
+    /* ─── MODE TOGGLE ────────────────────────────────────────────── */
+    .mode-switch-container {
+      min-width: 260px;
+      height: 48px;
+      position: relative;
+    }
+
+    .mode-switch-container button {
+      color: #94a3b8;
+      transition: color 0.3s ease;
+      cursor: pointer;
+    }
+
+    .mode-switch-container button.active {
+      color: white;
+      font-weight: 700;
+      text-shadow: 0 0 10px currentColor;
+    }
+
+    .mode-dot {
+      box-shadow: 0 0 10px currentColor;
+    }
+
+
+    .shadow-glow-amber {
+      box-shadow: 0 0 12px #fbbf24, 0 0 20px rgba(251, 191, 36, 0.5);
+    }
+
+    .shadow-glow-emerald {
+      box-shadow: 0 0 12px #34d399, 0 0 20px rgba(52, 211, 153, 0.5);
+    }
+
+    /* Focus ring when tabbing */
+    .mode-switch-container button:focus {
+      outline: none;
+    }
+
+    .mode-switch-container button:focus-visible {
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.4);
+    }
+
+    /* Premium Card Upgrade */
+    .glass {
+      background: rgba(15, 23, 42, 0.7) !important;
+      backdrop-filter: blur(12px) !important;
+      border: 1px solid rgba(148, 163, 184, 0.08) !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .magic-border-container {
+      position: relative;
+      z-index: 0;
+      border-radius: 16px;
+      overflow: hidden;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
+    }
+
+    /* Enhanced Headers */
+    h2 {
+      letter-spacing: -0.01em;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Settings Mode Buttons */
+    .settings-mode-btn {
+      background: var(--bg-slate-800);
+      border-color: var(--glass-border);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .settings-mode-btn:hover {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
   </style>
 </head>
+
 <body class="min-h-screen">
+  <canvas id="particle-canvas"></canvas>
 
-<!-- TOP BAR -->
-<header class="sticky top-0 z-50 glass border-b border-cyan-900/30">
-  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-5">
-      <h1 class="text-3xl font-black tracking-tighter">
-        <span class="text-white">ALGO</span>
-        <span class="text-cyan-400">EDGE</span>
-      </h1>
-      <div class="px-3 py-1 rounded-full bg-cyan-950/40 text-cyan-300 text-xs font-medium glow-cyan">
-        <i class="fa-solid fa-user-astronaut mr-1.5"></i>{{USERNAME}} • {{USER_ID}}
+  <!-- TOP BAR -->
+  <header class="sticky top-0 z-50 glass backdrop-blur-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3 sm:gap-5">
+        <div
+          class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center shadow-lg shadow-cyan-700/30">
+          <i class="fa-solid fa-chart-line text-white text-sm sm:text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-tight leading-tight">
+            <span class="text-slate-100">WeWin</span>
+            <span class="text-cyan-400">Algo</span>
+          </h1>
+          <p class="text-[10px] sm:text-xs text-slate-500 -mt-0.5">Edge • Live</p>
+        </div>
+        <div class="hidden md:flex items-center gap-3 ml-4 sm:ml-6 status-pill">
+          <i class="fa-solid fa-user-circle text-cyan-400"></i>
+          <span class="text-xs sm:text-sm">{{USERNAME}}</span>
+          <span class="text-slate-600">|</span>
+          <span class="font-mono text-slate-400 text-xs sm:text-sm">{{USER_ID}}</span>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 sm:gap-4 ml-auto sm:ml-0">
+        <!-- Status Badges Container - Scrollable on very small screens if needed -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 max-w-[200px] sm:max-w-none no-scrollbar">
+          <!-- Zerodha -->
+          <div id="status-badge" class="status-pill badge-gray shrink-0">
+            <div class="pulse-ring">
+              <span></span><span></span>
+              <div class="status-dot"></div>
+            </div>
+            <span class="badge-label ml-1 hidden sm:inline">ZERODHA</span>
+            <span class="badge-label ml-1 inline sm:hidden">KITE</span>
+          </div>
+
+          <!-- Market -->
+          <div id="market-badge" class="status-pill badge-gray shrink-0">
+            <div class="pulse-ring">
+              <span></span><span></span>
+              <div class="status-dot"></div>
+            </div>
+            <span class="badge-label ml-1 hidden sm:inline">MARKET</span>
+            <span class="badge-label ml-1 inline sm:hidden">MKT</span>
+          </div>
+
+          <!-- WS -->
+          <div id="ws-badge" class="status-pill badge-gray shrink-0">
+            <div class="pulse-ring">
+              <span></span><span></span>
+              <div class="status-dot"></div>
+            </div>
+            <span class="badge-label ml-1 font-bold">WS</span>
+          </div>
+        </div>
+
+        <!-- Automation Mode Badge -->
+        <div id="automation-badge" class="status-pill badge-amber hidden sm:flex">
+          <div class="pulse-ring connected">
+            <div class="status-dot"></div>
+          </div>
+          <span id="automation-label" class="badge-label ml-1">
+            MANUAL MODE
+          </span>
+        </div>
+
+
+        <div class="h-5 w-px bg-slate-700/50 mx-2 hidden lg:block"></div>
+
+        <div class="flex gap-2 sm:gap-3">
+          <button onclick="openCred()" class="btn-primary px-3 sm:px-6 min-w-[auto] sm:min-w-[120px]">
+            <i class="fa-solid fa-link text-sm"></i> <span class="hidden sm:inline">Connect</span>
+          </button>
+          <button onclick="squareoffAll()" class="btn-warning px-3 sm:px-6 min-w-[auto] sm:min-w-[120px]">
+            <i class="fa-solid fa-arrows-rotate text-sm"></i> <span class="hidden sm:inline">Square All</span>
+          </button>
+          <button onclick="killSwitch()" class="btn-danger px-3 sm:px-6 min-w-[auto] sm:min-w-[120px]">
+            <i class="fa-solid fa-power-off text-sm"></i> <span class="hidden sm:inline">KILL</span>
+          </button>
+        </div>
       </div>
     </div>
+  </header>
 
-    <div class="flex items-center gap-4">
-      <div id="status-badge" class="flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 border border-cyan-900/30 text-sm font-medium">
-        <span class="status-dot bg-gray-500"></span>Zerodha • …
+  <!-- MAIN CONTENT -->
+  <main class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-10 space-y-14">
+
+    <!-- LIVE SIGNALS -->
+    <section>
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <h2 class="text-2xl font-bold flex items-center gap-3">
+          <div class="p-2.5 bg-amber-500/15 rounded-xl border border-amber-500/20 shadow-lg shadow-amber-500/10">
+            <i class="fa-solid fa-bolt text-amber-400"></i>
+          </div>
+          <span class="text-gradient">Live Signals</span>
+        </h2>
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Active Alerts Counter -->
+          <div class="flex items-center gap-3 bg-slate-800/50 border border-slate-700 rounded-full px-5 py-2">
+            <span class="text-xs uppercase tracking-wider text-slate-400 font-medium">Active Alerts</span>
+            <span id="alerts-count" class="text-lg font-bold text-slate-100 tabular-nums">0</span>
+          </div>
+
+          <!-- Dual Mode Toggle / Segmented Control -->
+          <div
+            class="mode-switch-container relative inline-flex items-center bg-slate-900/60 backdrop-blur-md border border-slate-700/60 rounded-full p-1 shadow-inner shadow-black/40"
+            style="min-width: 220px; height: 42px;">
+
+            <!-- Sliding indicator -->
+            <div id="mode-indicator" class="absolute inset-y-1 left-1 w-1/2 rounded-full
+           bg-gradient-to-r from-cyan-500/30 to-teal-500/30
+           transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)]
+           shadow-lg shadow-cyan-500/20">
+            </div>
+
+            <!-- Manual -->
+            <button id="mode-manual-btn" onclick="setAutomationMode('MANUAL')"
+              class="relative z-10 flex-1 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold border-2 transition-all duration-300">
+              <div class="flex items-center gap-2 justify-center">
+                <i class="fa-solid fa-hand-pointer text-xs"></i>
+                ManualControl
+                <span class="mode-dot hidden w-2 h-2 rounded-full bg-red-400"></span>
+              </div>
+            </button>
+
+            <!-- Auto -->
+            <button id="mode-auto-btn" onclick="setAutomationMode('AUTO')"
+              class="relative z-10 flex-1 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold border-2 transition-all duration-300">
+              <div class="flex items-center gap-2 justify-center">
+                <i class="fa-solid fa-robot text-xs"></i>
+                FullAutomation
+                <span class="mode-dot hidden w-2 h-2 rounded-full bg-emerald-400"></span>
+              </div>
+            </button>
+          </div>
+
+
+          <!-- Universal Settings Button -->
+          <button onclick="openUniversalSettings()"
+            class="p-2.5 bg-slate-800/50 border border-slate-700 rounded-full hover:bg-slate-700/50 transition-all duration-300 group"
+            title="Configure Universal Settings">
+            <i class="fa-solid fa-sliders text-slate-400 group-hover:text-cyan-400 transition-colors"></i>
+          </button>
+        </div>
       </div>
 
-      <div id="market-badge" class="flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 border border-cyan-900/30 text-sm font-medium">
-        <span class="status-dot bg-gray-500"></span>Market • …
+      <div class="magic-border-container">
+        <div class="glass rounded-2xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto alerts-wrap">
+            <table class="alerts-table w-full min-w-[1200px] text-sm">
+              <thead>
+                <tr
+                  class="text-slate-100 text-xs uppercase tracking-wider font-serif border-b-2 border-white/10 drop-shadow-sm">
+                  <th class="p-3 text-left w-[120px]">Scan</th>
+                  <th class="p-4 w-20">Time</th>
+                  <th class="p-4 w-28 text-left">Symbol</th>
+                  <th class="p-4 text-right w-24">LTP</th>
+                  <th class="p-4 text-right w-20">LC</th>
+                  <th class="p-4 text-right w-20">UC</th>
+                  <th class="p-4 text-right w-24">% Chg</th>
+                  <th class="p-4 text-right w-20">Fr O</th>
+                  <th class="p-4 text-right w-20">Fr H</th>
+                  <th class="p-4 text-right w-20">Fr L</th>
+                  <th class="p-4 text-right w-24">TBQ</th>
+                  <th class="p-4 text-right w-24">TSQ</th>
+                  <th class="p-4 text-right w-28 text-emerald-300">Buy V</th>
+                  <th class="p-4 text-right w-28 text-red-400">Sell Vol</th>
+                  <th class="p-4 text-center w-36">Trade</th>
+                </tr>
+              </thead>
+              <tbody id="alerts-body" class="divide-y divide-slate-800/60 bg-slate-900/30">
+                <!-- filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ACTIVE POSITIONS / LADDERS -->
+    <section>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <h2 class="text-2xl font-bold flex items-center gap-3">
+          <div class="p-2.5 bg-cyan-500/15 rounded-xl border border-cyan-500/20 shadow-lg shadow-cyan-500/10">
+            <i class="fa-solid fa-cubes text-cyan-400"></i>
+          </div>
+          <span class="text-gradient">Active Ladders</span>
+        </h2>
+
+        <div class="flex flex-wrap gap-4">
+          <div id="ladder-pnl-pill"
+            class="flex items-center gap-4 px-6 py-2.5 rounded-full bg-slate-800/60 border border-slate-700 shadow-inner">
+            <span class="text-xs uppercase tracking-wider text-slate-400 font-medium">Net PnL</span>
+            <span id="overall-pnl-ladders" class="text-xl font-bold font-mono tabular-nums">0.00</span>
+          </div>
+          <div class="flex items-center gap-3 px-5 py-2.5 bg-slate-800/50 border border-slate-700 rounded-full">
+            <span class="text-xs uppercase tracking-wider text-slate-400 font-medium">Active Ladders</span>
+            <span id="ladder-count" class="text-lg font-bold text-slate-100 tabular-nums">0</span>
+          </div>
+        </div>
       </div>
 
-      <div id="ws-badge" class="px-4 py-2 rounded-full bg-black/40 border border-cyan-900/30 text-sm font-medium">
-        WS • …
+      <div class="magic-border-container">
+        <div class="glass rounded-2xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-white-400 text-xs uppercase tracking-wider font-sans border-b-2 border-white/10">
+                  <th class="p-5 pl-7 text-left">Symbol</th>
+                  <th class="p-5 text-center">Cycle</th>
+                  <th class="p-5 text-center">Leg</th>
+                  <th class="p-5 text-center">Qty</th>
+                  <th class="p-5 text-center">LTP</th>
+                  <th class="p-5 text-center">Avg</th>
+                  <th class="p-5 text-center">Extreme</th>
+                  <th class="p-5 text-center">Next Add</th>
+                  <th class="p-5 text-center">SL</th>
+                  <th class="p-5 text-center">TSL</th>
+                  <th class="p-5 text-center">PnL</th>
+                  <th class="p-5 text-center">Status</th>
+                  <th class="p-5 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="ladderRows" class="divide-y divide-slate-800/60 bg-slate-900/25">
+                <tr>
+                  <td colspan="13" class="p-16 text-center text-slate-500 italic">
+                    No active ladder positions at the moment
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      
-      <div class="flex gap-3">
-        <button onclick="openCred()" class="btn-glow px-5 py-2.5 bg-cyan-900/30 hover:bg-cyan-800/50 border border-cyan-600/50 rounded-lg font-medium text-cyan-300 glow-cyan">
-          <i class="fa-solid fa-link mr-2"></i>Connect
+    </section>
+
+  </main>
+
+  <!-- ================= TRADE MODAL ================= -->
+  <div id="tradeModal"
+    class="fixed inset-0 hidden bg-black/70 backdrop-blur-md flex items-center justify-center z-50 modal px-4">
+    <div class="glass rounded-3xl p-8 w-full max-w-lg shadow-2xl shadow-black/60 border border-slate-600/40">
+      <div class="flex justify-between items-center mb-7">
+        <h3 class="text-2xl font-bold text-cyan-300 flex items-center gap-3">
+          <i class="fa-solid fa-cubes text-cyan-400"></i>
+          Ladder Strategy
+        </h3>
+        <button onclick="closeTradeModal()" class="text-slate-400 hover:text-white text-2xl transition-colors">
+          <i class="fa-solid fa-xmark"></i>
         </button>
+      </div>
 
-        <button onclick="squareoffAll()" class="btn-glow px-5 py-2.5 bg-amber-900/40 hover:bg-amber-800/50 border border-amber-600/50 rounded-lg font-medium text-amber-300">
-          <i class="fa-solid fa-arrows-rotate mr-2"></i>Square All
+      <div
+        class="mb-7 p-5 bg-slate-950/60 rounded-2xl border border-slate-700 text-center flex items-center justify-center gap-5 shadow-inner">
+        <!-- Input for Symbol with Datalist -->
+        <input id="tm-symbol" list="available-stocks"
+          class="text-2xl font-bold text-white bg-transparent border-b border-dashed border-slate-600 focus:border-cyan-400 outline-none w-48 text-center uppercase placeholder-slate-600 transition-colors"
+          oninput="tmSymbol = this.value.toUpperCase()" placeholder="SYMBOL">
+        <datalist id="available-stocks"></datalist>
+
+        <!-- Toggle for Side -->
+        <button id="tm-side" onclick="toggleTradeSide()"
+          class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold border border-slate-600 transition-all cursor-pointer select-none shadow-lg">
         </button>
+      </div>
 
-        <button onclick="killSwitch()" class="btn-glow px-6 py-2.5 bg-red-900/50 hover:bg-red-800/60 border border-red-600/60 rounded-lg font-medium text-red-300 glow-red">
-          <i class="fa-solid fa-power-off mr-2"></i>KILL
+      <!-- Form fields -->
+      <!-- Settings Mode Selector (Manual Control Only) -->
+      <div id="settings-mode-selector" class="mb-6">
+        <label class="block text-sm font-medium text-slate-300 mb-3">Settings Configuration</label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button type="button" onclick="selectSettingsMode('UNIVERSAL')" id="btn-universal-mode"
+            class="settings-mode-btn px-4 py-3 rounded-xl border-2 transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-sm">
+            <i class="fa-solid fa-globe"></i>
+            Universal Settings
+          </button>
+          <button type="button" onclick="selectSettingsMode('STOCK')" id="btn-stock-mode"
+            class="settings-mode-btn px-4 py-3 rounded-xl border-2 transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-sm">
+            <i class="fa-solid fa-chart-line"></i>
+            Stock-Wise Settings
+          </button>
+        </div>
+      </div>
+
+      <!-- Stock-Specific Settings Form (shown when STOCK mode selected) -->
+      <div id="stock-settings-form">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-5 sm:mb-7">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Mode</label>
+            <select id="ls-mode"
+              class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-cyan-500/30 outline-none">
+              <option value="UNIVERSAL">Universal</option>
+              <option value="STOCK">Stock Specific</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Qty Mode</label>
+            <select id="ls-qtymode"
+              class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-cyan-500/30 outline-none">
+              <option value="CAPITAL">Capital Based</option>
+              <option value="QTY">Fixed Quantity</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-5">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5">Capital (₹)</label>
+            <input id="ls-capital" type="number" value="1000"
+              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5">Quantity</label>
+            <input id="ls-qty" type="number" value="1"
+              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5">Thresh %</label>
+            <input id="ls-threshold" type="number" step="0.01" value="1"
+              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5">SL %</label>
+            <input id="ls-sl" type="number" step="0.01" value="1"
+              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5">Trails %</label>
+            <input id="ls-tsl" type="number" step="0.01" value="1"
+              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5">Cycles</label>
+            <input id="ls-cycles" type="number" value="1"
+              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+          </div>
+
+          <div class="col-span-1 sm:col-span-1">
+            <label class="block text-xs font-medium text-slate-400 mb-1.5">Max Adds</label>
+            <input id="ls-maxadds" type="number" value="2"
+              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
+        <button onclick="confirmTrade()"
+          class="flex-1 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-bold py-3 sm:py-3.5 rounded-xl shadow-lg shadow-cyan-700/30 transition-all flex items-center justify-center gap-2 text-sm sm:text-base">
+          <i class="fa-solid fa-rocket"></i> Launch Strategy
+        </button>
+        <button onclick="closeTradeModal()"
+          class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 font-medium py-3 sm:py-3.5 rounded-xl transition-colors text-sm sm:text-base">
+          Cancel
         </button>
       </div>
     </div>
   </div>
-</header>
 
-<!-- MAIN CONTENT -->
-<main class="max-w-7xl mx-auto px-6 py-10 space-y-12">
-<!-- ALERTS SECTION -->
-<section>
-  <h2
-  class="relative text-2xl font-semibold mb-6
-         flex items-center gap-4
-         text-cyan-300 tracking-wide"
->
-
-  <!-- Icon Pill -->
-  <span
-    class="relative inline-flex items-center justify-center
-           w-11 h-11 rounded-full
-           bg-gradient-to-br from-yellow-400/25 via-yellow-300/10 to-transparent
-           border border-yellow-400/40
-           shadow-xl shadow-yellow-400/30"
-  >
-    <i class="fa-solid fa-bolt-lightning text-yellow-300 text-lg"></i>
-
-    <!-- soft glow ring -->
-    <span
-      class="absolute inset-0 rounded-full
-             ring-2 ring-yellow-400/20"
-    ></span>
-  </span>
-
-  <span
-  class="font-bold
-         bg-gradient-to-r from-cyan-200 via-cyan-300 to-cyan-400 bg-clip-text text-transparent">
-  Live Chartink Alert Signals
-</span>
-</h2>
-  <!-- Table Wrapper -->
-  <div
-    class="glass rounded-2xl overflow-hidden
-           shadow-2xl shadow-black/70
-           border border-cyan-900/40">
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <!-- HEADER -->
-        <thead
-          class="sticky top-0 z-10
-                 bg-gradient-to-r from-black/80 via-black/70 to-black/80
-                 border-b border-cyan-900/40" >
-          <tr
-            class="text-cyan-300/90 font-semibold tracking-wide">
-            <th class="p-5 text-left">Scan</th>
-            <th class="p-5">Time</th>
-            <th class="p-5">Symbol</th>
-            <th class="p-5">LTP</th>
-            <th class="p-5 text-emerald-400">⬆ UC</th>
-            <th class="p-5 text-red-400">⬇ LC</th>
-            <th class="p-5">% Chg</th>
-            <th class="p-5">From O</th>
-            <th class="p-5">From H</th>
-            <th class="p-5">From L</th>
-            <th class="p-5">TBQ</th>
-            <th class="p-5">TSQ</th>
-            <th class="p-5">Buy Vol</th>
-            <th class="p-5">Sell Vol</th>
-            <th class="p-5 text-center">Trade</th>
-          </tr>
-        </thead>
-        <!-- BODY -->
-        <tbody
-          id="alerts-body"
-          class="divide-y divide-cyan-900/30 bg-black/40">
-          <!-- rows injected by JS -->
-        </tbody>
-      </table>
-    </div>
+  <!-- Toast / Message -->
+  <div id="msg-box"
+    class="fixed bottom-8 left-1/2 -translate-x-1/2 hidden px-6 py-3 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-base font-medium shadow-2xl z-50 border w-[90%] sm:w-auto text-center">
   </div>
-</section>
 
-  <!-- LADDER POSITIONS -->
-<section>
-<h2 class="text-2xl font-bold mb-6 flex items-center gap-3 text-cyan-300 tracking-wide">
-    <i class="fa-solid fa-cubes text-cyan-400"></i>
-    Active Ladders Positions
-  </h2>
+  <!-- ================= CREDENTIALS MODAL - Professional Style ================= -->
+  <div id="credModal"
+    class="fixed inset-0 hidden bg-black/75 backdrop-blur-md flex items-center justify-center z-50 px-4">
+    <div
+      class="bg-[#0f172a] rounded-2xl p-6 sm:p-10 w-full max-w-md border border-slate-700/50 shadow-2xl shadow-black/40">
 
-  <!-- Overall PnL pill + Total ladders -->
-<div class="mb-4 flex items-center justify-between">
-  <!-- Overall PnL -->
-  <div
-    id="ladder-pnl-pill"
-    class="group inline-flex items-center gap-3 px-5 py-2.5 rounded-full
-           bg-gradient-to-r from-emerald-900/30 via-emerald-800/20 to-emerald-900/30
-           border border-emerald-500/40
-           text-emerald-300 font-semibold
-           shadow-lg shadow-emerald-900/40
-           hover:shadow-emerald-700/50 hover:scale-[1.02]
-           transition-all duration-200">
-    <i class="fa-solid fa-chart-line text-emerald-400 group-hover:text-emerald-300"></i>
-    <span class="tracking-wide">Overall PnL</span>
-    <span class="text-emerald-400/70">•</span>
-    <span
-      id="overall-pnl-ladders"
-      class="tabular-nums text-emerald-200 text-sm">
-      0.00
-    </span>
-  </div>
-  <!-- Total Ladders -->
-<div class="text-sm flex items-center gap-4">
-  <span
-    id="ladder-count-badge"
-    class="group inline-flex items-center gap-3
-           px-5 py-2 rounded-full
-           bg-gradient-to-r from-cyan-900/30 to-cyan-800/20
-           border border-cyan-500/40
-           text-cyan-300
-           shadow-lg shadow-cyan-900/50
-           hover:shadow-cyan-700/50 hover:scale-[1.05]
-           transition-all duration-200"
-  >
-    <i class="fa-solid fa-layer-group text-cyan-400 text-base group-hover:text-cyan-300"></i>
-
-    <span class="tracking-wide font-medium">
-      Total Ladders
-    </span>
-
-    <span
-      id="ladder-count"
-      class="tabular-nums text-cyan-200 font-semibold text-base"
-    >
-      0
-    </span>
-  </span>
-</div>
-</div>
-
-
-  <!-- Table -->
-  <!-- Table -->
-<div
-  class="glass rounded-2xl overflow-hidden
-         shadow-2xl shadow-black/70
-         border border-cyan-900/40"
->
-
-  <table class="w-full text-sm">
-    <!-- HEADER -->
-    <thead class="bg-gradient-to-r from-black/80 via-black/70 to-black/80 sticky top-0 z-10">
-      <tr
-        class="text-cyan-300/90 font-semibold tracking-wide
-               border-b border-cyan-900/40">
-        <th class="p-5 text-left">Symbol</th>
-        <th class="p-5">Cycle</th>
-        <th class="p-5">Leg</th>
-        <th class="p-5">Qty</th>
-        <th class="p-5">LTP</th>
-        <th class="p-5">Avg</th>
-        <th class="p-5">Extreme</th>
-        <th class="p-5">Next Add</th>
-        <th class="p-5">SL</th>
-        <th class="p-5">TSL</th>
-        <th class="p-5">PnL</th>
-        <th class="p-5">Status</th>
-        <th class="p-5 text-center">Action</th>
-      </tr>
-    </thead>
-    <!-- BODY -->
-    <tbody
-      id="ladderRows"
-      class="divide-y divide-cyan-900/30 bg-black/40" >
-      <!-- EMPTY STATE -->
-      <tr>
-        <td
-          colspan="13"
-          class="p-16 text-center
-                 text-cyan-400/70 italic text-lg
-                 tracking-wide">  No active ladder strategies
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-</section>
-
-</main>
-
-<!-- ================= TRADE MODAL ================= -->
-<div id="tradeModal" class="fixed inset-0 hidden bg-black/80 backdrop-blur-lg items-center justify-center z-50 modal">
-  <div class="glass border border-cyan-800/40 rounded-3xl p-10 w-full max-w-lg shadow-2xl shadow-cyan-950/70 glow-cyan">
-    <div class="flex justify-between items-center mb-8">
-      <h3 class="text-3xl font-black text-cyan-300 tracking-tight">
-        <i class="fa-solid fa-cubes mr-3"></i>⚙️ LADDER SETTINGS
-      </h3>
-      <button onclick="closeTradeModal()" class="text-cyan-500 hover:text-cyan-300 text-2xl transition-colors">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-
-    <div class="mb-8 p-4 bg-black/40 rounded-2xl border border-cyan-900/30 text-center">
-      <span id="tm-symbol" class="text-2xl font-bold text-cyan-300"></span>
-      <span id="tm-side" class="ml-4 px-4 py-2 rounded-full text-lg font-black"></span>
-    </div>
-
-    <!-- Form fields with better spacing & labels -->
-    <div class="grid grid-cols-2 gap-6 mb-8">
-      <div>
-        <label class="block text-sm text-cyan-400/80 mb-2 font-medium">Mode</label>
-        <select id="ls-mode" class="w-full bg-black/60 border border-cyan-900/50 rounded-xl px-5 py-3 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-600/40">
-          <option value="UNIVERSAL">Universal</option>
-          <option value="STOCK">Stock Specific</option>
-        </select>
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6 sm:mb-8">
+        <h2 class="text-xl sm:text-2xl font-semibold text-cyan-400 flex items-center gap-3">
+          <i class="fa-solid fa-shield-halved text-cyan-500"></i>
+          Zerodha API
+        </h2>
+        <button onclick="closeCred()" class="text-slate-400 hover:text-slate-200 transition-colors text-xl"
+          title="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
-      <div>
-        <label class="block text-sm text-cyan-400/80 mb-2 font-medium">Qty Mode</label>
-        <select id="ls-qtymode" class="w-full bg-black/60 border border-cyan-900/50 rounded-xl px-5 py-3 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-600/40">
-          <option value="CAPITAL">Capital Based</option>
-          <option value="QTY">Fixed Quantity</option>
-        </select>
-      </div>
-    </div>
+      <!-- Description -->
+      <p class="text-xs sm:text-sm text-slate-400 mb-6 sm:mb-8 leading-relaxed">
+        Securely connect your Zerodha account.
+      </p>
 
-    <div class="grid grid-cols-2 gap-5 mb-6">
-      <div>
-        <label class="block text-xs text-slate-400 mb-1.5">Capital (₹)</label>
-        <input id="ls-capital" type="number" value="1000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
-      </div>
-      <div>
-        <label class="block text-xs text-slate-400 mb-1.5">Quantity</label>
-        <input id="ls-qty" type="number" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
-      </div>
-    </div>
+      <!-- Form -->
+      <form class="space-y-4 sm:space-y-6">
 
-    <div class="grid grid-cols-3 gap-5 mb-8">
-      <div>
-        <label class="block text-xs text-slate-400 mb-1.5">Threshold %</label>
-        <input id="ls-threshold" type="number" step="0.01" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
-      </div>
-      <div>
-        <label class="block text-xs text-slate-400 mb-1.5">Stop Loss %</label>
-        <input id="ls-sl" type="number" step="0.01" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
-      </div>
-      <div>
-        <label class="block text-xs text-slate-400 mb-1.5">Trailing %</label>
-        <input id="ls-tsl" type="number" step="0.01" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
-      </div>
-    <div>
-        <label class="block text-xs text-slate-400 mb-1.5">Cycles</label>
-        <input id="ls-cycles" type="number" value="1"
-          class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
-      </div>
-
-      <div>
-        <label class="block text-xs text-slate-400 mb-1.5">Max Adds</label>
-        <input id="ls-maxadds" type="number" value="2"
-          class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm"/>
-      </div>
-    </div>
-
-    <div class="flex gap-5 mt-10">
-      <button onclick="confirmTrade()" class="flex-1 btn-glow py-4 bg-gradient-to-r from-cyan-600 to-cyan-400 hover:from-cyan-500 hover:to-cyan-300 rounded-2xl font-bold text-lg shadow-2xl shadow-cyan-900/70">
-        <i class="fa-solid fa-rocket-launch mr-2"></i>LAUNCH STRATEGY
-      </button>
-      <button onclick="closeTradeModal()" class="flex-1 py-4 bg-black/60 border border-cyan-900/50 hover:bg-cyan-950/50 rounded-2xl font-medium text-lg">
-        Cancel
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Toast / Message -->
-<div id="msg-box" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden px-6 py-3 rounded-xl text-sm font-medium shadow-2xl z-50 transition-all duration-300"></div>
-
-<!-- ================= CREDENTIALS MODAL - Professional Style ================= -->
-<div id="credModal" class="fixed inset-0 hidden bg-black/75 backdrop-blur-md flex items-center justify-center z-50">
-  <div class="bg-[#0f172a] rounded-2xl p-10 w-full max-w-md border border-slate-700/50 shadow-2xl shadow-black/40">
-
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
-      <h2 class="text-2xl font-semibold text-cyan-400 flex items-center gap-3">
-        <i class="fa-solid fa-shield-halved text-cyan-500"></i>
-        Zerodha API Credentials
-      </h2>
-      <button 
-        onclick="closeCred()" 
-        class="text-slate-400 hover:text-slate-200 transition-colors text-xl"
-        title="Close"
-      >
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-
-    <!-- Description -->
-    <p class="text-sm text-slate-400 mb-8 leading-relaxed">
-      Securely connect your Zerodha account. 
-    </p>
-
-    <!-- Form -->
-    <form class="space-y-6">
-
-      <!-- API Key -->
-      <div>
-        <label class="block text-sm font-medium text-slate-300 mb-2">
-          API Key
-        </label>
-        <div class="relative">
-          <input 
-            id="api_key" 
-            type="password" 
-            placeholder="xxxxxxxxxxxxxxxxxxxxxxxx"
-            class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-5 py-3.5 text-slate-200 
+        <!-- API Key -->
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">
+            API Key
+          </label>
+          <div class="relative">
+            <input id="api_key" type="password" placeholder="xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 sm:px-5 py-3 sm:py-3.5 text-slate-200 text-sm sm:text-base
                    placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 
-                   transition-all duration-200 outline-none"
-          />
-          <button 
-            type="button"
-            onclick="toggleVisibility('api_key', this)"
-            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors"
-            title="Show/Hide"
-          >
-            <i class="fa-solid fa-eye"></i>
-          </button>
+                   transition-all duration-200 outline-none" />
+            <button type="button" onclick="toggleVisibility('api_key', this)"
+              class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors"
+              title="Show/Hide">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <!-- API Secret -->
-      <div>
-        <label class="block text-sm font-medium text-slate-300 mb-2">
-          API Secret
-        </label>
-        <div class="relative">
-          <input 
-            id="api_secret" 
-            type="password" 
-            placeholder="xxxxxxxxxxxxxxxxxxxxxxxx"
-            class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-5 py-3.5 text-slate-200 
+        <!-- API Secret -->
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">
+            API Secret
+          </label>
+          <div class="relative">
+            <input id="api_secret" type="password" placeholder="xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 sm:px-5 py-3 sm:py-3.5 text-slate-200 text-sm sm:text-base
                    placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 
-                   transition-all duration-200 outline-none"
-          />
-          <button 
-            type="button"
-            onclick="toggleVisibility('api_secret', this)"
-            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors"
-            title="Show/Hide"
-          >
-            <i class="fa-solid fa-eye"></i>
+                   transition-all duration-200 outline-none" />
+            <button type="button" onclick="toggleVisibility('api_secret', this)"
+              class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors"
+              title="Show/Hide">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
+          <button type="button" onclick="saveCred()"
+            class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 sm:py-3.5 rounded-lg 
+                 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 text-sm sm:text-base">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save
+          </button>
+
+          <button type="button" onclick="connectZerodha()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 sm:py-3.5 rounded-lg 
+                 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            Login
           </button>
         </div>
-      </div>
-
-      <!-- Buttons -->
-      <div class="flex gap-4 mt-8">
-        <button 
-          type="button"
-          onclick="saveCred()" 
-          class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3.5 rounded-lg 
-                 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30"
-        >
-          <i class="fa-solid fa-floppy-disk"></i>
-          Save Credentials
-        </button>
-
-        <button 
-          type="button"
-          onclick="connectZerodha()" 
-          class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3.5 rounded-lg 
-                 transition-all duration-200 flex items-center justify-center gap-2"
-        >
-          <i class="fa-solid fa-right-to-bracket"></i>
-          Login to Kite
-        </button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
-</div>
 
+  <!-- ================= UNIVERSAL SETTINGS MODAL ================= -->
+  <div id="universalSettingsModal"
+    class="fixed inset-0 hidden bg-black/75 backdrop-blur-md flex items-center justify-center z-50 px-4">
+    <div
+      class="bg-[#0f172a] rounded-2xl p-6 sm:p-10 w-full max-w-2xl border border-slate-700/50 shadow-2xl shadow-black/40">
 
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6 sm:mb-8">
+        <h2 class="text-xl sm:text-2xl font-semibold text-cyan-400 flex items-center gap-3">
+          <i class="fa-solid fa-sliders text-cyan-500"></i>
+          Universal Settings
+        </h2>
+        <button onclick="closeUniversalSettings()" class="text-slate-400 hover:text-slate-200 transition-colors text-xl"
+          title="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
 
-<script>
-/* ---------- STATE ---------- */
-const USER_ID = "{{USER_ID}}";
-// ===== Live ladder PnL meta store (for continuous updates) =====
-const LADDER_META = {}; 
-// ===== recompute overall ladder pnl from live values =====
-let overallLive = 0;
-for(const s in LADDER_META){
-  const m = LADDER_META[s];
-  const pnl = calcUnrealizedPnl(m.side, m.qty, m.avg, m.ltp);
-  overallLive += pnl;
-}
-setOverallPnl(overallLive);
+      <!-- Description -->
+      <p class="text-xs sm:text-sm text-slate-400 mb-6 sm:mb-8 leading-relaxed">
+        Configure default ladder settings. These will be used in <strong class="text-cyan-400">Full
+          Automation</strong>
+        mode
+        and as defaults when selecting <strong class="text-cyan-400">Universal Settings</strong> in Manual mode.
+      </p>
 
+      <!-- Form -->
+      <form class="space-y-4 sm:space-y-6">
 
-// alerts
-let subscribed = new Set();
-let alertsInterval = null;
-let LAST_ALERTS_RENDER = null;   // last JSON signature to avoid rebuild
-let ALERT_ROW_KEYS = new Set();  // currently rendered unique keys
+        <!-- Mode Selection -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Qty Mode</label>
+            <select id="us-qtymode"
+              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none">
+              <option value="CAPITAL">Capital Based</option>
+              <option value="QTY">Fixed Quantity</option>
+            </select>
+          </div>
+        </div>
 
-// trade modal
-let tmSymbol = null;
-let tmSide = null;
+        <!-- Capital & Quantity -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Capital (₹)</label>
+            <input id="us-capital" type="number" value="1000"
+              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Quantity</label>
+            <input id="us-qty" type="number" value="1"
+              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
+          </div>
+        </div>
 
-// ws
-let TICK_WS = null;
-let WS_READY = false;
-let WS_RETRY = 1500;
+        <!-- Ladder Parameters -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Threshold %</label>
+            <input id="us-threshold" type="number" step="0.01" value="1"
+              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">SL %</label>
+            <input id="us-sl" type="number" step="0.01" value="1"
+              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Trails %</label>
+            <input id="us-tsl" type="number" step="0.01" value="1"
+              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Cycles</label>
+            <input id="us-cycles" type="number" value="1"
+              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
+          </div>
+          <div class="col-span-1 sm:col-span-1">
+            <label class="block text-sm font-medium text-slate-300 mb-2">Max Adds</label>
+            <input id="us-maxadds" type="number" value="2"
+              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
+          </div>
+        </div>
 
-let TICK_BUFFER = {};
-let TICK_FLUSH_TIMER = null;
-
-/* ---------- HELPERS ---------- */
-function $(id){ return document.getElementById(id); }
-
-function setWs(ok, txt){
-  const b = $("ws-badge");
-  b.innerText = txt;
-  b.className = "px-3 py-1 text-xs rounded " +
-    (ok ? "bg-green-600/20 text-green-400" : "bg-red-600/20 text-red-400");
-}
-
-function wsUrl(){
-  const p = location.protocol === "https:" ? "wss" : "ws";
-  return `${p}://${location.host}/ws/ticks?user_id=${USER_ID}`;
-}
-
-function toggleVisibility(inputId, button) {
-  const input = document.getElementById(inputId);
-  const icon = button.querySelector('i');
-  if (input.type === 'password') {
-    input.type = 'text';
-    icon.classList.remove('fa-eye');
-    icon.classList.add('fa-eye-slash');
-  } else {
-    input.type = 'password';
-    icon.classList.remove('fa-eye-slash');
-    icon.classList.add('fa-eye');
-  }
-}
-
-// IST time parts
-function istHM(){
-  const parts = new Intl.DateTimeFormat("en-IN", {
-    timeZone: "Asia/Kolkata",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  }).formatToParts(new Date());
-  let h=0,m=0;
-  for(const p of parts){
-    if(p.type==="hour") h = parseInt(p.value,10);
-    if(p.type==="minute") m = parseInt(p.value,10);
-  }
-  return {h,m};
-}
-
-/**
- * Freeze window: market close ke baad 15:31 -> next day 09:00 tak
- *  - 15:31-23:59 => freeze
- *  - 00:00-08:59 => freeze
- *  - 09:00-15:30 => allow
- */
-function isAlertFreezeWindow(){
-  const {h,m} = istHM();
-  if(h < 9) return true;
-  if(h > 15) return true;
-  if(h === 15 && m >= 31) return true;
-  return false;
-}
-
-/* ---------- SESSION + STATUS ---------- */
-async function checkSession(){
-  const r = await fetch("/api/zerodha-status");
-  if(!r.ok){
-    alert("Login first!");
-    window.location.href = "/";
-    return false;
-  }
-  return true;
-}
-
-async function refreshStatus(){
-  const badge = $("status-badge");
-  try {
-    const res = await fetch("/api/zerodha-status");
-    const z = await res.json();
-
-    if (z.connected || z.status === "connected") {
-      badge.innerHTML = "🟢 Zerodha CONNECTED";
-      badge.className =
-        "px-3 py-1 text-xs font-semibold rounded-full bg-green-600/20 text-green-400 shadow shadow-green-500/20";
-    } else {
-      badge.innerHTML = "🔴 Zerodha DISCONNECTED";
-      badge.className =
-        "px-3 py-1 text-xs font-semibold rounded-full bg-red-600/20 text-red-400 shadow shadow-red-500/20";
-    }
-  } catch (e) {
-    badge.innerHTML = "🔴 Zerodha DISCONNECTED";
-    badge.className = "px-3 py-1 text-xs font-semibold rounded-full bg-red-600/20 text-red-400";
-  }
-}
-
-function updateMarketBadge(marketOpen){
-  const badge = $("market-badge");
-  if(marketOpen){
-    badge.innerText = "🟢 Market OPEN";
-    badge.className = "px-3 py-1 text-xs rounded-full bg-green-600/20 text-green-400";
-  } else {
-    badge.innerText = "🔴 Market CLOSED";
-    badge.className = "px-3 py-1 text-xs rounded-full bg-red-600/20 text-red-400";
-  }
-}
-
-/**
- * Alerts gate:
- * - Freeze window me polling OFF
- * - 09:00 ke baad polling ON (market open ho ya na ho)
- */
-function manageAlertsPolling(){
-  if(isAlertFreezeWindow()){
-    stopAlertsPolling();
-    return;
-  }
-  startAlertsPolling();
-}
-
-function checkMarketStatus(){
-  fetch("/api/market-status")
-    .then(r => r.json())
-    .then(d => {
-      updateMarketBadge(!!d.market_open);
-      // ✅ independent alert gate (your requirement)
-      manageAlertsPolling();
-    })
-    .catch(()=> {
-      // even if api fails, still apply time gate
-      manageAlertsPolling();
-    });
-}
-
-/* ---------- WS START ---------- */
-function startTickWS(){
-  if(TICK_WS && TICK_WS.readyState <= 1) return;
-
-  setWs(false,"WS: Connecting");
-  TICK_WS = new WebSocket(wsUrl());
-
-  TICK_WS.onopen = () => {
-    WS_READY = true;
-    setWs(true,"WS: LIVE");
-  };
-
-  TICK_WS.onclose = () => {
-    WS_READY = false;
-    setWs(false,"WS: Reconnecting");
-    setTimeout(startTickWS, WS_RETRY);
-  };
-
-  TICK_WS.onerror = () => {
-    try{ TICK_WS.close(); }catch{}
-  };
-
-  TICK_WS.onmessage = ev => {
-    let d;
-    try{ d = JSON.parse(ev.data); }catch{ return; }
-
-    // snapshot support
-    if(d.type === "snapshot" && Array.isArray(d.ticks)){
-      for(const t of d.ticks){
-        if(!t.symbol) continue;
-        TICK_BUFFER[String(t.symbol).toUpperCase()] = t;
-      }
-      if(!TICK_FLUSH_TIMER){
-        TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
-      }
-      return;
-    }
-
-    if(!d.symbol) return;
-    TICK_BUFFER[String(d.symbol).toUpperCase()] = d;
-    if(!TICK_FLUSH_TIMER){
-      TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
-    }
-  };
-}
-
-/* ---------- NO-BLINK TICK FLUSH (updates all cells by data-sym) ---------- */
-function setTextIfChanged(el, txt){
-  if(!el) return;
-  if(el.textContent !== txt) el.textContent = txt;
-}
-function calcUnrealizedPnl(side, qty, avg, ltp){
-  if(!qty || !avg || !ltp) return 0;
-  if(side === "SELL") return (avg - ltp) * qty;
-  return (ltp - avg) * qty; // BUY default
-}
-
-function paintPnlCell(el, pnl){
-  if(!el) return;
-  el.classList.remove("text-emerald-300","text-red-300","text-slate-200");
-  if(pnl > 0) el.classList.add("text-emerald-300");
-  else if(pnl < 0) el.classList.add("text-red-300");
-  else el.classList.add("text-slate-200");
-}
-
-
-function flushTickUI(){
-  for(const sym in TICK_BUFFER){
-    const d = TICK_BUFFER[sym];
-    const ltp  = Number(d.ltp||0);
-    if(ltp <= 0) continue;
-
-    const prev = Number(d.prev||ltp);
-    const open = Number(d.open||prev||ltp);
-    const high = Number(d.high||ltp);
-    const low  = Number(d.low||ltp);
-    const uc = (d.upper_circuit != null && d.upper_circuit !== "") ? Number(d.upper_circuit) : 0;
-    const lc = (d.lower_circuit != null && d.lower_circuit !== "") ? Number(d.lower_circuit) : 0;
-    
-    // ALERTS table: update ALL rows having data-sym=sym
-    const nodes = document.querySelectorAll(`[data-sym="${sym}"]`);
-    nodes.forEach(node => {
-      const field = node.getAttribute("data-field");
-      if(!field) return;
-
-      if(field === "ltp") setTextIfChanged(node, ltp.toFixed(2));
-      if(field === "uc") setTextIfChanged(node, uc > 0 ? uc.toFixed(2) : "--");
-      if(field === "lc") setTextIfChanged(node, lc > 0 ? lc.toFixed(2) : "--");
-      if(field === "pct") setTextIfChanged(node, (((ltp-prev)/prev)*100).toFixed(2) + "%");
-      if(field === "fo")  setTextIfChanged(node, open ? (((ltp-open)/open)*100).toFixed(2)+"%" : "--");
-      if(field === "fh")  setTextIfChanged(node, (((ltp-high)/high)*100).toFixed(2) + "%");
-      if(field === "fl")  setTextIfChanged(node, (((ltp-low)/low)*100).toFixed(2) + "%");
-      if(field === "tbq") setTextIfChanged(node, String(d.tbq||0));
-      if(field === "tsq") setTextIfChanged(node, String(d.tsq||0));
-      if(field === "bto") setTextIfChanged(node, String(Math.round(ltp*(d.tbq||0))));
-      if(field === "sto") setTextIfChanged(node, String(Math.round(ltp*(d.tsq||0))));
-    });
-
-    // LADDER table LTP (no blink)
-    const ladderLtp = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="ltp"]`);
-    ladderLtp.forEach(node => setTextIfChanged(node, ltp.toFixed(2)));
-    // ===== LIVE LADDER PnL update (continuous) =====
-if(LADDER_META[sym]){
-  LADDER_META[sym].ltp = ltp;
-
-  const {avg, qty, side} = LADDER_META[sym];
-  const pnl = calcUnrealizedPnl(side, qty, avg, ltp);
-
-  const pnlNodes = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="pnl"]`);
-  pnlNodes.forEach(node => {
-    setTextIfChanged(node, pnl.toFixed(2));
-    paintPnlCell(node, pnl);
-  });
-}
-
-
-  }
-
-  TICK_BUFFER = {};
-  TICK_FLUSH_TIMER = null;
-}
-
-/* ================= ALERTS (NO REBUILD = NO BLINK) ================= */
-function startAlertsPolling(){
-  if(alertsInterval) return;
-  loadAlerts(); // immediate
-  alertsInterval = setInterval(() => {
-    if(!isAlertFreezeWindow()){
-      loadAlerts();
-    }
-  }, 30000);
-}
-
-function stopAlertsPolling(){
-  if(alertsInterval) clearInterval(alertsInterval);
-  alertsInterval = null;
-}
-
-/**
- * Stable render:
- * - if same alert payload signature, DO NOTHING (no rebuild)
- * - if changed, rebuild once
- * - tick updates happen via WS on data-sym cells
- */
-async function loadAlerts(){
-  try{
-    const r = await fetch("/api/alerts");
-    const data = await r.json();
-
-    // freeze window => don't change UI (keep last)
-    if(isAlertFreezeWindow()){
-      return;
-    }
-
-    // signature to avoid needless rebuild
-    const sig = JSON.stringify(data || []);
-    if(LAST_ALERTS_RENDER === sig){
-      return;
-    }
-    LAST_ALERTS_RENDER = sig;
-
-    // rebuild only on change
-    const tbody = $("alerts-body");
-    let html = "";
-    const oldSyms = new Set(subscribed);
-    subscribed.clear();
-
-    // if empty, keep last visible rows (don’t blank => no blink)
-    if(!data || data.length === 0){
-      // keep old subscription
-      subscribed = oldSyms;
-      return;
-    }
-
-    // unique rows by (scan|time|symbol)
-    ALERT_ROW_KEYS.clear();
-
-    data.forEach(a=>{
-      (a.stocks || []).forEach(s=>{
-        s = String(s||"").toUpperCase();
-        if(!s) return;
-
-        subscribed.add(s);
-        const key = `${a.scan}|${a.time}|${s}`;
-        if(ALERT_ROW_KEYS.has(key)) return;
-        ALERT_ROW_KEYS.add(key);
-
-        html += `
-        <tr class="hover:bg-slate-800/60">
-          <td class="p-3 text-cyan-300">${a.scan}</td>
-          <td class="p-3 text-gray-400">${a.time}</td>
-          <td class="p-3 font-semibold">${s}</td>
-
-          <td class="p-3 text-cyan-400 tabular-nums" data-sym="${s}" data-field="ltp">--</td>
-          <td class="p-3 text-emerald-300 tabular-nums" data-sym="${s}" data-field="uc">--</td>
-          <td class="p-3 text-rose-300 tabular-nums" data-sym="${s}" data-field="lc">--</td>
-          <td class="p-3 text-center tabular-nums" data-sym="${s}" data-field="pct">--</td>
-          <td class="p-3 text-center tabular-nums" data-sym="${s}" data-field="fo">--</td>
-          <td class="p-3 text-center tabular-nums" data-sym="${s}" data-field="fh">--</td>
-          <td class="p-3 text-center tabular-nums" data-sym="${s}" data-field="fl">--</td>
-
-          <td class="p-3 tabular-nums" data-sym="${s}" data-field="tbq">--</td>
-          <td class="p-3 tabular-nums" data-sym="${s}" data-field="tsq">--</td>
-          <td class="p-3 text-green-400 tabular-nums" data-sym="${s}" data-field="bto">--</td>
-          <td class="p-3 text-red-400 tabular-nums" data-sym="${s}" data-field="sto">--</td>
-
-          <td class="p-3">
-        <div class="flex gap-2">
-          <button onclick="openTradeModal('${s}','BUY')" class="bg-green-600 px-2 py-1 rounded text-white">
-            BUY
+        <!-- Save Button -->
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
+          <button type="button" onclick="saveUniversalSettings()"
+            class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 sm:py-3.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 text-sm sm:text-base">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save Settings
           </button>
-          <button onclick="openTradeModal('${s}','SELL')" class="bg-red-600 px-2 py-1 rounded text-white">
-            SELL
+          <button type="button" onclick="closeUniversalSettings()"
+            class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 sm:py-3.5 rounded-lg transition-all duration-200 text-sm sm:text-base">
+            Cancel
           </button>
         </div>
-      </td>
+      </form>
+    </div>
+  </div>
 
-        </tr>`;
-      });
-    });
 
-    tbody.innerHTML = html;
-  }catch(e){
-    // ignore
-  }
-}
 
-/* ================= TRADE MODAL ================= */
-function openTradeModal(s,side){
-  tmSymbol=s; tmSide=side;
-  $("tm-symbol").innerText=s;
-  $("tm-side").innerText=side;
-  $("tradeModal").classList.remove("hidden");
-}
-function closeTradeModal(){
-  $("tradeModal").classList.add("hidden");
-}
-
-async function confirmTrade(){
-  const mode = $("ls-mode").value;
-  const qtyMode = $("ls-qtymode").value;
-
-  const settings = {
-    qty_mode: qtyMode,
-    per_trade_capital: parseFloat($("ls-capital").value || "0"),
-    per_trade_qty: parseInt($("ls-qty").value || "1"),
-    threshold_pct: parseFloat($("ls-threshold").value || "1"),
-    stop_loss_pct: parseFloat($("ls-sl").value || "1"),
-    trailing_sl_pct: parseFloat($("ls-tsl").value || "1"),
-    ladder_cycles: parseInt($("ls-cycles").value || "1"),
-    max_adds_per_leg: parseInt($("ls-maxadds").value || "2"),
-  };
-
-  fetch("/api/ladder/start", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      symbol: tmSymbol,
-      side: tmSide,
-      settings_mode: mode,
-      settings: settings
-    })
-  })
-  .then(r=>r.json())
-  .then(d=>{
-    if(d.error){
-      showMsg("❌ " + d.error, true);
-      return;
+  <script>
+    /* ---------- STATE ---------- */
+    const USER_ID = "{{USER_ID}}";
+    // ===== Live ladder PnL meta store (for continuous updates) =====
+    const LADDER_META = {};
+    // ===== recompute overall ladder pnl from live values =====
+    let overallLive = 0;
+    for (const s in LADDER_META) {
+      const m = LADDER_META[s];
+      const pnl = calcUnrealizedPnl(m.side, m.qty, m.avg, m.ltp);
+      overallLive += pnl;
     }
-    showMsg("✅ Ladder started: " + tmSymbol + " (" + tmSide + ")", false);
-    closeTradeModal();
-    loadLadderState();
-  })
-  .catch(()=> showMsg("❌ Ladder start failed", true));
-}
-
-/* ================= CREDENTIALS ================= */
-function openCred(){ credModal.classList.remove("hidden"); }
-function closeCred(){ credModal.classList.add("hidden"); }
-function saveCred(){
-  fetch("/api/save-credentials",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({api_key:api_key.value, api_secret:api_secret.value})
-  }).then(()=>closeCred());
-}
-function connectZerodha(){ window.location="/connect/zerodha"; }
-function logout(){ window.location="/logout"; }
-
-/* ================= OVERALL PNL ================= */
-function setOverallPnl(val){
-  const pnl = Number(val || 0);
-
-  // top bar (agar aap rakhna chahte ho)
-  const elTop = document.getElementById("overall-pnl");
-  if(elTop) elTop.textContent = pnl.toFixed(2);
-
-  // ✅ Active Ladders pill
-  const elBox = document.getElementById("overall-pnl-ladders");
-  if(elBox) elBox.textContent = pnl.toFixed(2);
-
-  // ✅ color logic for pill
-  const pill = document.getElementById("ladder-pnl-pill");
-  if(!pill) return;
-
-  // reset
-  pill.classList.remove(
-    "bg-emerald-900/20","border-emerald-600/40","text-emerald-300",
-    "bg-red-900/20","border-red-600/40","text-red-300",
-    "bg-cyan-900/20","border-cyan-600/40","text-cyan-300"
-  );
-
-  if(pnl > 0){
-    pill.classList.add("bg-emerald-900/20","border-emerald-600/40","text-emerald-300");
-  }else if(pnl < 0){
-    pill.classList.add("bg-red-900/20","border-red-600/40","text-red-300");
-  }else{
-    pill.classList.add("bg-cyan-900/20","border-cyan-600/40","text-cyan-300");
-  }
-}
-function setLadderCount(n){
-  const el = document.getElementById("ladder-count");
-  if(el) el.textContent = String(Number(n||0));
-}
+    setOverallPnl(overallLive);
 
 
+    // alerts
+    let subscribed = new Set();
+    let alertsInterval = null;
+    let LAST_ALERTS_RENDER = null;   // last JSON signature to avoid rebuild
+    let ALERT_ROW_KEYS = new Set();  // currently rendered unique keys
 
-/* ================= LADDER STATE (HIDE DONE + CLEAR ON SQUAREOFF ALL) ================= */
-function ladderEmptyUI(){
-  const tbody = $("ladderRows");
-  tbody.innerHTML = `
-    <tr>
-      <td colspan="13" class="p-16 text-center text-cyan-900/70 italic text-lg">
-        No active ladder strategies
-      </td>
-    </tr>`;
-  setOverallPnl(0);
-  setLadderCount(0);
-}
+    // trade modal
+    let tmSymbol = null;
+    let tmSide = null;
+    let currentSettingsMode = "UNIVERSAL"; // UNIVERSAL or STOCK
 
-function loadLadderState(){
-  fetch("/api/ladder/state")
-    .then(r=>r.json())
-    .then(rows=>{
-      const tbody = $("ladderRows");
-      if(!rows || rows.length===0){
-        ladderEmptyUI();
-        return;
+    // automation mode
+    let automationMode = "MANUAL"; // MANUAL or AUTO
+    let pendingAutoModeSwitch = false; // ✅ Flag to auto-enable AUTO after settings save
+    let automationEnabledSymbols = new Set(); // ✅ Snapshot of symbols when automation was enabled
+    let processedAutoTradeSymbols = new Set(); // ✅ Track symbols already auto-traded in this session
+
+    // ws
+    let TICK_WS = null;
+    let WS_READY = false;
+    let WS_RETRY = 1500;
+
+    let TICK_BUFFER = {};
+    let TICK_FLUSH_TIMER = null;
+
+    /* ---------- HELPERS ---------- */
+    function $(id) { return document.getElementById(id); }
+
+    // WS status
+    function setWs(ok, txt) {
+      const badge = $("ws-badge");
+      const ring = badge.querySelector('.pulse-ring');
+      const label = badge.querySelector('.badge-label');
+
+      // Reset classes
+      badge.className = "status-pill";
+      ring.classList.remove("connected", "connecting");
+
+      if (ok) {
+        badge.classList.add("badge-green", "connected");
+        ring.classList.add("connected");
+        label.textContent = "WS LIVE";
+      } else if (txt && (txt.toLowerCase().includes("connect") || txt.toLowerCase().includes("retry"))) {
+        badge.classList.add("badge-amber", "connecting");
+        ring.classList.add("connecting");
+        label.textContent = "WS CONNECTING";
+      } else {
+        badge.classList.add("badge-red");
+        label.textContent = "WS OFFLINE";
       }
+    }
 
-      // ✅ filter: DONE + qty=0 rows hide (so Squareoff ke baad clear dikhenga)
-      const filtered = rows.filter(s=>{
-        const ls = s.leg_state || {};
-        const status = String(ls.status||"");
-        const qty = Number(ls.qty||0);
+    function wsUrl() {
+      const p = location.protocol === "https:" ? "wss" : "ws";
+      return `${p}://${location.host}/ws/ticks?user_id=${USER_ID}`;
+    }
 
-        // show if active OR running-like OR qty>0 OR waiting feed
-        if(s.active) return true;
-        if(qty > 0) return true;
-        if(status === "RUNNING" || status === "EXITING") return true;
-        if(status === "IDLE" && (ls.reason || "").includes("WAIT")) return true;
+    function toggleVisibility(inputId, button) {
+      const input = document.getElementById(inputId);
+      const icon = button.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
 
-        // otherwise hide (DONE etc)
+    // IST time parts
+    function istHM() {
+      const parts = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).formatToParts(new Date());
+      let h = 0, m = 0;
+      for (const p of parts) {
+        if (p.type === "hour") h = parseInt(p.value, 10);
+        if (p.type === "minute") m = parseInt(p.value, 10);
+      }
+      return { h, m };
+    }
+
+    /**
+     * Freeze window: market close ke baad 15:31 -> next day 09:00 tak
+     *  - 15:31-23:59 => freeze
+     *  - 00:00-08:59 => freeze
+     *  - 09:00-15:30 => allow
+     */
+    function isAlertFreezeWindow() {
+      const { h, m } = istHM();
+      if (h < 9) return true;
+      if (h > 15) return true;
+      if (h === 15 && m >= 31) return true;
+      return false;
+    }
+
+    /* ---------- SESSION + STATUS ---------- */
+    async function checkSession() {
+      const r = await fetch("/api/zerodha-status");
+      if (!r.ok) {
+        alert("Login first!");
+        window.location.href = "/";
         return false;
-      });
+      }
+      return true;
+    }
 
-      if(filtered.length === 0){
-        ladderEmptyUI();
+    // Zerodha status
+    async function refreshStatus() {
+      const badge = $("status-badge");
+      const ring = badge.querySelector('.pulse-ring');
+      const label = badge.querySelector('.badge-label');
+
+      badge.className = "status-pill";
+      ring.classList.remove("connected", "connecting");
+
+      try {
+        const res = await fetch("/api/zerodha-status");
+        const z = await res.json();
+        if (z.connected || z.status === "connected") {
+          badge.classList.add("badge-green", "connected");
+          ring.classList.add("connected");
+          label.textContent = "ZERODHA LIVE";
+        } else {
+          badge.classList.add("badge-red");
+          label.textContent = "ZERODHA OFFLINE";
+        }
+      } catch (e) {
+        badge.classList.add("badge-red");
+        label.textContent = "ZERODHA ERROR";
+      }
+    }
+
+    // Market status
+    function updateMarketBadge(marketOpen) {
+      const badge = $("market-badge");
+      const ring = badge.querySelector('.pulse-ring');
+      const label = badge.querySelector('.badge-label');
+
+      badge.className = "status-pill";
+      ring.classList.remove("connected", "connecting");
+
+      if (marketOpen) {
+        badge.classList.add("badge-green", "connected");
+        ring.classList.add("connected");
+        label.textContent = "MARKET OPEN";
+      } else {
+        badge.classList.add("badge-red");
+        label.textContent = "MARKET CLOSED";
+      }
+    }
+
+    /**
+     * Alerts gate:
+     * - Freeze window me polling OFF
+     * - 09:00 ke baad polling ON (market open ho ya na ho)
+     */
+    function manageAlertsPolling() {
+      if (isAlertFreezeWindow()) {
+        stopAlertsPolling();
         return;
       }
-      setLadderCount(filtered.length);
+      startAlertsPolling();
+    }
+
+    function checkMarketStatus() {
+      fetch("/api/market-status")
+        .then(r => r.json())
+        .then(d => {
+          updateMarketBadge(!!d.market_open);
+          // ✅ independent alert gate (your requirement)
+          manageAlertsPolling();
+        })
+        .catch(() => {
+          // even if api fails, still apply time gate
+          manageAlertsPolling();
+        });
+    }
+
+    /* ---------- WS START ---------- */
+    function startTickWS() {
+      if (TICK_WS && TICK_WS.readyState <= 1) return;
+
+      setWs(false, "WS: Connecting");
+      TICK_WS = new WebSocket(wsUrl());
+
+      TICK_WS.onopen = () => {
+        WS_READY = true;
+        setWs(true, "WS: LIVE");
+      };
+
+      TICK_WS.onclose = () => {
+        WS_READY = false;
+        setWs(false, "WS: Reconnecting");
+        setTimeout(startTickWS, WS_RETRY);
+      };
+
+      TICK_WS.onerror = () => {
+        try { TICK_WS.close(); } catch { }
+      };
+
+      TICK_WS.onmessage = ev => {
+        let d;
+        try { d = JSON.parse(ev.data); } catch { return; }
+
+        // snapshot support
+        if (d.type === "snapshot" && Array.isArray(d.ticks)) {
+          for (const t of d.ticks) {
+            if (!t.symbol) continue;
+            TICK_BUFFER[String(t.symbol).toUpperCase()] = t;
+          }
+          if (!TICK_FLUSH_TIMER) {
+            TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
+          }
+          return;
+        }
+
+        if (!d.symbol) return;
+        TICK_BUFFER[String(d.symbol).toUpperCase()] = d;
+        if (!TICK_FLUSH_TIMER) {
+          TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
+        }
+      };
+    }
+
+    /* ---------- NO-BLINK TICK FLUSH (updates all cells by data-sym) ---------- */
+    function setTextIfChanged(el, txt) {
+      if (!el) return;
+      if (el.textContent !== txt) el.textContent = txt;
+    }
+    function calcUnrealizedPnl(side, qty, avg, ltp) {
+      if (!qty || !avg || !ltp) return 0;
+      if (side === "SELL") return (avg - ltp) * qty;
+      return (ltp - avg) * qty; // BUY default
+    }
+
+    function paintPnlCell(el, pnl) {
+      el.classList.remove("text-emerald-400", "text-red-400", "text-slate-300");
+      if (pnl > 0) {
+        el.classList.add("text-emerald-400", "font-semibold");
+        el.style.textShadow = "0 0 8px rgba(16,185,129,0.5)";
+      } else if (pnl < 0) {
+        el.classList.add("text-red-400", "font-semibold");
+        el.style.textShadow = "0 0 8px rgba(244,63,94,0.4)";
+      } else {
+        el.classList.add("text-slate-300");
+      }
+    }
 
 
-      // rebuild ladder table (less frequent) but NO LTP blink now (WS updates LTP by data-lsym)
-      tbody.innerHTML = "";
+    function flushTickUI() {
+      for (const sym in TICK_BUFFER) {
+        const d = TICK_BUFFER[sym];
+        const ltp = Number(d.ltp || 0);
+        if (ltp <= 0) continue;
 
-      let overall = 0;
+        const prev = Number(d.prev || ltp);
+        const open = Number(d.open || prev || ltp);
+        const high = Number(d.high || ltp);
+        const low = Number(d.low || ltp);
+        const uc = (d.upper_circuit != null && d.upper_circuit !== "") ? Number(d.upper_circuit) : 0;
+        const lc = (d.lower_circuit != null && d.lower_circuit !== "") ? Number(d.lower_circuit) : 0;
 
-      filtered.forEach(s=>{
-        const ls = s.leg_state || {};
-        const SYM = String(s.symbol || "").toUpperCase();
-const avgv = ls.avg_price ? Number(ls.avg_price) : 0;
-const qtyv = Number(ls.qty || 0);
-const sidev = String(ls.side || "").toUpperCase();
+        // ALERTS table: update ALL rows having data-sym=sym
+        const nodes = document.querySelectorAll(`[data-sym="${sym}"]`);
+        nodes.forEach(node => {
+          const field = node.getAttribute("data-field");
+          if (!field) return;
 
-// store latest ladder meta for live pnl calculation
-LADDER_META[SYM] = {
-  avg: avgv,
-  qty: qtyv,
-  side: sidev,
-  ltp: LADDER_META[SYM]?.ltp || (s.ltp ? Number(s.ltp) : 0),
-};
+          if (field === "ltp") setTextIfChanged(node, ltp.toFixed(2));
+          if (field === "uc") setTextIfChanged(node, uc > 0 ? uc.toFixed(2) : "--");
+          if (field === "lc") setTextIfChanged(node, lc > 0 ? lc.toFixed(2) : "--");
+          if (field === "pct") setTextIfChanged(node, (((ltp - prev) / prev) * 100).toFixed(2) + "%");
+          if (field === "fo") setTextIfChanged(node, open ? (((ltp - open) / open) * 100).toFixed(2) + "%" : "--");
+          if (field === "fh") setTextIfChanged(node, (((ltp - high) / high) * 100).toFixed(2) + "%");
+          if (field === "fl") setTextIfChanged(node, (((ltp - low) / low) * 100).toFixed(2) + "%");
+          if (field === "tbq") setTextIfChanged(node, String(d.tbq || 0));
+          if (field === "tsq") setTextIfChanged(node, String(d.tsq || 0));
+          if (field === "bto") setTextIfChanged(node, String(Math.round(ltp * (d.tbq || 0))));
+          if (field === "sto") setTextIfChanged(node, String(Math.round(ltp * (d.tsq || 0))));
+        });
 
-        const hiLo = (ls.side==="BUY")
-          ? (ls.highest ? Number(ls.highest).toFixed(2) : "-")
-          : (ls.lowest ? Number(ls.lowest).toFixed(2) : "-");
+        // LADDER table LTP (no blink)
+        const ladderLtp = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="ltp"]`);
+        ladderLtp.forEach(node => setTextIfChanged(node, ltp.toFixed(2)));
+        // ===== LIVE LADDER PnL update (continuous) =====
+        if (LADDER_META[sym]) {
+          LADDER_META[sym].ltp = ltp;
 
-        // LTP shown from WS ticks if available; fallback to API ltp
-        const ltp = s.ltp ? Number(s.ltp).toFixed(2) : "-";
+          const { avg, qty, side } = LADDER_META[sym];
+          const pnl = calcUnrealizedPnl(side, qty, avg, ltp);
 
-        const pnlNum = (ls.unrealized_pnl!=null) ? Number(ls.unrealized_pnl) : 0;
-        overall += pnlNum;
+          const pnlNodes = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="pnl"]`);
+          pnlNodes.forEach(node => {
+            setTextIfChanged(node, pnl.toFixed(2));
+            paintPnlCell(node, pnl);
+          });
+        }
+      }
+      TICK_BUFFER = {};
+      TICK_FLUSH_TIMER = null;
+    }
 
-        const pnl = pnlNum.toFixed(2);
+    /* ================= ALERTS (NO REBUILD = NO BLINK) ================= */
+    function startAlertsPolling() {
+      if (alertsInterval) return;
+      loadAlerts(); // immediate
+      alertsInterval = setInterval(() => {
+        if (!isAlertFreezeWindow()) {
+          loadAlerts();
+        }
+      }, 15000);
+    }
 
-        let nextAdd = "-";
-        let sl = "-";
-        let tsl = "-";
+    function stopAlertsPolling() {
+      if (alertsInterval) clearInterval(alertsInterval);
+      alertsInterval = null;
+    }
 
-        if(ls.avg_price && s.settings){
-          const avg = Number(ls.avg_price);
-          const last = Number(ls.last_add_price || avg);
-          const th = Number(s.settings.threshold_pct);
-          const slp = Number(s.settings.stop_loss_pct);
-          const tslp = Number(s.settings.trailing_sl_pct);
+    function shakeBell() {
+      const bell = document.getElementById("alerts-bell");
+      if (!bell) return; // ✅ Exit if element doesn't exist
+      bell.classList.remove("bell-shake"); // reset
+      void bell.offsetWidth;               // reflow
+      bell.classList.add("bell-shake");
+    }
 
-          if(ls.side === "BUY"){
-            nextAdd = (last * (1 + th/100)).toFixed(2);
-            sl = (avg * (1 - slp/100)).toFixed(2);
-            if(ls.highest) tsl = (Number(ls.highest) * (1 - tslp/100)).toFixed(2);
+
+    /**
+     * Stable render:
+     * - if same alert payload signature, DO NOTHING (no rebuild)
+     * - if changed, rebuild once
+     * - tick updates happen via WS on data-sym cells
+     * - ✅ AUTO-TRADE: if automation is ON, auto-start trades for NEW symbols
+     */
+    async function loadAlerts() {
+      try {
+        const r = await fetch("/api/alerts");
+        const data = await r.json();
+
+        // freeze window => don't change UI (keep last)
+        if (isAlertFreezeWindow()) {
+          return;
+        }
+
+        // signature to avoid needless rebuild
+        const sig = JSON.stringify(data || []);
+        if (LAST_ALERTS_RENDER === sig) {
+          return;
+        }
+        LAST_ALERTS_RENDER = sig;
+
+        // rebuild only on change
+        const tbody = $("alerts-body");
+        let html = "";
+        const oldSyms = new Set(subscribed);
+        subscribed.clear();
+
+        // if empty, keep last visible rows (don't blank => no blink)
+        if (!data || data.length === 0) {
+          // keep old subscription
+          subscribed = oldSyms;
+          return;
+        }
+
+        // unique rows by (scan|time|symbol)
+        ALERT_ROW_KEYS.clear();
+        let liveCount = 0;
+
+        // ✅ Track NEW symbols for auto-trading
+        const newSymbols = new Set();
+
+        data.forEach(a => {
+          (a.stocks || []).forEach(s => {
+            s = String(s || "").toUpperCase();
+            if (!s) return;
+
+            subscribed.add(s);
+            const key = `${a.scan}|${a.time}|${s}`;
+            if (ALERT_ROW_KEYS.has(key)) return;
+            ALERT_ROW_KEYS.add(key);
+            liveCount += 1;   // ✅ count each unique alert row
+
+            // ✅ Check if this is a NEW symbol (not in old set)
+            if (!oldSyms.has(s)) {
+              newSymbols.add(s);
+            }
+
+            html += `
+<tr class="hover:bg-slate-800/40 transition-all duration-300 border-b-2 border-slate-700/60 group row-entrance">
+  <td class="p-3 text-left">
+    <div class="scan-name-wrap text-sky-400 font-medium text-xs" title="${a.scan}">${a.scan}</div>
+  </td>
+  <td class="p-4 text-slate-500 tabular-nums text-xs">${a.time}</td>
+  <td class="p-4 font-extrabold text-white text-lg tracking-wide">${s}</td>
+
+  <td class="p-4 text-right tabular-nums text-white font-bold text-lg tracking-wide" data-sym="${s}" data-field="ltp">--</td>
+  <td class="p-4 text-right tabular-nums text-red-500 font-bold text-lg tracking-wide" data-sym="${s}" data-field="lc">--</td>
+  <td class="p-4 text-right tabular-nums text-emerald-500 font-bold text-lg tracking-wide" data-sym="${s}" data-field="uc">--</td>
+  <td class="p-4 text-right tabular-nums text-cyan-400 font-extrabold text-lg tracking-wide" data-sym="${s}" data-field="pct">--</td>
+  <td class="p-4 text-right tabular-nums text-slate-300 font-semibold text-lg tracking-wide" data-sym="${s}" data-field="fo">--</td>
+  <td class="p-4 text-right tabular-nums text-slate-300 font-semibold text-lg tracking-wide" data-sym="${s}" data-field="fh">--</td>
+  <td class="p-4 text-right tabular-nums text-slate-300 font-semibold text-lg tracking-wide" data-sym="${s}" data-field="fl">--</td>
+
+  <td class="p-4 text-right tabular-nums text-slate-200 font-semibold text-lg tracking-wide" data-sym="${s}" data-field="tbq">--</td>
+  <td class="p-4 text-right tabular-nums text-slate-200 font-semibold text-lg tracking-wide" data-sym="${s}" data-field="tsq">--</td>
+  <td class="p-4 text-right tabular-nums text-emerald-400 font-extrabold text-xl tracking-wide" data-sym="${s}" data-field="bto">--</td>
+  <td class="p-4 text-right tabular-nums text-red-400 font-extrabold text-xl tracking-wide" data-sym="${s}" data-field="sto">--</td>
+
+  <td class="p-4 text-center">
+    <div class="flex items-center justify-center gap-2">
+      <button class="trade-btn trade-buy" data-symbol="${s}" data-side="BUY">BUY</button>
+      <button class="trade-btn trade-sell" data-symbol="${s}" data-side="SELL">SELL</button>
+    </div>
+  </td>
+</tr>`;
+          });
+        });
+
+        tbody.innerHTML = html;
+        setAlertCount(liveCount);
+
+        // ✅ AUTO-TRADE: If automation is ON and we have NEW symbols, auto-start trades
+        // Only trade symbols that were NOT present when automation was enabled
+        if (automationMode === "AUTO" && newSymbols.size > 0) {
+          // Filter out symbols that existed when automation was enabled AND symbols already processed
+          const trulyNewSymbols = new Set(
+            Array.from(newSymbols).filter(s => !automationEnabledSymbols.has(s) && !processedAutoTradeSymbols.has(s))
+          );
+
+          if (trulyNewSymbols.size > 0) {
+            console.log("🤖 AUTO-TRADE: Detected", trulyNewSymbols.size, "truly new symbols:", Array.from(trulyNewSymbols));
+            console.log("   (Ignoring", newSymbols.size - trulyNewSymbols.size, "pre-existing symbols)");
+
+            // Get universal settings
+            try {
+              const settingsRes = await fetch("/api/universal-settings");
+              const settingsData = await settingsRes.json();
+              const settings = settingsData.settings;
+
+              if (!settings || !settings.per_trade_capital) {
+                console.warn("⚠️ AUTO-TRADE: Universal settings not configured");
+                return;
+              }
+
+              // Auto-start ladder for each TRULY NEW symbol
+              for (const symbol of trulyNewSymbols) {
+                // Mark as processed immediately so we don't try again
+                processedAutoTradeSymbols.add(symbol);
+
+                try {
+                  console.log("🚀 AUTO-TRADE: Starting ladder for", symbol);
+
+                  // ✅ Minimal delay (100ms) for WebSocket to process
+                  await new Promise(resolve => setTimeout(resolve, 100));
+
+                  const response = await fetch("/api/ladder/start", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      symbol: symbol,
+                      side: "BUY",  // Default to BUY, you can make this configurable
+                      settings_mode: "UNIVERSAL",
+                      settings: settings
+                    })
+                  });
+
+                  const result = await response.json();
+
+                  if (result.error) {
+                    console.error("❌ AUTO-TRADE failed for", symbol, ":", result.error);
+                  } else {
+                    console.log("✅ AUTO-TRADE: Ladder started for", symbol);
+                    showMsg(`🤖 Auto-started: ${symbol}`, false);
+                  }
+                } catch (err) {
+                  console.error("❌ AUTO-TRADE error for", symbol, ":", err);
+                }
+              }
+
+              // Refresh ladder state after auto-trades
+              setTimeout(() => loadLadderState(), 500);
+
+            } catch (err) {
+              console.error("❌ AUTO-TRADE: Failed to get settings:", err);
+            }
           } else {
-            nextAdd = (last * (1 - th/100)).toFixed(2);
-            sl = (avg * (1 + slp/100)).toFixed(2);
-            if(ls.lowest) tsl = (Number(ls.lowest) * (1 + tslp/100)).toFixed(2);
+            console.log("ℹ️ AUTO-TRADE: All new symbols were pre-existing. No auto-trade.");
           }
         }
 
-        let st = ls.status || "UNKNOWN";
-        if(ls.reason){
-          st += " (" + ls.reason + ")";
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    /* ================= AUTOMATION MODE SWITCH ================= */
+    async function setAutomationMode(mode) {
+      if (mode === automationMode) {
+        showMsg(`ℹ️ Already in ${mode === "AUTO" ? "Full Automation" : "Manual Control"} Mode`, false);
+        return;
+      }
+
+      // If switching to AUTO, check if universal settings are configured
+      if (mode === "AUTO") {
+        try {
+          const res = await fetch("/api/universal-settings");
+          const data = await res.json();
+
+          // ✅ Check if settings are properly configured (not just defaults)
+          const s = data.settings || {};
+          const hasConfigured = s.per_trade_capital && s.per_trade_capital > 0 &&
+            s.threshold_pct && s.stop_loss_pct && s.trailing_sl_pct;
+
+          if (!hasConfigured) {
+            showMsg("⚠️ Please configure Universal Settings first", true);
+            pendingAutoModeSwitch = true; // ✅ Remember to enable AUTO after save
+            openUniversalSettings();
+            return;
+          }
+        } catch (e) {
+          showMsg("❌ Failed to verify settings", true);
+          return;
         }
-        let stColor = "text-slate-400";
-        if(st.includes("WAIT")) stColor = "text-yellow-400";
-        else if(st.startsWith("RUNNING")) stColor = "text-green-400";
-        else if(st.startsWith("DONE")) stColor = "text-slate-400";
-        else if(st.startsWith("ERROR")) stColor = "text-red-500";
-        else if(st.startsWith("EXIT")) stColor = "text-orange-400";
+      }
 
-        tbody.innerHTML += `
-          <tr>
-            <td class="p-3 text-left font-semibold">${s.symbol}</td>
-            <td class="p-3 text-center">${(s.cycle_index+1)} / ${s.cycle_total}</td>
-            <td class="p-3 text-center">${s.leg}</td>
-            <td class="p-3 text-center tabular-nums">${ls.qty || 0}</td>
+      // Save to backend
+      try {
+        await fetch("/api/automation-mode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: mode })
+        });
 
-            <td class="p-3 text-center tabular-nums"
+        automationMode = mode;
+
+        // ✅ When enabling AUTO, capture current symbols as baseline
+        if (mode === "AUTO") {
+          automationEnabledSymbols = new Set(subscribed);
+          processedAutoTradeSymbols.clear(); // ✅ Reset processed list when starting new session
+          console.log("🔄 Automation ENABLED. Baseline symbols:", Array.from(automationEnabledSymbols));
+        } else {
+          // Clear baseline when disabling
+          automationEnabledSymbols.clear();
+          console.log("🔄 Automation DISABLED");
+        }
+
+        console.log("🔄 Automation mode changed to:", mode); // Debug log
+        updateAutomationUI();
+        showMsg(`✅ Switched to ${mode === "AUTO" ? "Full Automation" : "Manual Control"}`, false);
+      } catch (e) {
+        console.error("❌ Failed to update automation mode:", e);
+        showMsg("❌ Failed to update automation mode", true);
+      }
+    }
+
+    function updateAutomationUI() {
+      console.log("🎨 Updating UI for mode:", automationMode); // Debug log
+      const manualBtn = $("mode-manual-btn");
+      const autoBtn = $("mode-auto-btn");
+      const indicator = $("mode-indicator");
+
+      const manualDot = manualBtn.querySelector(".mode-dot");
+      const autoDot = autoBtn.querySelector(".mode-dot");
+      // 🔥 Header badge
+      const badge = $("automation-badge");
+      const label = $("automation-label");
+      const ring = badge.querySelector(".pulse-ring");
+
+      // Reset badge classes
+      badge.className = "status-pill";
+      ring.classList.remove("connected");
+
+      if (automationMode === "AUTO") {
+        indicator.style.transform = "translateX(100%)";
+        indicator.className = "absolute inset-y-1 left-1 w-1/2 rounded-full bg-gradient-to-r from-emerald-500/30 to-emerald-600/30 transition-all duration-500 ease-[cubic-bezier(.4,0,.2,1)] shadow-lg shadow-emerald-500/30";
+
+        // Toggle buttons
+        autoBtn.classList.add("active");
+        autoBtn.classList.add("bg-emerald-600", "border-emerald-500", "text-white");
+        autoBtn.classList.remove("bg-slate-800", "border-slate-600", "text-slate-300");
+        manualBtn.classList.remove("active", "bg-red-600", "border-red-500", "text-white");
+        manualBtn.classList.add("bg-slate-800", "border-slate-600", "text-slate-300");
+
+        autoDot.classList.remove("hidden");
+        autoDot.classList.remove("bg-amber-400");
+        autoDot.classList.add("bg-emerald-400");
+        manualDot.classList.add("hidden");
+
+        // 🟢 Header badge - GREEN for AUTO
+        badge.classList.add("badge-green");
+        ring.classList.add("connected");
+        label.textContent = "FULL AUTOMATION";
+      } else {
+        indicator.style.transform = "translateX(0%)";
+        indicator.className = "absolute inset-y-1 left-1 w-1/2 rounded-full bg-gradient-to-r from-red-500/30 to-red-600/30 transition-all duration-500 ease-[cubic-bezier(.4,0,.2,1)] shadow-lg shadow-red-500/30";
+
+        // Toggle buttons
+        manualBtn.classList.add("active", "bg-red-600", "border-red-500", "text-white");
+        manualBtn.classList.remove("bg-slate-800", "border-slate-600", "text-slate-300");
+        autoBtn.classList.remove("active", "bg-emerald-600", "border-emerald-500", "text-white");
+        autoBtn.classList.add("bg-slate-800", "border-slate-600", "text-slate-300");
+
+        manualDot.classList.remove("hidden");
+        manualDot.classList.remove("bg-emerald-400", "bg-amber-400");
+        manualDot.classList.add("bg-red-400");
+        autoDot.classList.add("hidden");
+
+        // 🔴 Header badge - RED for MANUAL
+        badge.classList.add("badge-red");
+        ring.classList.add("connected");
+        label.textContent = "MANUAL MODE";
+      }
+    }
+
+
+    async function loadAutomationMode() {
+      try {
+        const res = await fetch("/api/automation-mode");
+        const data = await res.json();
+        automationMode = data.mode || "MANUAL";
+        updateAutomationUI();
+      } catch (e) {
+        console.error("Failed to load automation mode:", e);
+      }
+    }
+
+    /* ================= UNIVERSAL SETTINGS ================= */
+    function openUniversalSettings() {
+      loadUniversalSettingsToForm();
+      $("universalSettingsModal").classList.remove("hidden");
+    }
+
+    function closeUniversalSettings() {
+      $("universalSettingsModal").classList.add("hidden");
+      pendingAutoModeSwitch = false; // ✅ Reset flag if user cancels
+    }
+
+    async function loadUniversalSettingsToForm() {
+      try {
+        const res = await fetch("/api/universal-settings");
+        const data = await res.json();
+        const s = data.settings;
+
+        $("us-qtymode").value = s.qty_mode || "CAPITAL";
+        $("us-capital").value = s.per_trade_capital || 1000;
+        $("us-qty").value = s.per_trade_qty || 1;
+        $("us-threshold").value = s.threshold_pct || 1;
+        $("us-sl").value = s.stop_loss_pct || 1;
+        $("us-tsl").value = s.trailing_sl_pct || 1;
+        $("us-cycles").value = s.ladder_cycles || 1;
+        $("us-maxadds").value = s.max_adds_per_leg || 2;
+      } catch (e) {
+        console.error("Failed to load universal settings:", e);
+      }
+    }
+
+    async function saveUniversalSettings() {
+      const settings = {
+        qty_mode: $("us-qtymode").value,
+        per_trade_capital: parseFloat($("us-capital").value || "1000"),
+        per_trade_qty: parseInt($("us-qty").value || "1"),
+        threshold_pct: parseFloat($("us-threshold").value || "1"),
+        stop_loss_pct: parseFloat($("us-sl").value || "1"),
+        trailing_sl_pct: parseFloat($("us-tsl").value || "1"),
+        ladder_cycles: parseInt($("us-cycles").value || "1"),
+        max_adds_per_leg: parseInt($("us-maxadds").value || "2"),
+      };
+
+      try {
+        await fetch("/api/universal-settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ settings })
+        });
+
+        showMsg("✅ Universal settings saved", false);
+        closeUniversalSettings();
+
+        // ✅ If user clicked Full Automation before configuring, auto-enable it now
+        if (pendingAutoModeSwitch) {
+          pendingAutoModeSwitch = false;
+          await setAutomationMode("AUTO");
+        }
+      } catch (e) {
+        showMsg("❌ Failed to save universal settings", true);
+      }
+    }
+
+    /* ================= SETTINGS MODE SELECTION ================= */
+    function selectSettingsMode(mode) {
+      currentSettingsMode = mode;
+
+      const btnUniversal = $("btn-universal-mode");
+      const btnStock = $("btn-stock-mode");
+      const stockForm = $("stock-settings-form");
+
+      if (mode === "UNIVERSAL") {
+        btnUniversal.classList.add("bg-cyan-600", "border-cyan-500", "text-white");
+        btnUniversal.classList.remove("bg-slate-800", "border-slate-600", "text-slate-300");
+        btnStock.classList.remove("bg-cyan-600", "border-cyan-500", "text-white");
+        btnStock.classList.add("bg-slate-800", "border-slate-600", "text-slate-300");
+
+        stockForm.style.display = "none";
+        loadUniversalSettingsToTradeModal();
+      } else {
+        btnStock.classList.add("bg-cyan-600", "border-cyan-500", "text-white");
+        btnStock.classList.remove("bg-slate-800", "border-slate-600", "text-slate-300");
+        btnUniversal.classList.remove("bg-cyan-600", "border-cyan-500", "text-white");
+        btnUniversal.classList.add("bg-slate-800", "border-slate-600", "text-slate-300");
+
+        stockForm.style.display = "block";
+        loadStockSettingsToTradeModal(tmSymbol);
+      }
+    }
+
+    async function loadUniversalSettingsToTradeModal() {
+      try {
+        const res = await fetch("/api/universal-settings");
+        const data = await res.json();
+        const s = data.settings;
+
+        $("ls-mode").value = "UNIVERSAL";
+        $("ls-qtymode").value = s.qty_mode || "CAPITAL";
+        $("ls-capital").value = s.per_trade_capital || 1000;
+        $("ls-qty").value = s.per_trade_qty || 1;
+        $("ls-threshold").value = s.threshold_pct || 1;
+        $("ls-sl").value = s.stop_loss_pct || 1;
+        $("ls-tsl").value = s.trailing_sl_pct || 1;
+        $("ls-cycles").value = s.ladder_cycles || 1;
+        $("ls-maxadds").value = s.max_adds_per_leg || 2;
+      } catch (e) {
+        console.error("Failed to load universal settings:", e);
+      }
+    }
+
+    async function loadStockSettingsToTradeModal(symbol) {
+      try {
+        const res = await fetch(`/api/stock-settings?symbol=${symbol}`);
+        const data = await res.json();
+
+        if (data.settings) {
+          const s = data.settings;
+          $("ls-mode").value = "STOCK";
+          $("ls-qtymode").value = s.qty_mode || "CAPITAL";
+          $("ls-capital").value = s.per_trade_capital || 1000;
+          $("ls-qty").value = s.per_trade_qty || 1;
+          $("ls-threshold").value = s.threshold_pct || 1;
+          $("ls-sl").value = s.stop_loss_pct || 1;
+          $("ls-tsl").value = s.trailing_sl_pct || 1;
+          $("ls-cycles").value = s.ladder_cycles || 1;
+          $("ls-maxadds").value = s.max_adds_per_leg || 2;
+        } else {
+          $("ls-mode").value = "STOCK";
+        }
+      } catch (e) {
+        console.error("Failed to load stock settings:", e);
+      }
+    }
+
+    /* ================= TRADE MODAL ================= */
+    function toggleTradeSide() {
+      tmSide = (tmSide === "BUY") ? "SELL" : "BUY";
+      const btn = $("tm-side");
+      btn.innerText = tmSide;
+
+      // Update styling
+      btn.className = "px-4 py-1.5 rounded-lg text-sm font-bold border transition-all cursor-pointer select-none shadow-lg " +
+        (tmSide === "BUY"
+          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/20"
+          : "bg-rose-500/10 text-rose-400 border-rose-500/50 hover:bg-rose-500/20");
+    }
+
+    function openTradeModal(s, side) {
+      // Check automation mode
+      if (automationMode === "AUTO") {
+        showMsg("⚠️ Full Automation is enabled. Disable automation to manually configure trades.", true);
+        return;
+      }
+
+      tmSymbol = s;
+      tmSide = side;
+
+      // Set input value
+      $("tm-symbol").value = s;
+
+      // Populate datalist with currently subscribed/visible stocks
+      const dl = $("available-stocks");
+      if (dl) {
+        dl.innerHTML = "";
+        if (typeof subscribed !== 'undefined') {
+          subscribed.forEach(sym => {
+            const opt = document.createElement("option");
+            opt.value = sym;
+            dl.appendChild(opt);
+          });
+        }
+      }
+
+      // Update Side Button
+      const btn = $("tm-side");
+      btn.innerText = side;
+      btn.className = "px-4 py-1.5 rounded-lg text-sm font-bold border transition-all cursor-pointer select-none shadow-lg " +
+        (side === "BUY"
+          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/20"
+          : "bg-rose-500/10 text-rose-400 border-rose-500/50 hover:bg-rose-500/20");
+
+      // Reset to universal mode by default
+      selectSettingsMode("UNIVERSAL");
+
+      $("tradeModal").classList.remove("hidden");
+    }
+    function closeTradeModal() {
+      $("tradeModal").classList.add("hidden");
+    }
+
+
+    async function confirmTrade() {
+      const mode = currentSettingsMode === "UNIVERSAL" ? "UNIVERSAL" : "STOCK";
+      const qtyMode = $("ls-qtymode").value;
+
+      const settings = {
+        qty_mode: qtyMode,
+        per_trade_capital: parseFloat($("ls-capital").value || "0"),
+        per_trade_qty: parseInt($("ls-qty").value || "1"),
+        threshold_pct: parseFloat($("ls-threshold").value || "1"),
+        stop_loss_pct: parseFloat($("ls-sl").value || "1"),
+        trailing_sl_pct: parseFloat($("ls-tsl").value || "1"),
+        ladder_cycles: parseInt($("ls-cycles").value || "1"),
+        max_adds_per_leg: parseInt($("ls-maxadds").value || "2"),
+      };
+
+      // If STOCK mode, save stock-specific settings for future use
+      if (mode === "STOCK") {
+        try {
+          await fetch("/api/stock-settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              symbol: tmSymbol,
+              settings: settings
+            })
+          });
+        } catch (e) {
+          console.error("Failed to save stock settings:", e);
+        }
+      }
+
+      // Start ladder
+      fetch("/api/ladder/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: tmSymbol,
+          side: tmSide,
+          settings_mode: mode,
+          settings: settings
+        })
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) {
+            showMsg("❌ " + d.error, true);
+            return;
+          }
+          showMsg("✅ Ladder started: " + tmSymbol + " (" + tmSide + ")", false);
+          closeTradeModal();
+          loadLadderState();
+        })
+        .catch(() => showMsg("❌ Ladder start failed", true));
+    }
+
+    /* ================= CREDENTIALS ================= */
+    function openCred() { credModal.classList.remove("hidden"); }
+    function closeCred() { credModal.classList.add("hidden"); }
+    function saveCred() {
+      fetch("/api/save-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_key: api_key.value, api_secret: api_secret.value })
+      }).then(() => closeCred());
+    }
+    function connectZerodha() { window.location = "/connect/zerodha"; }
+    function logout() { window.location = "/logout"; }
+
+    /* ================= OVERALL PNL ================= */
+    function setOverallPnl(val) {
+      const pnl = Number(val || 0);
+
+      // top bar (agar aap rakhna chahte ho)
+      const elTop = document.getElementById("overall-pnl");
+      if (elTop) elTop.textContent = pnl.toFixed(2);
+
+      // ✅ Active Ladders pill
+      const elBox = document.getElementById("overall-pnl-ladders");
+      if (elBox) elBox.textContent = pnl.toFixed(2);
+
+      // ✅ color logic for pill
+      const pill = document.getElementById("ladder-pnl-pill");
+      if (!pill) return;
+
+      // reset
+      pill.classList.remove(
+        "bg-emerald-900/20", "border-emerald-600/40", "text-emerald-300",
+        "bg-red-900/20", "border-red-600/40", "text-red-300",
+        "bg-cyan-900/20", "border-cyan-600/40", "text-cyan-300"
+      );
+
+      if (pnl > 0) {
+        pill.classList.add("bg-emerald-900/20", "border-emerald-600/40", "text-emerald-300");
+      } else if (pnl < 0) {
+        pill.classList.add("bg-red-900/20", "border-red-600/40", "text-red-300");
+      } else {
+        pill.classList.add("bg-cyan-900/20", "border-cyan-600/40", "text-cyan-300");
+      }
+    }
+    function setAlertCount(n) {
+      const el = document.getElementById("alerts-count");
+      if (el) el.textContent = String(Number(n || 0));
+    }
+
+
+    function setLadderCount(n) {
+      const el = document.getElementById("ladder-count");
+      if (el) el.textContent = String(Number(n || 0));
+    }
+
+
+
+    /* ================= LADDER STATE (HIDE DONE + CLEAR ON SQUAREOFF ALL) ================= */
+    function ladderEmptyUI() {
+      const tbody = $("ladderRows");
+      tbody.innerHTML = `
+    <tr>
+      <td colspan="13" class="p-12 text-center text-slate-500 italic text-sm">
+        No active ladder strategies
+      </td>
+    </tr>`;
+      setOverallPnl(0);
+      setLadderCount(0);
+    }
+
+    function loadLadderState() {
+      fetch("/api/ladder/state")
+        .then(r => r.json())
+        .then(rows => {
+          const tbody = $("ladderRows");
+          if (!rows || rows.length === 0) {
+            ladderEmptyUI();
+            return;
+          }
+
+          // ✅ filter: DONE + qty=0 rows hide (so Squareoff ke baad clear dikhenga)
+          const filtered = rows.filter(s => {
+            const ls = s.leg_state || {};
+            const status = String(ls.status || "");
+            const qty = Number(ls.qty || 0);
+
+            // show if active OR running-like OR qty>0 OR waiting feed
+            if (s.active) return true;
+            if (qty > 0) return true;
+            if (status === "RUNNING" || status === "EXITING") return true;
+            if (status === "IDLE" && (ls.reason || "").includes("WAIT")) return true;
+
+            // otherwise hide (DONE etc)
+            return false;
+          });
+
+          if (filtered.length === 0) {
+            ladderEmptyUI();
+            return;
+          }
+          setLadderCount(filtered.length);
+
+
+          // rebuild ladder table (less frequent) but NO LTP blink now (WS updates LTP by data-lsym)
+          tbody.innerHTML = "";
+
+          let overall = 0;
+
+          filtered.forEach(s => {
+            const ls = s.leg_state || {};
+            const SYM = String(s.symbol || "").toUpperCase();
+            const avgv = ls.avg_price ? Number(ls.avg_price) : 0;
+            const qtyv = Number(ls.qty || 0);
+            const sidev = String(ls.side || "").toUpperCase();
+
+            // store latest ladder meta for live pnl calculation
+            LADDER_META[SYM] = {
+              avg: avgv,
+              qty: qtyv,
+              side: sidev,
+              ltp: LADDER_META[SYM]?.ltp || (s.ltp ? Number(s.ltp) : 0),
+            };
+
+            const hiLo = (ls.side === "BUY")
+              ? (ls.highest ? Number(ls.highest).toFixed(2) : "-")
+              : (ls.lowest ? Number(ls.lowest).toFixed(2) : "-");
+
+            // LTP shown from WS ticks if available; fallback to API ltp
+            const ltp = s.ltp ? Number(s.ltp).toFixed(2) : "-";
+
+            const pnlNum = (ls.unrealized_pnl != null) ? Number(ls.unrealized_pnl) : 0;
+            overall += pnlNum;
+
+            const pnl = pnlNum.toFixed(2);
+
+            let nextAdd = "-";
+            let sl = "-";
+            let tsl = "-";
+
+            if (ls.avg_price && s.settings) {
+              const avg = Number(ls.avg_price);
+              const last = Number(ls.last_add_price || avg);
+              const th = Number(s.settings.threshold_pct);
+              const slp = Number(s.settings.stop_loss_pct);
+              const tslp = Number(s.settings.trailing_sl_pct);
+
+              if (ls.side === "BUY") {
+                nextAdd = (last * (1 + th / 100)).toFixed(2);
+                sl = (avg * (1 - slp / 100)).toFixed(2);
+                if (ls.highest) tsl = (Number(ls.highest) * (1 - tslp / 100)).toFixed(2);
+              } else {
+                nextAdd = (last * (1 - th / 100)).toFixed(2);
+                sl = (avg * (1 + slp / 100)).toFixed(2);
+                if (ls.lowest) tsl = (Number(ls.lowest) * (1 + tslp / 100)).toFixed(2);
+              }
+            }
+
+            let st = ls.status || "UNKNOWN";
+            if (ls.reason) {
+              st += " (" + ls.reason + ")";
+            }
+            let stColor = "text-slate-400";
+            if (st.includes("WAIT")) stColor = "text-yellow-400";
+            else if (st.startsWith("RUNNING")) stColor = "text-green-400";
+            else if (st.startsWith("DONE")) stColor = "text-slate-400";
+            else if (st.startsWith("ERROR")) stColor = "text-red-500";
+            else if (st.startsWith("EXIT")) stColor = "text-orange-400";
+
+            tbody.innerHTML += `
+          <tr class="hover:bg-slate-800/40 transition-all duration-300 border-b-2 border-slate-700/60 group">
+            <td class="p-3 pl-4 text-left font-extrabold text-white text-sm tracking-wide">${s.symbol}</td>
+            <td class="p-3 text-center text-slate-500 text-xs font-medium">${(s.cycle_index + 1)} / ${s.cycle_total}</td>
+            <td class="p-3 text-center text-slate-300 font-medium">${s.leg}</td>
+            <td class="p-3 text-center tabular-nums text-slate-100 font-semibold">${ls.qty || 0}</td>
+
+            <td class="p-3 text-center tabular-nums text-sky-400 font-bold"
                 data-lsym="${String(s.symbol).toUpperCase()}"
                 data-lfield="ltp">${ltp}</td>
 
-            <td class="p-3 text-center tabular-nums">${ls.avg_price ? Number(ls.avg_price).toFixed(2) : "-"}</td>
-            <td class="p-3 text-center tabular-nums">${hiLo}</td>
-            <td class="p-3 text-center text-cyan-400 tabular-nums">${nextAdd}</td>
-            <td class="p-3 text-center text-red-400 tabular-nums">${sl}</td>
-            <td class="p-3 text-center text-yellow-400 tabular-nums">${tsl}</td>
-            <td class="p-3 text-center font-semibold tabular-nums"
-    data-lsym="${String(s.symbol).toUpperCase()}" data-lfield="pnl">${pnl}</td>
-            <td class="p-3 text-center font-semibold ${stColor}">${st}</td>
-            <td class="p-3 text-center">
+            <td class="p-3 text-center tabular-nums text-slate-400 text-xs">${ls.avg_price ? Number(ls.avg_price).toFixed(2) : "-"}</td>
+            <td class="p-3 text-center tabular-nums text-slate-500 text-xs">${hiLo}</td>
+            <td class="p-3 text-center text-emerald-400 tabular-nums font-bold">${nextAdd}</td>
+            <td class="p-3 text-center text-rose-500 tabular-nums font-medium">${sl}</td>
+            <td class="p-3 text-center text-amber-500 tabular-nums font-medium">${tsl}</td>
+            <td class="p-3 text-center font-black tabular-nums text-base"
+                data-lsym="${String(s.symbol).toUpperCase()}" data-lfield="pnl">${pnl}</td>
+            <td class="p-3 text-center font-bold text-[10px] tracking-widest uppercase ${stColor}">${st}</td>
+            <td class="p-2 text-center">
               <button onclick="squareoffLadder('${s.symbol}')"
-                class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-semibold">
-                Squareoff
+                class="squareoff-btn uppercase">
+                SQUAREOFF
               </button>
             </td>
           </tr>`;
+          });
+
+          setOverallPnl(overall);
+        })
+        .catch(() => { });
+    }
+
+    function squareoffLadder(symbol) {
+      fetch("/api/ladder/squareoff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol })
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) {
+            showMsg("❌ " + d.error, true);
+            return;
+          }
+          showMsg("✅ Squareoff done: " + symbol, false);
+
+          // refresh now
+          setTimeout(loadLadderState, 500);
+        })
+        .catch(() => showMsg("❌ Squareoff failed", true));
+    }
+
+    function killSwitch() {
+      if (!confirm("KILL SWITCH: This will square-off ALL positions and stop WS + trading. Continue?")) return;
+
+      // ✅ IMMEDIATELY Disable Automation
+      setAutomationMode("MANUAL");
+
+      fetch("/api/kill-switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: true })
+      })
+        .then(() => {
+          showMsg("🛑 Kill switch activated", true);
+          setTimeout(loadLadderState, 700);
+        })
+        .catch(() => showMsg("❌ Kill switch failed", true));
+    }
+
+    // ✅ Squareoff ALL => clear UI immediately + overall pnl 0
+    function squareoffAll() {
+      if (!confirm("Squareoff ALL positions (MIS Market)? Continue?")) return;
+
+      fetch("/api/squareoff_all", { method: "POST" })
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) {
+            showMsg("❌ " + d.error, true);
+            return;
+          }
+          showMsg(`✅ Squareoff all placed (${d.count})`, false);
+
+          // ✅ immediate clear (your requirement)
+          ladderEmptyUI();
+
+          // refresh in background to sync actual state
+          setTimeout(() => {
+            loadLadderState();
+          }, 1500);
+        })
+        .catch(() => showMsg("❌ Squareoff all failed", true));
+    }
+
+    /* ================= MSG ================= */
+    function showMsg(txt, isErr = false) {
+      const box = $("msg-box");
+      box.textContent = txt;
+      box.className = `px-6 py-3 rounded-xl text-sm font-medium shadow-2xl z-50 transition-all duration-300 ${isErr
+        ? 'bg-red-900/80 text-red-100 border border-red-700/50'
+        : 'bg-emerald-900/80 text-emerald-100 border border-emerald-700/50'
+        }`;
+      box.classList.remove("hidden");
+
+      setTimeout(() => {
+        box.classList.add("opacity-0", "translate-y-4");
+        setTimeout(() => box.classList.add("hidden"), 400);
+      }, 2800);
+    }
+
+    /* ================= CONNECTED PARTICLE NETWORK ================= */
+    function initParticles() {
+      const canvas = document.getElementById('particle-canvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      const mouse = { x: null, y: null };
+
+      // Configuration
+      const PARTICLE_COUNT = 80;
+      const CONNECT_DISTANCE = 150;
+      const MOUSE_RADIUS = 200;
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      window.addEventListener('resize', resize);
+      window.addEventListener('mousemove', (e) => {
+        mouse.x = e.x;
+        mouse.y = e.y;
+      });
+      resize();
+
+      class Particle {
+        constructor() {
+          this.init();
+        }
+
+        init() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.size = Math.random() * 2 + 0.5;
+          this.speedX = (Math.random() - 0.5) * 0.3;
+          this.speedY = (Math.random() - 0.5) * 0.3;
+          this.baseColor = Math.random() > 0.5 ? '14, 165, 233' : '99, 102, 241'; // Sky or Indigo
+        }
+
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+
+          // Bounce off edges
+          if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+          if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+
+          // Mouse interaction
+          const dx = mouse.x - this.x;
+          const dy = mouse.y - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < MOUSE_RADIUS) {
+            const forceDirectionX = dx / distance;
+            const forceDirectionY = dy / distance;
+            const force = (MOUSE_RADIUS - distance) / MOUSE_RADIUS;
+            const directionX = forceDirectionX * force * this.size;
+            const directionY = forceDirectionY * force * this.size;
+            this.x -= directionX; // Move away from mouse
+            this.y -= directionY;
+          }
+        }
+
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${this.baseColor}, 0.6)`;
+          ctx.fill();
+        }
+      }
+
+      function init() {
+        particles = [];
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          particles.push(new Particle());
+        }
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < particles.length; i++) {
+          particles[i].update();
+          particles[i].draw();
+
+          // Connect particles
+          for (let j = i; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < CONNECT_DISTANCE) {
+              ctx.beginPath();
+              ctx.strokeStyle = `rgba(148, 163, 184, ${0.15 - distance / CONNECT_DISTANCE * 0.15})`;
+              ctx.lineWidth = 1;
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.stroke();
+            }
+          }
+        }
+        requestAnimationFrame(animate);
+      }
+
+      init();
+      animate();
+    }
+
+    /* ================= INIT ================= */
+    document.addEventListener("DOMContentLoaded", async () => {
+      initParticles();
+      // ✅ Handle BUY/SELL click for dynamically injected rows
+      document.addEventListener("click", (ev) => {
+        const btn = ev.target.closest(".trade-btn");
+        if (!btn) return;
+
+        const sym = (btn.dataset.symbol || "").toUpperCase();
+        const side = (btn.dataset.side || "").toUpperCase();
+
+        if (!sym || !side) return;
+        openTradeModal(sym, side);
       });
 
-      setOverallPnl(overall);
-    })
-    .catch(()=>{});
-}
+      if (!(await checkSession())) return;
 
-function squareoffLadder(symbol){
-  fetch("/api/ladder/squareoff", {
-    method:"POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({symbol})
-  })
-  .then(r=>r.json())
-  .then(d=>{
-    if(d.error){
-      showMsg("❌ " + d.error, true);
-      return;
-    }
-    showMsg("✅ Squareoff done: " + symbol, false);
+      refreshStatus();
+      checkMarketStatus();   // also manages alert gate
 
-    // refresh now
-    setTimeout(loadLadderState, 500);
-  })
-  .catch(()=>showMsg("❌ Squareoff failed", true));
-}
+      await loadAutomationMode();   // load saved automation mode
+      updateAutomationUI();        // ✅ force sync toggle UI
 
-function killSwitch(){
-  if(!confirm("KILL SWITCH: This will square-off ALL positions and stop WS + trading. Continue?")) return;
-  fetch("/api/kill-switch", {
-    method:"POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({enabled:true})
-  })
-  .then(()=> {
-    showMsg("🛑 Kill switch activated", true);
-    setTimeout(loadLadderState, 700);
-  })
-  .catch(()=>showMsg("❌ Kill switch failed", true));
-}
 
-// ✅ Squareoff ALL => clear UI immediately + overall pnl 0
-function squareoffAll(){
-  if(!confirm("Squareoff ALL positions (MIS Market)? Continue?")) return;
+      startTickWS();         // ✅ ONLY ONE WS
 
-  fetch("/api/squareoff_all", { method:"POST" })
-    .then(r => r.json())
-    .then(d => {
-      if(d.error){
-        showMsg("❌ " + d.error, true);
-        return;
-      }
-      showMsg(`✅ Squareoff all placed (${d.count})`, false);
+      setInterval(refreshStatus, 5000);
+      setInterval(checkMarketStatus, 60000);
 
-      // ✅ immediate clear (your requirement)
-      ladderEmptyUI();
+      loadLadderState();
+      setInterval(loadLadderState, 30000);
 
-      // refresh in background to sync actual state
-      setTimeout(() => {
-        loadLadderState();
-      }, 1500);
-    })
-    .catch(() => showMsg("❌ Squareoff all failed", true));
-}
-
-/* ================= MSG ================= */
-function showMsg(txt, isErr = false) {
-  const box = $("msg-box");
-  box.textContent = txt;
-  box.className = `px-6 py-3 rounded-xl text-sm font-medium shadow-2xl z-50 transition-all duration-300 ${
-    isErr
-      ? 'bg-red-900/80 text-red-100 border border-red-700/50'
-      : 'bg-emerald-900/80 text-emerald-100 border border-emerald-700/50'
-  }`;
-  box.classList.remove("hidden");
-
-  setTimeout(() => {
-    box.classList.add("opacity-0", "translate-y-4");
-    setTimeout(() => box.classList.add("hidden"), 400);
-  }, 2800);
-}
-
-/* ================= INIT ================= */
-document.addEventListener("DOMContentLoaded", async ()=>{
-  if(!(await checkSession())) return;
-
-  refreshStatus();
-  checkMarketStatus();   // also manages alert gate
-
-  startTickWS();         // ✅ ONLY ONE WS
-
-  setInterval(refreshStatus, 5000);
-  setInterval(checkMarketStatus, 60000);
-
-  loadLadderState();
-  setInterval(loadLadderState, 30000);
-
-  // extra: at exact 09:00 IST window, gate will open automatically on next checkMarketStatus tick
-});
-</script>
+      // extra: at exact 09:00 IST window, gate will open automatically on next checkMarketStatus tick
+    });
+  </script>
 
 </body>
+
 </html>

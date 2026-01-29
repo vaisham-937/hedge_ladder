@@ -178,6 +178,7 @@ class LadderSettings:
     ladder_cycles: int = 5               # 1 cycle = 1 buy ladder + 1 sell ladder
     max_adds_per_leg: int = 2             # safety cap
     slippage_bps: float = 0.0             # optional, not used for MIS market in this version
+    max_trades_per_symbol: int = 1        # Max number of auto-trades allowed per symbol per session
 
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> "LadderSettings":
@@ -605,6 +606,27 @@ class LadderEngine:
             settings = LadderSettings.from_dict({**asdict(settings), **settings_payload})
             await self.save_settings(settings_mode, symbol, settings)
 
+        # 🔥 CHECK GLOBAL TRADE LIMIT (Req: "Only 20 stocks must be processed")
+        # We use 'max_trades_per_symbol' setting as the GLOBAL limit now.
+        global_count_key = f"ladder:global_count:{self.user_id}"
+        global_count = int(await self.redis.get(global_count_key) or 0)
+        global_limit = settings.max_trades_per_symbol
+
+        # Check if we already traded this specific symbol? 
+        # (Redis set? or just rely on global count + per-session active check)
+        # User wants "Unique Stocks". So we should check if symbol was already processed?
+        # For now, simplistic Global Count of "Starts".
+        
+        if global_count >= global_limit:
+            # But allow if this symbol is ALREADY running? 
+            # (start_ladder handles 'already_running' before this)
+            logger.warning("START_BLOCKED_GLOBAL_LIMIT user=%s count=%s limit=%s", 
+                           self.user_id, global_count, global_limit)
+            return {"error": f"GLOBAL_LIMIT_REACHED ({global_count}/{global_limit})"}
+
+        # Increment Global Count
+        await self.redis.incr(global_count_key)
+
         # 4) Token missing -> WAIT_FEED session
         if not token_raw:
             sess = LadderSession(
@@ -784,7 +806,19 @@ class LadderEngine:
         sess.leg_state = LegState(side=side, status="RUNNING", qty=0, avg_price=0.0, entries=0)
         sess.updated_ts = time.time()
 
-        oid = await self._place_mis_market(symbol=symbol, side=side, qty=qty)
+        try:
+            oid = await self._place_mis_market(symbol=symbol, side=side, qty=qty)
+        except Exception as e:
+            logger.error(f"ENTRY_FAILED user={self.user_id} symbol={symbol} err={e}")
+            sess.leg_state.status = "REJECTED"
+            sess.leg_state.reason = str(e)
+            sess.active = False
+            
+            # Rejected trades count as ONE attempt. We do not retry.
+            # So we do NOT decrement the global count.
+
+            await self._snapshot(sess)
+            return
 
         exec_avg = await self._get_executed_avg_price(str(oid))
         base_price = exec_avg if (exec_avg and exec_avg > 0) else float(ltp)
@@ -1060,6 +1094,11 @@ class LadderEngine:
             sess.cycle_index += 1
             if sess.cycle_index >= sess.settings.ladder_cycles:
                 sess.active = False
+                # Explicitly mark as COMPLETE for UI
+                if sess.leg_state:
+                    sess.leg_state.status = "COMPLETE"
+                    sess.leg_state.reason = "CYCLES_DONE"
+                
                 sess.updated_ts = time.time()
                 await self._snapshot(sess)
                 logger.info("SESSION_DONE user=%s symbol=%s cycles=%s",

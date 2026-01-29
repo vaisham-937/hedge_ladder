@@ -1624,6 +1624,12 @@
             <input id="us-maxadds" type="number" value="2"
               class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
           </div>
+          <div class="col-span-1 sm:col-span-1">
+            <label class="block text-sm font-medium text-slate-300 mb-2">Trade Limit</label>
+            <input id="us-maxtrades" type="number" value="1" min="1"
+              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none"
+              title="Max number of auto-trades allowed per symbol per session" />
+          </div>
         </div>
 
         <!-- Save Button -->
@@ -1674,7 +1680,8 @@
     let automationMode = "MANUAL"; // MANUAL or AUTO
     let pendingAutoModeSwitch = false; // ✅ Flag to auto-enable AUTO after settings save
     let automationEnabledSymbols = new Set(); // ✅ Snapshot of symbols when automation was enabled
-    let processedAutoTradeSymbols = new Set(); // ✅ Track symbols already auto-traded in this session
+    let processedAutoTradeSymbols = new Map(); // ✅ Track symbols trade count (Symbol -> Count)
+    let manuallySquaredOffSymbols = new Set(); // ✅ Blacklist for manually killed symbols
 
     // ws
     let TICK_WS = null;
@@ -2089,9 +2096,11 @@
         // ✅ AUTO-TRADE: If automation is ON and we have NEW symbols, auto-start trades
         // Only trade symbols that were NOT present when automation was enabled
         if (automationMode === "AUTO" && newSymbols.size > 0) {
-          // Filter out symbols that existed when automation was enabled AND symbols already processed
+          // Filter out symbols that existed when automation was enabled
+          // Note: We do NOT filter by processedAutoTradeSymbols here anymore, 
+          // because we want to allow re-entry up to the configured limit.
           const trulyNewSymbols = new Set(
-            Array.from(newSymbols).filter(s => !automationEnabledSymbols.has(s) && !processedAutoTradeSymbols.has(s))
+            Array.from(newSymbols).filter(s => !automationEnabledSymbols.has(s))
           );
 
           if (trulyNewSymbols.size > 0) {
@@ -2111,8 +2120,28 @@
 
               // Auto-start ladder for each TRULY NEW symbol
               for (const symbol of trulyNewSymbols) {
-                // Mark as processed immediately so we don't try again
-                processedAutoTradeSymbols.add(symbol);
+                // 🛑 CHECK BLACKLIST (Manual Square Off)
+                if (manuallySquaredOffSymbols.has(symbol)) {
+                  // console.log(`🛑 Skipped blacklisted symbol: ${symbol}`);
+                  continue;
+                }
+
+                // 🛑 CHECK GLOBAL LIMIT (Req: "Only 20 stocks must be processed")
+                // We treat 'max_trades_per_symbol' as GLOBAL MAX processed symbols
+                const globalLimit = settings.max_trades_per_symbol || 20;
+                const totalProcessedCount = processedAutoTradeSymbols.size;
+
+                if (totalProcessedCount >= globalLimit) {
+                  // console.log(`🛑 Global limit reached (${totalProcessedCount}/${globalLimit}).`);
+                  continue;
+                }
+
+                // 🛑 CHECK PER-SYMBOL LIMIT (Req: "Do not try to buy again")
+                // Strict 1 Attempt Per Symbol
+                const currentCount = processedAutoTradeSymbols.get(symbol) || 0;
+                if (currentCount >= 1) {
+                  continue;
+                }
 
                 try {
                   console.log("🚀 AUTO-TRADE: Starting ladder for", symbol);
@@ -2135,9 +2164,16 @@
 
                   if (result.error) {
                     console.error("❌ AUTO-TRADE failed for", symbol, ":", result.error);
+                  } else if (result.status === "already_running") {
+                    // Do not increment count if it's just the same session running
+                    // console.log("⚠️ AUTO-TRADE: Already running", symbol);
                   } else {
+                    // ✅ SUCCESS: New session started
                     console.log("✅ AUTO-TRADE: Ladder started for", symbol);
                     showMsg(`🤖 Auto-started: ${symbol}`, false);
+
+                    // Increment count ONLY on success
+                    processedAutoTradeSymbols.set(symbol, currentCount + 1);
                   }
                 } catch (err) {
                   console.error("❌ AUTO-TRADE error for", symbol, ":", err);
@@ -2204,6 +2240,7 @@
         if (mode === "AUTO") {
           automationEnabledSymbols = new Set(subscribed);
           processedAutoTradeSymbols.clear(); // ✅ Reset processed list when starting new session
+          manuallySquaredOffSymbols.clear(); // ✅ Clear blacklist on fresh start
           console.log("🔄 Automation ENABLED. Baseline symbols:", Array.from(automationEnabledSymbols));
         } else {
           // Clear baseline when disabling
@@ -2315,7 +2352,9 @@
         $("us-sl").value = s.stop_loss_pct || 1;
         $("us-tsl").value = s.trailing_sl_pct || 1;
         $("us-cycles").value = s.ladder_cycles || 1;
+        $("us-cycles").value = s.ladder_cycles || 1;
         $("us-maxadds").value = s.max_adds_per_leg || 2;
+        $("us-maxtrades").value = s.max_trades_per_symbol || 1;
       } catch (e) {
         console.error("Failed to load universal settings:", e);
       }
@@ -2330,7 +2369,9 @@
         stop_loss_pct: parseFloat($("us-sl").value || "1"),
         trailing_sl_pct: parseFloat($("us-tsl").value || "1"),
         ladder_cycles: parseInt($("us-cycles").value || "1"),
+        ladder_cycles: parseInt($("us-cycles").value || "1"),
         max_adds_per_leg: parseInt($("us-maxadds").value || "2"),
+        max_trades_per_symbol: parseInt($("us-maxtrades").value || "1"),
       };
 
       try {
@@ -2622,21 +2663,33 @@
             const status = String(ls.status || "");
             const qty = Number(ls.qty || 0);
 
-            // show if active OR running-like OR qty>0 OR waiting feed
-            if (s.active) return true;
-            if (qty > 0) return true;
-            if (status === "RUNNING" || status === "EXITING") return true;
-            if (status === "IDLE" && (ls.reason || "").includes("WAIT")) return true;
+            // ✅ STRICT FILTER: Show only Real Positions, Rejections, Errors, or Completed
+            // Hides "Waiting" or "Idle" states that have no quantity yet.
+            const st = (status || "").toUpperCase();
 
-            // otherwise hide (DONE etc)
-            return false;
+            if (st === "REJECTED" || st === "ERROR") return true;
+            if (st === "COMPLETE") return true;
+            if (qty > 0) return true; // Show any status if we have money in it
+
+            return false; // Hide IDLE, WAIT_FEED, WAIT_LTP if qty is 0
           });
 
           if (filtered.length === 0) {
             ladderEmptyUI();
             return;
           }
-          setLadderCount(filtered.length);
+
+          // ✅ Sort Alphabetically A-Z
+          filtered.sort((a, b) => (a.symbol || "").localeCompare(b.symbol || ""));
+
+          // ✅ FIX: Count only REAL running positions for the header badge
+          // Filter out REJECTED/ERROR from the "count", even though we show them in table.
+          const realCount = filtered.filter(s => {
+            const st = (s.leg_state?.status || "");
+            return !st.startsWith("REJECT") && !st.startsWith("ERROR") && !st.startsWith("DONE");
+          }).length;
+
+          setLadderCount(realCount);
 
 
           // rebuild ladder table (less frequent) but NO LTP blink now (WS updates LTP by data-lsym)
@@ -2701,7 +2754,8 @@
             if (st.includes("WAIT")) stColor = "text-yellow-400";
             else if (st.startsWith("RUNNING")) stColor = "text-green-400";
             else if (st.startsWith("DONE")) stColor = "text-slate-400";
-            else if (st.startsWith("ERROR")) stColor = "text-red-500";
+            else if (st.startsWith("COMPLETE")) stColor = "text-blue-500";
+            else if (st.startsWith("ERROR") || st.startsWith("REJECTED")) stColor = "text-red-500";
             else if (st.startsWith("EXIT")) stColor = "text-orange-400";
 
             tbody.innerHTML += `
@@ -2738,6 +2792,9 @@
     }
 
     function squareoffLadder(symbol) {
+      // ✅ Add to blacklist so Auto-Trade doesn't pick it up immediately
+      manuallySquaredOffSymbols.add(symbol);
+
       fetch("/api/ladder/squareoff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

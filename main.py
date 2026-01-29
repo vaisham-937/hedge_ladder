@@ -663,7 +663,7 @@ async def save_universal_settings(request: Request):
     
     # Validate required fields
     required = ["qty_mode", "per_trade_capital", "per_trade_qty", "threshold_pct", 
-                "stop_loss_pct", "trailing_sl_pct", "ladder_cycles", "max_adds_per_leg"]
+                "stop_loss_pct", "trailing_sl_pct", "ladder_cycles", "max_adds_per_leg", "max_trades_per_symbol"]
     
     for field in required:
         if field not in settings:
@@ -683,7 +683,16 @@ async def get_universal_settings(request: Request):
     if raw:
         try:
             settings = json.loads(raw)
-            return {"settings": settings}
+            # ✅ Merge with defaults in case of new fields (like max_trades_per_symbol)
+            defaults = {
+                "qty_mode": "CAPITAL", "per_trade_capital": 1000, "per_trade_qty": 1,
+                "threshold_pct": 1.0, "stop_loss_pct": 1.0, "trailing_sl_pct": 1.0,
+                "ladder_cycles": 1, "max_adds_per_leg": 2, "max_trades_per_symbol": 1
+            }
+            # Update defaults with stored settings (so stored takes precedence)
+            defaults.update(settings)
+            
+            return {"settings": defaults}
         except:
             pass
     
@@ -697,7 +706,8 @@ async def get_universal_settings(request: Request):
             "stop_loss_pct": 1.0,
             "trailing_sl_pct": 1.0,
             "ladder_cycles": 1,
-            "max_adds_per_leg": 2
+            "max_adds_per_leg": 2,
+            "max_trades_per_symbol": 1
         }
     }
 
@@ -1067,15 +1077,25 @@ class LadderSquareoffReq(BaseModel):
 
 @app.post("/api/ladder/squareoff")
 async def api_ladder_squareoff(request: Request, body: LadderSquareoffReq):
-    # Reuse your existing single-squareoff logic
     user_id = request.session.get("user_id")
     if not user_id:
         return JSONResponse({"error": "Not logged in"}, 401)
+    
     symbol = body.symbol.strip().upper()
     if not symbol:
         return JSONResponse({"error": "Symbol missing"}, 400)
 
-    # Call your /api/squareoff code path internally
+    # 1️⃣ Try to use LADDER ENGINE first (Best for state consistency & stopping re-entry)
+    eng = ENGINE_HUB.get(int(user_id))
+    if eng:
+        # Check if session exists (active or not)
+        sess = eng.sessions.get(symbol)
+        if sess and sess.active:
+            # Delegate to engine: Stops session, Exit order, Updates state
+            res = await eng.squareoff_symbol(symbol, reason="MANUAL_BTN")
+            return res
+
+    # 2️⃣ Fallback: Direct Zerodha Squareoff (if engine lost track or not active)
     kite = get_kite_for_user(int(user_id))
     pos = kite.positions().get("net", [])
     net_qty = 0
@@ -1083,10 +1103,15 @@ async def api_ladder_squareoff(request: Request, body: LadderSquareoffReq):
         if str(p.get("tradingsymbol", "")).upper() == symbol:
             net_qty = int(p.get("quantity", 0) or 0)
             break
+            
     if net_qty == 0:
-        # 🧹 Remove stale ladder entry immediately
+        # 🧹 Remove stale ladder entry
         r.delete(f"ladder:state:{user_id}:{symbol}")
+        # Also ensure memory cleanup
+        if eng and hasattr(eng, "sessions") and symbol in eng.sessions:
+             eng.sessions.pop(symbol, None)
         return {"status": "no_position", "symbol": symbol}
+
     side = kite.TRANSACTION_TYPE_SELL if net_qty > 0 else kite.TRANSACTION_TYPE_BUY
     qty = abs(net_qty)
     oid = kite.place_order(
@@ -1262,17 +1287,22 @@ async def api_squareoff_all(request: Request):
                 continue
 
             side = kite.TRANSACTION_TYPE_SELL if q > 0 else kite.TRANSACTION_TYPE_BUY
-            oid = kite.place_order(
-                variety=kite.VARIETY_REGULAR,
-                exchange=kite.EXCHANGE_NSE,
-                tradingsymbol=sym,
-                transaction_type=side,
-                quantity=abs(q),
-                product=kite.PRODUCT_MIS,
-                order_type=kite.ORDER_TYPE_MARKET,
-            )
+            
+            try:
+                oid = kite.place_order(
+                    variety=kite.VARIETY_REGULAR,
+                    exchange=kite.EXCHANGE_NSE,
+                    tradingsymbol=sym,
+                    transaction_type=side,
+                    quantity=abs(q),
+                    product=kite.PRODUCT_MIS,
+                    order_type=kite.ORDER_TYPE_MARKET,
+                )
+                placed.append({"symbol": sym, "qty": abs(q), "order_id": oid})
+            except Exception as e:
+                # Log error but CONTINUE cleanup
+                print(f"❌ Squareoff order failed for {sym}: {e}")
 
-            placed.append({"symbol": sym, "qty": abs(q), "order_id": oid})
             symbols_to_cleanup.add(sym)
 
         # 2) Clean ladder state from MEMORY engine (very important)
@@ -1308,6 +1338,15 @@ async def api_squareoff_all(request: Request):
             token = r.get(f"symbol_token:{sym}")
             if token and str(token).isdigit():
                 r.srem(f"ws:{user_id}:tokens", int(token))
+
+        # 5) Reset Trade Counts (Server-Side) so "Fresh Auto-Start" works seamlessly
+        # This allows re-trading same symbols if user explicitly resets via Kill Switch
+        count_keys = r.keys(f"ladder:count:{user_id}:*")
+        if count_keys:
+             r.delete(*count_keys)
+        
+        # Clear Global Count
+        r.delete(f"ladder:global_count:{user_id}")
 
         return {"status": "squareoff_all_placed", "count": len(placed), "orders": placed}
 

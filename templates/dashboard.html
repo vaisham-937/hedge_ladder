@@ -837,12 +837,12 @@
     /* No Scrollbar + Responsive Fixes */
     @media (max-width: 1200px) {
       table {
-        font-size: 0.7rem !important;
+        font-size: 0.85rem !important;
       }
 
       th,
       td {
-        padding: 0.25rem 0.5rem !important;
+        padding: 0.75rem 0.9rem;
       }
 
       .trade-btn {
@@ -931,7 +931,7 @@
 
     .alerts-table {
       width: 100%;
-      min-width: 1250px;
+      min-width: 1300px;
       /* ✅ table wide, so rows not squeezed */
       table-layout: auto;
       /* ✅ columns take natural space */
@@ -941,12 +941,12 @@
     /* compact cells with better height */
     .alerts-table th,
     .alerts-table td {
-      padding: 12px 10px !important;
+      padding: 20px 16px !important;
       font-size: 12.5px !important;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 1.5;
+      line-height: 1.8;
     }
 
     /* Trade action cells - prevent border cutoff */
@@ -957,9 +957,9 @@
 
     /* Header row - slightly taller */
     .alerts-table th {
-      padding: 15px 12px !important;
-      font-size: 14px !important;
-      font-weight: 700;
+      padding: 24px 18px !important;
+      font-size: 20px !important;
+      font-weight: 800;
     }
 
     /* Scan column: allow wrap so width bache */
@@ -974,14 +974,6 @@
       /* Increased from 90px */
       --sellW: 100px;
       /* Increased from 80px */
-    }
-
-    .sticky-trade {
-      /* Removed sticky */
-    }
-
-    .sticky-sell {
-      /* Removed sticky */
     }
 
     /* Trade buttons vertical -> narrow */
@@ -1097,11 +1089,11 @@
   <canvas id="particle-canvas"></canvas>
 
   <!-- TOP BAR -->
-  <header class="sticky top-0 z-50 glass backdrop-blur-lg">
+  <header class="fixed top-0 left-0 w-full z-50 glass backdrop-blur-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3 sm:gap-5">
         <div
-          class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center shadow-lg shadow-cyan-700/30">
+          class="w-8 h-8 sm:w-7 sm:h-7 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center shadow-lg shadow-cyan-700/30">
           <i class="fa-solid fa-chart-line text-white text-sm sm:text-lg"></i>
         </div>
         <div>
@@ -1109,7 +1101,7 @@
             <span class="text-slate-100">WeWin</span>
             <span class="text-cyan-400">Algo</span>
           </h1>
-          <p class="text-[10px] sm:text-xs text-slate-500 -mt-0.5">Edge • Live</p>
+          <p class="text-[10px] sm:text-xs text-slate-400 -mt-0.5">Edge • Live</p>
         </div>
         <div class="hidden md:flex items-center gap-3 ml-4 sm:ml-6 status-pill">
           <i class="fa-solid fa-user-circle text-cyan-400"></i>
@@ -1181,7 +1173,7 @@
   </header>
 
   <!-- MAIN CONTENT -->
-  <main class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-10 space-y-14">
+  <main class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pb-10 pt-48 space-y-14">
 
     <!-- LIVE SIGNALS -->
     <section>
@@ -1190,7 +1182,7 @@
           <div class="p-2.5 bg-amber-500/15 rounded-xl border border-amber-500/20 shadow-lg shadow-amber-500/10">
             <i class="fa-solid fa-bolt text-amber-400"></i>
           </div>
-          <span class="text-gradient">Live Signals</span>
+          <span class="text-gradient">Live Chartink Signals</span>
         </h2>
         <div class="flex flex-wrap items-center gap-3">
           <!-- Active Alerts Counter -->
@@ -1217,7 +1209,7 @@
               <div class="flex items-center gap-2 justify-center">
                 <i class="fa-solid fa-hand-pointer text-xs"></i>
                 ManualControl
-                <span class="mode-dot hidden w-2 h-2 rounded-full bg-red-400"></span>
+                <span class="mode-dot hidden w-2 h-2 rounded-full bg-rose-400"></span>
               </div>
             </button>
 
@@ -1242,37 +1234,57 @@
         </div>
       </div>
 
-      <div class="magic-border-container">
-        <div class="glass rounded-2xl overflow-hidden shadow-2xl">
-          <div class="overflow-x-auto alerts-wrap">
-            <table class="alerts-table w-full min-w-[1200px] text-sm">
-              <thead>
-                <tr
-                  class="text-slate-100 text-xs uppercase tracking-wider font-serif border-b-2 border-white/10 drop-shadow-sm">
-                  <th class="p-3 text-left w-[120px]">Scan</th>
-                  <th class="p-4 w-20">Time</th>
-                  <th class="p-4 w-28 text-left">Symbol</th>
-                  <th class="p-4 text-right w-24">LTP</th>
-                  <th class="p-4 text-right w-20">LC</th>
-                  <th class="p-4 text-right w-20">UC</th>
-                  <th class="p-4 text-right w-24">% Chg</th>
-                  <th class="p-4 text-right w-20">Fr O</th>
-                  <th class="p-4 text-right w-20">Fr H</th>
-                  <th class="p-4 text-right w-20">Fr L</th>
-                  <th class="p-4 text-right w-24">TBQ</th>
-                  <th class="p-4 text-right w-24">TSQ</th>
-                  <th class="p-4 text-right w-28 text-emerald-300">Buy V</th>
-                  <th class="p-4 text-right w-28 text-red-400">Sell Vol</th>
-                  <th class="p-4 text-center w-36">Trade</th>
-                </tr>
-              </thead>
-              <tbody id="alerts-body" class="divide-y divide-slate-800/60 bg-slate-900/30">
-                <!-- filled by JS -->
-              </tbody>
-            </table>
+      <!-- ACTIVE ALERTS TABLE -->
+      <div id="active-alerts-table"
+        class="glass-panel rounded-md p-1 border border-slate-700/50 relative overflow-hidden group hover:border-cyan-500/30 transition-all duration-500">
+
+        <!-- Decoration -->
+        <div
+          class="absolute -top-20 -right-20 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl group-hover:bg-cyan-500/10 transition-all duration-700">
+        </div>
+        <div class="overflow-x-auto custom-scrollbar relative z-10 bg-slate-900/30">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead
+              class="text-[10px] uppercase bg-slate-900/80 text-slate-400 sticky top-0 z-20 backdrop-blur-md shadow-lg border-b border-slate-700/50">
+              <tr>
+                <th scope="col"
+                  class="px-3 py-4 font-extrabold text-cyan-400 border-r border-slate-800/50 text-sm font-mono tracking-wider">
+                  Scan</th>
+                <th scope="col" class="px-2 py-4 font-semibold text-sm font-mono tracking-wide">Time</th>
+                <th scope="col" class="px-3 py-4 font-extrabold text-slate-200 text-sm font-mono tracking-wider">Symbol
+                </th>
+                <th scope="col" class="px-3 py-4 font-bold text-center text-sm font-mono tracking-wide">LTP</th>
+                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-red-400/90">LC</th>
+                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-emerald-400/90">UC
+                </th>
+                <th scope="col"
+                  class="px-2 py-4 font-extrabold text-center text-sm font-mono text-cyan-400 min-w-[70px] tracking-wider">
+                  % Chg</th>
+                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-slate-300">FR O</th>
+                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-slate-300">FR H</th>
+                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-slate-300"> FR L</th>
+                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-slate-300">TBQ</th>
+                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-slate-300">TSQ</th>
+                <th scope="col" class="px-2 py-4 font-bold text-center text-sm font-mono text-emerald-400">Buy V</th>
+                <th scope="col" class="px-2 py-4 font-bold text-center text-sm font-mono text-red-400">Sell V</th>
+                <th scope="col"
+                  class="px-3 py-4 text-center font-extrabold text-sm font-mono text-slate-200 min-w-[120px] bg-slate-900 tracking-wider">
+                  Action</th>
+              </tr>
+            </thead>
+            <tbody id="alerts-body" class="divide-y divide-slate-800/50 text-slate-300">
+              <!-- JS populates this -->
+            </tbody>
+          </table>
+
+          <!-- Empty State -->
+          <div id="alerts-empty" class="hidden flex flex-col items-center justify-center py-20 text-slate-500">
+            <i class="fa-solid fa-radar text-4xl mb-4 animate-pulse text-slate-700"></i>
+            <p>Waiting for signals...</p>
           </div>
         </div>
       </div>
+
     </section>
 
 
@@ -1385,62 +1397,92 @@
       <div id="stock-settings-form">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-5 sm:mb-7">
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Mode</label>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Mode</label>
             <select id="ls-mode"
-              class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-cyan-500/30 outline-none">
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all cursor-pointer">
               <option value="UNIVERSAL">Universal</option>
               <option value="STOCK">Stock Specific</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Qty Mode</label>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Qty Mode</label>
             <select id="ls-qtymode"
-              class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-cyan-500/30 outline-none">
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all cursor-pointer">
               <option value="CAPITAL">Capital Based</option>
               <option value="QTY">Fixed Quantity</option>
             </select>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-5">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Capital (₹)</label>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Capital (₹)</label>
             <input id="ls-capital" type="number" value="1000"
-              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Quantity</label>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Quantity</label>
             <input id="ls-qty" type="number" value="1"
-              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600" />
           </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <!-- Entry Threshold Section -->
+        <div
+          class="col-span-1 sm:col-span-2 mb-6 p-4 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 rounded-xl border border-slate-700/60 shadow-lg shadow-black/20 flex items-center gap-5 group hover:border-cyan-500/30 transition-all duration-300 relative overflow-hidden">
+          <!-- Glow effect -->
+          <div class="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          </div>
+
+          <div class="relative flex items-center justify-center">
+            <input id="ls-entry-enabled" type="checkbox"
+              class="peer w-6 h-6 text-cyan-500 bg-slate-800 border-2 border-slate-600 rounded-md focus:ring-cyan-500 focus:ring-offset-0 focus:ring-2 cursor-pointer transition-all checked:bg-cyan-500 checked:border-cyan-500 hover:border-cyan-400">
+          </div>
+
+          <label for="ls-entry-enabled"
+            class="relative text-base font-semibold text-slate-200 select-none cursor-pointer flex-1 group-hover:text-cyan-400 transition-colors">
+            Entry Threshold
+            <span class="block text-xs text-slate-500 font-normal mt-0.5">Override global threshold setting</span>
+          </label>
+
+          <div
+            class="relative flex items-center gap-3 bg-slate-950/50 p-1.5 rounded-lg border border-slate-700/50 focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all">
+            <span class="text-sm font-bold text-slate-500 pl-2">±</span>
+            <input id="ls-entry-pct" type="number" step="0.01" value="0.5" placeholder="0.5"
+              class="w-20 bg-transparent border-none p-0 text-center text-slate-100 font-bold text-lg focus:ring-0 placeholder-slate-700"
+              title="Triggers BUY if > X%, SELL if < -X% (from Day Open)" />
+            <span class="text-sm font-bold text-cyan-500 pr-2">%</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5 mb-6 sm:mb-8">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Thresh %</label>
+            <label class="block text-xs font-bold text-violet-400 uppercase tracking-wider mb-2">Threshold %</label>
             <input id="ls-threshold" type="number" step="0.01" value="1"
-              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">SL %</label>
+            <label class="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">SL %</label>
             <input id="ls-sl" type="number" step="0.01" value="1"
-              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Trails %</label>
+            <label class="block text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">Trailing SL %</label>
             <input id="ls-tsl" type="number" step="0.01" value="1"
-              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Cycles</label>
+            <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">Cycles</label>
             <input id="ls-cycles" type="number" value="1"
-              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+            <span class="block text-xs text-slate-500 mt-1">Number of strategy repetitions</span>
           </div>
 
           <div class="col-span-1 sm:col-span-1">
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Max Adds</label>
+            <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Max Adds</label>
             <input id="ls-maxadds" type="number" value="2"
-              class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 outline-none" />
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+            <span class="block text-xs text-slate-500 mt-1">Max additional orders per cycle</span>
           </div>
         </div>
       </div>
@@ -1544,107 +1586,143 @@
 
   <!-- ================= UNIVERSAL SETTINGS MODAL ================= -->
   <div id="universalSettingsModal"
-    class="fixed inset-0 hidden bg-black/75 backdrop-blur-md flex items-center justify-center z-50 px-4">
-    <div
-      class="bg-[#0f172a] rounded-2xl p-6 sm:p-10 w-full max-w-2xl border border-slate-700/50 shadow-2xl shadow-black/40">
+    class="fixed inset-0 hidden bg-black/75 backdrop-blur-md z-50 overflow-y-auto custom-scrollbar">
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div
+        class="bg-[#0f172a] rounded-2xl p-6 sm:p-10 w-full max-w-2xl border border-slate-700/50 shadow-2xl shadow-black/40 relative">
 
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6 sm:mb-8">
-        <h2 class="text-xl sm:text-2xl font-semibold text-cyan-400 flex items-center gap-3">
-          <i class="fa-solid fa-sliders text-cyan-500"></i>
-          Universal Settings
-        </h2>
-        <button onclick="closeUniversalSettings()" class="text-slate-400 hover:text-slate-200 transition-colors text-xl"
-          title="Close">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6 sm:mb-8">
+          <h2 class="text-xl sm:text-2xl font-semibold text-cyan-400 flex items-center gap-3">
+            <i class="fa-solid fa-sliders text-cyan-500"></i>
+            Universal Settings
+          </h2>
+          <button onclick="closeUniversalSettings()"
+            class="text-slate-400 hover:text-slate-200 transition-colors text-xl" title="Close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Description -->
+        <p class="text-xs sm:text-sm text-slate-400 mb-6 sm:mb-8 leading-relaxed">
+          Configure default ladder settings. These will be used in <strong class="text-cyan-400">Full
+            Automation</strong>
+          mode
+          and as defaults when selecting <strong class="text-cyan-400">Universal Settings</strong> in Manual mode.
+        </p>
+
+        <!-- Form -->
+        <form class="space-y-4 sm:space-y-6">
+
+          <!-- Mode Selection -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Qty Mode</label>
+              <select id="us-qtymode"
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all cursor-pointer">
+                <option value="CAPITAL">Capital Based</option>
+                <option value="QTY">Fixed Quantity</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Entry Threshold Section -->
+          <div
+            class="col-span-1 sm:col-span-2 mb-6 p-4 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 rounded-xl border border-slate-700/60 shadow-lg shadow-black/20 flex items-center gap-5 group hover:border-cyan-500/30 transition-all duration-300 relative overflow-hidden">
+            <!-- Glow effect -->
+            <div
+              class="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            </div>
+
+            <div class="relative flex items-center justify-center">
+              <input id="us-entry-enabled" type="checkbox"
+                class="peer w-6 h-6 text-cyan-500 bg-slate-800 border-2 border-slate-600 rounded-md focus:ring-cyan-500 focus:ring-offset-0 focus:ring-2 cursor-pointer transition-all checked:bg-cyan-500 checked:border-cyan-500 hover:border-cyan-400">
+            </div>
+
+            <label for="us-entry-enabled"
+              class="relative text-base font-semibold text-yellow-400 select-none cursor-pointer flex-1 group-hover:text-cyan-400 transition-colors">
+              Enable Entry Price Threshold
+              <span class="block text-xs text-slate-500 font-normal mt-0.5">Triggers trade only if price moves % from
+                Day
+                Open</span>
+            </label>
+
+            <div
+              class="relative flex items-center gap-3 bg-slate-950/50 p-1.5 rounded-lg border border-slate-700/50 focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all">
+              <span class="text-sm font-bold text-slate-500 pl-2">±</span>
+              <input id="us-entry-pct" type="number" step="0.01" value="0.5" placeholder="0.5"
+                class="w-20 bg-transparent border-none p-0 text-center text-slate-100 font-bold text-lg focus:ring-0 placeholder-slate-700"
+                title="Triggers BUY if > X%, SELL if < -X% (from Day Open)" />
+              <span class="text-sm font-bold text-cyan-500 pr-2">%</span>
+            </div>
+          </div>
+
+          <!-- Capital & Quantity -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Capital (₹)</label>
+              <input id="us-capital" type="number" value="1000"
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Quantity</label>
+              <input id="us-qty" type="number" value="1"
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600" />
+            </div>
+          </div>
+
+          <!-- Ladder Parameters -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5 mt-5">
+            <div>
+              <label class="block text-xs font-bold text-sky-400 uppercase tracking-wider mb-2">Threshold %</label>
+              <input id="us-threshold" type="number" step="0.01" value="1"
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">stop Loss %</label>
+              <input id="us-sl" type="number" step="0.01" value="1"
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">Trailing SL %</label>
+              <input id="us-tsl" type="number" step="0.01" value="1"
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Cycles</label>
+              <input id="us-cycles" type="number" value="1"
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+              <span class="block text-xs text-slate-400 mt-1">Number of strategy repetitions</span>
+            </div>
+            <div class="col-span-1 sm:col-span-1">
+              <label class="block text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">Max Adds</label>
+              <input id="us-maxadds" type="number" value="2"
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+              <span class="block text-xs text-slate-400 mt-1">Max additional orders per cycle</span>
+            </div>
+            <div class="col-span-1 sm:col-span-1">
+              <label class="block text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2">Trade Limit /
+                day</label>
+              <input id="us-maxtrades" type="number" value="1" min="1"
+                class="w-full bg-slate-800/80 border border-cyan-500/50 rounded-xl px-4 py-3.5 text-white font-bold tracking-wide focus:border-blue-400 focus:bg-slate-900 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all shadow-[0_0_15px_rgba(59,130,246,0.25)]"
+                title="Max number of auto-trades allowed per symbol per session" />
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
+            <button type="button" onclick="saveUniversalSettings()"
+              class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 sm:py-3.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 text-sm sm:text-base">
+              <i class="fa-solid fa-floppy-disk"></i>
+              Save Settings
+            </button>
+            <button type="button" onclick="closeUniversalSettings()"
+              class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 sm:py-3.5 rounded-lg transition-all duration-200 text-sm sm:text-base">
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
-
-      <!-- Description -->
-      <p class="text-xs sm:text-sm text-slate-400 mb-6 sm:mb-8 leading-relaxed">
-        Configure default ladder settings. These will be used in <strong class="text-cyan-400">Full
-          Automation</strong>
-        mode
-        and as defaults when selecting <strong class="text-cyan-400">Universal Settings</strong> in Manual mode.
-      </p>
-
-      <!-- Form -->
-      <form class="space-y-4 sm:space-y-6">
-
-        <!-- Mode Selection -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Qty Mode</label>
-            <select id="us-qtymode"
-              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none">
-              <option value="CAPITAL">Capital Based</option>
-              <option value="QTY">Fixed Quantity</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Capital & Quantity -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Capital (₹)</label>
-            <input id="us-capital" type="number" value="1000"
-              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Quantity</label>
-            <input id="us-qty" type="number" value="1"
-              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
-          </div>
-        </div>
-
-        <!-- Ladder Parameters -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Threshold %</label>
-            <input id="us-threshold" type="number" step="0.01" value="1"
-              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">SL %</label>
-            <input id="us-sl" type="number" step="0.01" value="1"
-              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Trails %</label>
-            <input id="us-tsl" type="number" step="0.01" value="1"
-              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Cycles</label>
-            <input id="us-cycles" type="number" value="1"
-              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
-          </div>
-          <div class="col-span-1 sm:col-span-1">
-            <label class="block text-sm font-medium text-slate-300 mb-2">Max Adds</label>
-            <input id="us-maxadds" type="number" value="2"
-              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none" />
-          </div>
-          <div class="col-span-1 sm:col-span-1">
-            <label class="block text-sm font-medium text-slate-300 mb-2">Trade Limit</label>
-            <input id="us-maxtrades" type="number" value="1" min="1"
-              class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 outline-none"
-              title="Max number of auto-trades allowed per symbol per session" />
-          </div>
-        </div>
-
-        <!-- Save Button -->
-        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
-          <button type="button" onclick="saveUniversalSettings()"
-            class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 sm:py-3.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 text-sm sm:text-base">
-            <i class="fa-solid fa-floppy-disk"></i>
-            Save Settings
-          </button>
-          <button type="button" onclick="closeUniversalSettings()"
-            class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 sm:py-3.5 rounded-lg transition-all duration-200 text-sm sm:text-base">
-            Cancel
-          </button>
-        </div>
-      </form>
     </div>
   </div>
 
@@ -1653,18 +1731,6 @@
   <script>
     /* ---------- STATE ---------- */
     const USER_ID = "{{USER_ID}}";
-    // ===== Live ladder PnL meta store (for continuous updates) =====
-    const LADDER_META = {};
-    // ===== recompute overall ladder pnl from live values =====
-    let overallLive = 0;
-    for (const s in LADDER_META) {
-      const m = LADDER_META[s];
-      const pnl = calcUnrealizedPnl(m.side, m.qty, m.avg, m.ltp);
-      overallLive += pnl;
-    }
-    setOverallPnl(overallLive);
-
-
     // alerts
     let subscribed = new Set();
     let alertsInterval = null;
@@ -1690,6 +1756,8 @@
 
     let TICK_BUFFER = {};
     let TICK_FLUSH_TIMER = null;
+    let LADDER_META = {};  // ✅ Store ladder metadata: symbol → {avg, qty, side, ltp}
+
 
     /* ---------- HELPERS ---------- */
     function $(id) { return document.getElementById(id); }
@@ -1920,6 +1988,33 @@
       }
     }
 
+    // ✅ NEW: Calculate NET PNL from all active ladder positions
+    function updateNetPNL() {
+      let totalPnl = 0;
+
+      // Sum PNL from all symbols in LADDER_META
+      for (const sym in LADDER_META) {
+        const meta = LADDER_META[sym];
+        if (!meta || !meta.qty || meta.qty === 0) continue;
+
+        const ltp = meta.ltp || 0;
+        const avg = meta.avg || 0;
+        const qty = meta.qty || 0;
+
+        if (ltp <= 0 || avg <= 0) continue;
+
+        // Calculate PNL based on side
+        if (meta.side === "BUY") {
+          totalPnl += (ltp - avg) * qty;
+        } else if (meta.side === "SELL") {
+          totalPnl += (avg - ltp) * qty;
+        }
+      }
+
+      // Update NET PNL display
+      setOverallPnl(totalPnl);
+    }
+
 
     function flushTickUI() {
       for (const sym in TICK_BUFFER) {
@@ -1947,10 +2042,14 @@
           if (field === "fo") setTextIfChanged(node, open ? (((ltp - open) / open) * 100).toFixed(2) + "%" : "--");
           if (field === "fh") setTextIfChanged(node, (((ltp - high) / high) * 100).toFixed(2) + "%");
           if (field === "fl") setTextIfChanged(node, (((ltp - low) / low) * 100).toFixed(2) + "%");
-          if (field === "tbq") setTextIfChanged(node, String(d.tbq || 0));
-          if (field === "tsq") setTextIfChanged(node, String(d.tsq || 0));
-          if (field === "bto") setTextIfChanged(node, String(Math.round(ltp * (d.tbq || 0))));
-          if (field === "sto") setTextIfChanged(node, String(Math.round(ltp * (d.tsq || 0))));
+
+          // ✅ Comma separated integers
+          if (field === "tbq") setTextIfChanged(node, (d.tbq || 0).toLocaleString('en-IN'));
+          if (field === "tsq") setTextIfChanged(node, (d.tsq || 0).toLocaleString('en-IN'));
+
+          // ✅ Comma separated integers for Turnover
+          if (field === "bto") setTextIfChanged(node, Math.round(ltp * (d.tbq || 0)).toLocaleString('en-IN'));
+          if (field === "sto") setTextIfChanged(node, Math.round(ltp * (d.tsq || 0)).toLocaleString('en-IN'));
         });
 
         // LADDER table LTP (no blink)
@@ -1963,15 +2062,36 @@
           const { avg, qty, side } = LADDER_META[sym];
           const pnl = calcUnrealizedPnl(side, qty, avg, ltp);
 
+          // ✅ UPDATE PNL
           const pnlNodes = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="pnl"]`);
           pnlNodes.forEach(node => {
             setTextIfChanged(node, pnl.toFixed(2));
             paintPnlCell(node, pnl);
           });
+
+          // ✅ NEW: UPDATE EXTREME (highest for BUY, lowest for SELL)
+          if (side === "BUY") {
+            // Track highest price
+            if (!LADDER_META[sym].highest || ltp > LADDER_META[sym].highest) {
+              LADDER_META[sym].highest = ltp;
+              const extremeNodes = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="extreme"]`);
+              extremeNodes.forEach(node => setTextIfChanged(node, ltp.toFixed(2)));
+            }
+          } else if (side === "SELL") {
+            // Track lowest price
+            if (!LADDER_META[sym].lowest || ltp < LADDER_META[sym].lowest) {
+              LADDER_META[sym].lowest = ltp;
+              const extremeNodes = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="extreme"]`);
+              extremeNodes.forEach(node => setTextIfChanged(node, ltp.toFixed(2)));
+            }
+          }
         }
       }
       TICK_BUFFER = {};
       TICK_FLUSH_TIMER = null;
+
+      // ✅ REAL-TIME NET PNL: Recalculate overall PNL on every tick
+      updateNetPNL();
     }
 
     /* ================= ALERTS (NO REBUILD = NO BLINK) ================= */
@@ -2059,31 +2179,46 @@
               newSymbols.add(s);
             }
 
+            // Helper for formatted numbers or placeholder
+            const fmt = (n) => (n && !isNaN(n)) ? Number(n).toLocaleString('en-IN') : '--';
+            const fmtDec = (n) => (n && !isNaN(n)) ? Number(n).toFixed(2) : '--';
+
             html += `
-<tr class="hover:bg-slate-800/40 transition-all duration-300 border-b-2 border-slate-700/60 group row-entrance">
-  <td class="p-3 text-left">
-    <div class="scan-name-wrap text-sky-400 font-medium text-xs" title="${a.scan}">${a.scan}</div>
+<tr class="hover:bg-slate-800/40 transition-colors duration-200 border-b border-slate-800/50 group row-entrance">
+  <td class="px-2 py-3 text-left border-r border-slate-800/30">
+    <div class="truncate w-20 text-cyan-400 font-medium text-sm" title="${a.scan}">${a.scan}</div>
   </td>
-  <td class="p-4 text-slate-500 tabular-nums text-xs">${a.time}</td>
-  <td class="p-4 font-extrabold text-white text-lg tracking-wide">${s}</td>
+  <td class="px-1 py-3 text-slate-300 tabular-nums text-xs font-mono">${a.time}</td>
+  <td class="px-2 py-3 font-bold text-slate-200 text-sm font-mono tracking-wide">${s}</td>
 
-  <td class="p-4 text-right tabular-nums text-white font-bold text-lg tracking-wide" data-sym="${s}" data-field="ltp">--</td>
-  <td class="p-4 text-right tabular-nums text-red-500 font-bold text-lg tracking-wide" data-sym="${s}" data-field="lc">--</td>
-  <td class="p-4 text-right tabular-nums text-emerald-500 font-bold text-lg tracking-wide" data-sym="${s}" data-field="uc">--</td>
-  <td class="p-4 text-right tabular-nums text-cyan-400 font-extrabold text-lg tracking-wide" data-sym="${s}" data-field="pct">--</td>
-  <td class="p-4 text-right tabular-nums text-slate-300 font-semibold text-lg tracking-wide" data-sym="${s}" data-field="fo">--</td>
-  <td class="p-4 text-right tabular-nums text-slate-300 font-semibold text-lg tracking-wide" data-sym="${s}" data-field="fh">--</td>
-  <td class="p-4 text-right tabular-nums text-slate-300 font-semibold text-lg tracking-wide" data-sym="${s}" data-field="fl">--</td>
+  <td class="px-1 py-3 text-center tabular-nums text-yellow-400 font-bold text-sm font-mono" data-sym="${s}" data-field="ltp">--</td>
+  <td class="px-1 py-3 text-right tabular-nums text-red-400/80 font-semibold text-xs font-mono" data-sym="${s}" data-field="lc">--</td>
+  <td class="px-1 py-3 text-right tabular-nums text-emerald-400/80 font-semibold text-xs font-mono" data-sym="${s}" data-field="uc">--</td>
+  <td class="px-1 py-3 text-right tabular-nums text-cyan-300 font-bold text-sm font-mono" data-sym="${s}" data-field="pct">--</td>
+  
+  <td class="px-1 py-3 text-right tabular-nums text-slate-200 text-[13px] font-mono" data-sym="${s}" data-field="fo">--</td>
+  <td class="px-1 py-3 text-right tabular-nums text-slate-200 text-[13px] font-mono" data-sym="${s}" data-field="fh">--</td>
+  <td class="px-1 py-3 text-right tabular-nums text-slate-200 text-[13px] font-mono" data-sym="${s}" data-field="fl">--</td>
 
-  <td class="p-4 text-right tabular-nums text-slate-200 font-semibold text-lg tracking-wide" data-sym="${s}" data-field="tbq">--</td>
-  <td class="p-4 text-right tabular-nums text-slate-200 font-semibold text-lg tracking-wide" data-sym="${s}" data-field="tsq">--</td>
-  <td class="p-4 text-right tabular-nums text-emerald-400 font-extrabold text-xl tracking-wide" data-sym="${s}" data-field="bto">--</td>
-  <td class="p-4 text-right tabular-nums text-red-400 font-extrabold text-xl tracking-wide" data-sym="${s}" data-field="sto">--</td>
+  <td class="px-1 py-3 text-right tabular-nums text-slate-400 font-medium text-xs font-mono" data-sym="${s}" data-field="tbq">--</td>
+  <td class="px-1 py-3 text-right tabular-nums text-slate-400 font-medium text-xs font-mono" data-sym="${s}" data-field="tsq">--</td>
+  <td class="px-1 py-3 text-center tabular-nums text-emerald-500/90 font-semibold text-sm font-mono" data-sym="${s}" data-field="bto">--</td>
+  <td class="px-1 py-3 text-center tabular-nums text-red-500/90 font-semibold text-sm font-mono" data-sym="${s}" data-field="sto">--</td>
 
-  <td class="p-4 text-center">
-    <div class="flex items-center justify-center gap-2">
-      <button class="trade-btn trade-buy" data-symbol="${s}" data-side="BUY">BUY</button>
-      <button class="trade-btn trade-sell" data-symbol="${s}" data-side="SELL">SELL</button>
+  <td class="px-2 py-3 text-center">
+    <div class="flex items-center justify-center gap-3">
+      <button class="px-3 py-1.5 inline-flex items-center justify-center
+         bg-emerald-500/10 hover:bg-emerald-500/20
+         text-emerald-400 text-xs font-bold
+         rounded border border-emerald-500/30
+         transition-all active:scale-95 trade-buy"
+  data-symbol="${s}" data-side="BUY">BUY</button>
+<button class="px-3 py-1.5 inline-flex items-center justify-center
+         bg-red-500/10 hover:bg-red-500/20
+         text-red-400 text-xs font-bold
+         rounded border border-red-500/30
+         transition-all active:scale-95 trade-sell"
+  data-symbol="${s}" data-side="SELL">SELL</button>
     </div>
   </td>
 </tr>`;
@@ -2122,7 +2257,7 @@
               for (const symbol of trulyNewSymbols) {
                 // 🛑 CHECK BLACKLIST (Manual Square Off)
                 if (manuallySquaredOffSymbols.has(symbol)) {
-                  // console.log(`🛑 Skipped blacklisted symbol: ${symbol}`);
+                  // console.log(`🛑 Skipped blacklisted symbol: ${ symbol } `);
                   continue;
                 }
 
@@ -2132,7 +2267,7 @@
                 const totalProcessedCount = processedAutoTradeSymbols.size;
 
                 if (totalProcessedCount >= globalLimit) {
-                  // console.log(`🛑 Global limit reached (${totalProcessedCount}/${globalLimit}).`);
+                  // console.log(`🛑 Global limit reached(${ totalProcessedCount } / ${ globalLimit }).`);
                   continue;
                 }
 
@@ -2170,7 +2305,7 @@
                   } else {
                     // ✅ SUCCESS: New session started
                     console.log("✅ AUTO-TRADE: Ladder started for", symbol);
-                    showMsg(`🤖 Auto-started: ${symbol}`, false);
+                    showMsg(`🤖 Auto - started: ${symbol} `, false);
 
                     // Increment count ONLY on success
                     processedAutoTradeSymbols.set(symbol, currentCount + 1);
@@ -2250,7 +2385,7 @@
 
         console.log("🔄 Automation mode changed to:", mode); // Debug log
         updateAutomationUI();
-        showMsg(`✅ Switched to ${mode === "AUTO" ? "Full Automation" : "Manual Control"}`, false);
+        showMsg(`✅ Switched to ${mode === "AUTO" ? "Full Automation" : "Manual Control"} `, false);
       } catch (e) {
         console.error("❌ Failed to update automation mode:", e);
         showMsg("❌ Failed to update automation mode", true);
@@ -2296,26 +2431,25 @@
         label.textContent = "FULL AUTOMATION";
       } else {
         indicator.style.transform = "translateX(0%)";
-        indicator.className = "absolute inset-y-1 left-1 w-1/2 rounded-full bg-gradient-to-r from-red-500/30 to-red-600/30 transition-all duration-500 ease-[cubic-bezier(.4,0,.2,1)] shadow-lg shadow-red-500/30";
+        indicator.className = "absolute inset-y-1 left-1 w-1/2 rounded-full bg-gradient-to-r from-fuchsia-600/20 to-pink-600/20 backdrop-blur-md transition-all duration-500 ease-[cubic-bezier(.4,0,.2,1)] shadow-inner shadow-fuchsia-500/20";
 
         // Toggle buttons
-        manualBtn.classList.add("active", "bg-red-600", "border-red-500", "text-white");
+        manualBtn.classList.add("active", "bg-fuchsia-500/15", "border-fuchsia-400/40", "text-white");
         manualBtn.classList.remove("bg-slate-800", "border-slate-600", "text-slate-300");
         autoBtn.classList.remove("active", "bg-emerald-600", "border-emerald-500", "text-white");
         autoBtn.classList.add("bg-slate-800", "border-slate-600", "text-slate-300");
 
         manualDot.classList.remove("hidden");
         manualDot.classList.remove("bg-emerald-400", "bg-amber-400");
-        manualDot.classList.add("bg-red-400");
+        manualDot.classList.add("bg-fuchsia-500");
         autoDot.classList.add("hidden");
 
         // 🔴 Header badge - RED for MANUAL
-        badge.classList.add("badge-red");
+        badge.classList.add("border-fuchsia-400/40", "bg-fuchsia-500/15", "text-fuchsia-300", "shadow-inner");
         ring.classList.add("connected");
         label.textContent = "MANUAL MODE";
       }
     }
-
 
     async function loadAutomationMode() {
       try {
@@ -2346,6 +2480,8 @@
         const s = data.settings;
 
         $("us-qtymode").value = s.qty_mode || "CAPITAL";
+        $("us-entry-enabled").checked = s.entry_threshold_enabled || false;
+        $("us-entry-pct").value = s.entry_threshold_pct || 0.5;
         $("us-capital").value = s.per_trade_capital || 1000;
         $("us-qty").value = s.per_trade_qty || 1;
         $("us-threshold").value = s.threshold_pct || 1;
@@ -2363,6 +2499,8 @@
     async function saveUniversalSettings() {
       const settings = {
         qty_mode: $("us-qtymode").value,
+        entry_threshold_enabled: $("us-entry-enabled").checked,
+        entry_threshold_pct: parseFloat($("us-entry-pct").value || "0.5"),
         per_trade_capital: parseFloat($("us-capital").value || "1000"),
         per_trade_qty: parseInt($("us-qty").value || "1"),
         threshold_pct: parseFloat($("us-threshold").value || "1"),
@@ -2429,6 +2567,8 @@
 
         $("ls-mode").value = "UNIVERSAL";
         $("ls-qtymode").value = s.qty_mode || "CAPITAL";
+        $("ls-entry-enabled").checked = s.entry_threshold_enabled || false;
+        $("ls-entry-pct").value = s.entry_threshold_pct || 0.5;
         $("ls-capital").value = s.per_trade_capital || 1000;
         $("ls-qty").value = s.per_trade_qty || 1;
         $("ls-threshold").value = s.threshold_pct || 1;
@@ -2443,13 +2583,15 @@
 
     async function loadStockSettingsToTradeModal(symbol) {
       try {
-        const res = await fetch(`/api/stock-settings?symbol=${symbol}`);
+        const res = await fetch(`/ api / stock - settings ? symbol = ${symbol} `);
         const data = await res.json();
 
         if (data.settings) {
           const s = data.settings;
           $("ls-mode").value = "STOCK";
           $("ls-qtymode").value = s.qty_mode || "CAPITAL";
+          $("ls-entry-enabled").checked = s.entry_threshold_enabled || false;
+          $("ls-entry-pct").value = s.entry_threshold_pct || 0.5;
           $("ls-capital").value = s.per_trade_capital || 1000;
           $("ls-qty").value = s.per_trade_qty || 1;
           $("ls-threshold").value = s.threshold_pct || 1;
@@ -2528,6 +2670,8 @@
 
       const settings = {
         qty_mode: qtyMode,
+        entry_threshold_enabled: $("ls-entry-enabled").checked,
+        entry_threshold_pct: parseFloat($("ls-entry-pct").value || "0.5"),
         per_trade_capital: parseFloat($("ls-capital").value || "0"),
         per_trade_qty: parseInt($("ls-qty").value || "1"),
         threshold_pct: parseFloat($("ls-threshold").value || "1"),
@@ -2638,10 +2782,10 @@
     function ladderEmptyUI() {
       const tbody = $("ladderRows");
       tbody.innerHTML = `
-    <tr>
-      <td colspan="13" class="p-12 text-center text-slate-500 italic text-sm">
-        No active ladder strategies
-      </td>
+              <tr>
+              <td colspan="13" class="p-12 text-center text-slate-500 italic text-sm">
+                No active ladder strategies
+              </td>
     </tr>`;
       setOverallPnl(0);
       setLadderCount(0);
@@ -2657,21 +2801,27 @@
             return;
           }
 
-          // ✅ filter: DONE + qty=0 rows hide (so Squareoff ke baad clear dikhenga)
+          // ✅ filter: Hide DONE/COMPLETE positions automatically
           const filtered = rows.filter(s => {
             const ls = s.leg_state || {};
             const status = String(ls.status || "");
             const qty = Number(ls.qty || 0);
 
-            // ✅ STRICT FILTER: Show only Real Positions, Rejections, Errors, or Completed
-            // Hides "Waiting" or "Idle" states that have no quantity yet.
             const st = (status || "").toUpperCase();
 
+            // Show errors/rejections for debugging
             if (st === "REJECTED" || st === "ERROR") return true;
-            if (st === "COMPLETE") return true;
-            if (qty > 0) return true; // Show any status if we have money in it
 
-            return false; // Hide IDLE, WAIT_FEED, WAIT_LTP if qty is 0
+            // ✅ HIDE COMPLETE/DONE - auto-clear from Active Ladders
+            if (st === "COMPLETE" || st === "DONE") return false;
+
+            // Show RUNNING positions even if qty=0 (order pending)
+            if (st === "RUNNING" || st === "EXITING") return true;
+
+            // Show any other status if we have qty
+            if (qty > 0) return true;
+
+            return false; // Hide IDLE, WAIT_* if qty is 0
           });
 
           if (filtered.length === 0) {
@@ -2748,7 +2898,14 @@
 
             let st = ls.status || "UNKNOWN";
             if (ls.reason) {
-              st += " (" + ls.reason + ")";
+              let r = String(ls.reason);
+              // ✅ Shorten long Zerodha error messages
+              if (r.indexOf("MARKET ORDERS ARE BLOCKED FOR ILLIQUID ETFS") !== -1) {
+                r = "Illiquid ETF";
+              } else if (r.length > 40) {
+                r = r.substring(0, 40) + "...";
+              }
+              st += " (" + r + ")";
             }
             let stColor = "text-slate-400";
             if (st.includes("WAIT")) stColor = "text-yellow-400";
@@ -2759,7 +2916,7 @@
             else if (st.startsWith("EXIT")) stColor = "text-orange-400";
 
             tbody.innerHTML += `
-          <tr class="hover:bg-slate-800/40 transition-all duration-300 border-b-2 border-slate-700/60 group">
+              <tr class="hover:bg-slate-800/40 transition-all duration-300 border-b-2 border-slate-700/60 group">
             <td class="p-3 pl-4 text-left font-extrabold text-white text-sm tracking-wide">${s.symbol}</td>
             <td class="p-3 text-center text-slate-500 text-xs font-medium">${(s.cycle_index + 1)} / ${s.cycle_total}</td>
             <td class="p-3 text-center text-slate-300 font-medium">${s.leg}</td>
@@ -2770,7 +2927,9 @@
                 data-lfield="ltp">${ltp}</td>
 
             <td class="p-3 text-center tabular-nums text-slate-400 text-xs">${ls.avg_price ? Number(ls.avg_price).toFixed(2) : "-"}</td>
-            <td class="p-3 text-center tabular-nums text-slate-500 text-xs">${hiLo}</td>
+            <td class="p-3 text-center tabular-nums text-slate-500 text-xs"
+                data-lsym="${String(s.symbol).toUpperCase()}"
+                data-lfield="extreme">${hiLo}</td>
             <td class="p-3 text-center text-emerald-400 tabular-nums font-bold">${nextAdd}</td>
             <td class="p-3 text-center text-rose-500 tabular-nums font-medium">${sl}</td>
             <td class="p-3 text-center text-amber-500 tabular-nums font-medium">${tsl}</td>
@@ -2843,7 +3002,7 @@
             showMsg("❌ " + d.error, true);
             return;
           }
-          showMsg(`✅ Squareoff all placed (${d.count})`, false);
+          showMsg(`✅ Squareoff all placed(${d.count})`, false);
 
           // ✅ immediate clear (your requirement)
           ladderEmptyUI();
@@ -2860,10 +3019,10 @@
     function showMsg(txt, isErr = false) {
       const box = $("msg-box");
       box.textContent = txt;
-      box.className = `px-6 py-3 rounded-xl text-sm font-medium shadow-2xl z-50 transition-all duration-300 ${isErr
+      box.className = `fixed bottom - 10 left - 1 / 2 - translate - x - 1 / 2 px - 6 py - 3 rounded - xl text - sm font - medium shadow - 2xl z - 50 transition - all duration - 300 ${isErr
         ? 'bg-red-900/80 text-red-100 border border-red-700/50'
         : 'bg-emerald-900/80 text-emerald-100 border border-emerald-700/50'
-        }`;
+        } `;
       box.classList.remove("hidden");
 
       setTimeout(() => {
@@ -2984,7 +3143,7 @@
       initParticles();
       // ✅ Handle BUY/SELL click for dynamically injected rows
       document.addEventListener("click", (ev) => {
-        const btn = ev.target.closest(".trade-btn");
+        const btn = ev.target.closest(".trade-buy, .trade-sell");
         if (!btn) return;
 
         const sym = (btn.dataset.symbol || "").toUpperCase();

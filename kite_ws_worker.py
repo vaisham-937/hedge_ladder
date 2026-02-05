@@ -93,6 +93,7 @@ WS_CONNECTED = False
 # GLOBAL BUFFER + SENDER THREAD
 # -------------------------------------------------
 TICK_BUFFER = []
+ORDER_BUFFER = []  # ✅ New buffer for order updates
 BUF_LOCK = threading.Lock()
 
 MAX_BUF = 8000          # hard upper bound
@@ -106,14 +107,17 @@ def push_tick(payload: dict):
     with BUF_LOCK:
         TICK_BUFFER.append(payload)
         if len(TICK_BUFFER) > MAX_BUF:
-            # drop oldest to avoid memory blow
             del TICK_BUFFER[:1000]
 
+def push_order_update(payload: dict):
+    """Thread-safe append for order updates (Immediate high priority)."""
+    with BUF_LOCK:
+        ORDER_BUFFER.append(payload)
 
 async def ws_sender_loop():
     """
     Persistent reconnecting sender loop.
-    Reads tick batches from TICK_BUFFER and sends to FastAPI /ws/ingest.
+    Reads tick batches AND order updates.
     """
     while True:
         if r.get(f"kill:{USER_ID}"):
@@ -125,26 +129,38 @@ async def ws_sender_loop():
                 FASTAPI_WS_INGEST,
                 ping_interval=20,
                 ping_timeout=20,
-                open_timeout=10,          # ✅ add
-                close_timeout=3,          # ✅ add
-                max_size=5_000_000        # ✅ little higher
+                open_timeout=10,
+                close_timeout=3,
+                max_size=5_000_000
             ) as ws:
                 log.info("✅ Connected to FastAPI ingest WS")
 
                 while True:
                     if r.get(f"kill:{USER_ID}"):
-                        log.warning("🛑 Kill switch active. Stop sending ticks.")
                         return
 
-                    batch = None
+                    # 1️⃣ Flush Order Updates (Priority)
+                    order_batch = None
+                    with BUF_LOCK:
+                        if ORDER_BUFFER:
+                            order_batch = list(ORDER_BUFFER)
+                            ORDER_BUFFER.clear()
+                    
+                    if order_batch:
+                        for update in order_batch:
+                            await ws.send(json.dumps({"type": "order_update", "payload": update}))
+                    
+                    # 2️⃣ Flush Ticks
+                    tick_batch = None
                     with BUF_LOCK:
                         if TICK_BUFFER:
-                            batch = TICK_BUFFER[:BATCH_SIZE]
+                            tick_batch = TICK_BUFFER[:BATCH_SIZE]
                             del TICK_BUFFER[:BATCH_SIZE]
 
-                    if batch:
-                        await ws.send(json.dumps({"type": "ticks", "ticks": batch}))
-                    else:
+                    if tick_batch:
+                        await ws.send(json.dumps({"type": "ticks", "ticks": tick_batch}))
+                    
+                    if not order_batch and not tick_batch:
                         await asyncio.sleep(IDLE_SLEEP)
 
         except Exception as e:
@@ -176,6 +192,16 @@ def on_close(ws, code, reason):
 
 def on_error(ws, code, reason):
     log.error(f"❌ Kite WS error | {code} | {reason}")
+
+def on_order_update(ws, data):
+    """
+    Called when order status changes (REJECTED, OPEN, COMPLETE).
+    """
+    try:
+        # log.info(f"Order Update: {data}")
+        push_order_update(data)
+    except Exception as e:
+        log.error(f"Error in on_order_update: {e}")
 
 
 def _sum_depth_qty(depth: dict, side: str) -> int:
@@ -307,6 +333,7 @@ def start():
     kws.on_connect = on_connect
     kws.on_close = on_close
     kws.on_error = on_error
+    kws.on_order_update = on_order_update  # ✅ ADDED CALLBACK
 
     threading.Thread(target=sync_tokens, daemon=True, name=f"token_sync_user_{USER_ID}").start()
     kws.connect(threaded=True)

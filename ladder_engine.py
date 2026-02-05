@@ -179,6 +179,8 @@ class LadderSettings:
     max_adds_per_leg: int = 2             # safety cap
     slippage_bps: float = 0.0             # optional, not used for MIS market in this version
     max_trades_per_symbol: int = 1        # Max number of auto-trades allowed per symbol per session
+    entry_threshold_enabled: bool = False # ✅ NEW: Entry Logic
+    entry_threshold_pct: float = 0.5      # ✅ NEW: Entry Logic %
 
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> "LadderSettings":
@@ -194,6 +196,8 @@ class LadderSettings:
         s.trailing_sl_pct = float(max(0.01, float(s.trailing_sl_pct)))
         s.ladder_cycles = int(max(1, int(s.ladder_cycles)))
         s.max_adds_per_leg = int(max(1, int(s.max_adds_per_leg)))
+        s.entry_threshold_enabled = bool(s.entry_threshold_enabled)
+        s.entry_threshold_pct = float(s.entry_threshold_pct)
         return s
 
 @dataclass
@@ -441,6 +445,17 @@ class LadderEngine:
         await push_event(self.redis, self.user_id, symbol, "SETTINGS_SAVED", {"mode": mode, "settings": asdict(settings)})
 
     # ------------ circuit cache ------------
+    async def _fetch_quote_api(self, symbol: str) -> Dict[str, Any]:
+        """Fetch full quote (LTP, OHLC, etc) via REST API (async wrapper)"""
+        def _fetch(api_key: str, access_token: str, sym: str) -> Dict[str, Any]:
+            kite = KiteConnect(api_key=api_key)
+            kite.set_access_token(access_token)
+            q = kite.quote([f"NSE:{sym}"])
+            return q.get(f"NSE:{sym}", {}) if isinstance(q, dict) else {}
+
+        return await asyncio.to_thread(_fetch, self.api_key, self.access_token, symbol)
+
+    # ------------ circuit cache ------------
     async def get_circuit(self, symbol: str, force: bool = False) -> Circuit:
         c = self.circuits.get(symbol)
         if c and not force and (time.time() - c.ts) < 300:
@@ -457,20 +472,11 @@ class LadderEngine:
             except Exception:
                 pass
 
-        def _fetch_quote(api_key: str, access_token: str, sym: str) -> Dict[str, Any]:
-            kite = KiteConnect(api_key=api_key)
-            kite.set_access_token(access_token)
-            q = kite.quote([f"NSE:{sym}"])
-            return q.get(f"NSE:{sym}", {}) if isinstance(q, dict) else {}
-
         try:
-            q = await asyncio.to_thread(_fetch_quote, self.api_key, self.access_token, symbol)
+            q = await self._fetch_quote_api(symbol)
         except Exception as e:
             logger.error("CIRCUIT fetch failed symbol=%s err=%s", symbol, e, exc_info=True)
             await push_event(self.redis, self.user_id, symbol, "CIRCUIT_FETCH_FAIL", {"err": str(e)})
-
-            # 🔥 CRITICAL FIX — NEVER BLOCK TRADING
-            # If circuit fetch fails, just return empty circuit
             return Circuit()
 
         upper = q.get("upper_circuit_limit")
@@ -556,21 +562,84 @@ class LadderEngine:
         if settings_mode not in ("UNIVERSAL", "STOCK"):
             return {"error": "BAD_SETTINGS_MODE"}
 
-        # 1) Already running?
+        # 1) ✅ Already running OR completed? (Prevent duplicate ladder per session)
         existing = self.sessions.get(symbol)
-        if existing and existing.active:
-            logger.info("START_LADDER already_running user=%s symbol=%s", self.user_id, symbol)
-            return {"status": "already_running", "session": existing.to_public_dict()}
+        if existing:
+            # If active, ladder is still running
+            if existing.active:
+                logger.info("START_LADDER already_running user=%s symbol=%s", self.user_id, symbol)
+                return {"status": "already_running", "session": existing.to_public_dict()}
+            
+            # ✅ NEW: If inactive (completed all cycles), prevent re-entry
+            # This ensures only ONE ladder per stock per trading session
+            else:
+                logger.warning(
+                    "START_LADDER blocked_duplicate user=%s symbol=%s | "
+                    "Ladder already completed today. No re-entry allowed.",
+                    self.user_id, symbol
+                )
+                await push_event(self.redis, self.user_id, symbol, "START_BLOCKED_DUPLICATE", {
+                    "reason": "Ladder already completed for this symbol today"
+                })
+                return {
+                    "error": "Ladder Already Completed Today",
+                    "status": "duplicate_rejected"
+                }
 
         # 2) Ensure RAM map exists
         if self.SYMBOL_TOKEN_RAM is None:
             self.SYMBOL_TOKEN_RAM = {}
 
         token_raw = self.SYMBOL_TOKEN_RAM.get(self.user_id, {}).get(symbol)
-        # logger.info(
-        #     "START_LADDER user=%s symbol=%s side=%s mode=%s token_in_ram=%s payload=%s",
-        #     self.user_id, symbol, started_side, settings_mode, token_raw, settings_payload or {}
-        # )
+      
+        # 3) Load + merge settings (Wait, logic moved up?)
+        # IMPORTANT: Logic needs to load settings BEFORE logging "START LADDER" if we want to log the "Effective Side".
+        
+        settings = await self.load_settings(settings_mode, symbol)
+        if settings_payload:
+            settings = LadderSettings.from_dict({**asdict(settings), **settings_payload})
+            await self.save_settings(settings_mode, symbol, settings)
+
+        # ==========================================================
+        # ✅ ENTRY THRESHOLD LOGIC (Override Side / Block)
+        # ==========================================================
+        if settings.entry_threshold_enabled:
+            try:
+                # Need fresh quote for Open & LTP
+                q = await self._fetch_quote_api(symbol)
+                ltp = float(q.get("last_price") or 0)
+                ohlc = q.get("ohlc") or {}
+                open_price = float(ohlc.get("open") or 0)
+
+                if open_price > 0 and ltp > 0:
+                    diff_pct = ((ltp - open_price) / open_price) * 100
+                    thresh = settings.entry_threshold_pct
+                    
+                    if diff_pct >= thresh:
+                        started_side = "BUY"
+                        logger.info("ENTRY_LOGIC [%s] Diff=%.2f%% >= %.2f%% -> FORCE BUY", symbol, diff_pct, thresh)
+                    elif diff_pct <= -thresh:
+                        started_side = "SELL"
+                        logger.info("ENTRY_LOGIC [%s] Diff=%.2f%% <= -%.2f%% -> FORCE SELL", symbol, diff_pct, thresh)
+                    else:
+                        # Condition not met
+                        logger.warning("ENTRY_LOGIC_REJECT [%s] Diff=%.2f%% | Thresh=%.2f%%", symbol, diff_pct, thresh)
+                        await push_event(self.redis, self.user_id, symbol, "ENTRY_REJECTED", {
+                            "reason": "Threshold not met",
+                            "diff": diff_pct,
+                            "thresh": thresh
+                        })
+                        return {
+                            "error": f"Entry Threshold Not Met (Diff: {diff_pct:.2f}%)",
+                            "status": "rejected" 
+                        }
+                else:
+                    logger.warning("ENTRY_LOGIC [%s] Invalid Data (LTP=%s, Open=%s)", symbol, ltp, open_price)
+            except Exception as e:
+                logger.error("ENTRY_LOGIC [%s] Error: %s", symbol, e)
+                # Fail open or closed? If logic enabled, better fail closed.
+                return {"error": "Entry Check Failed (Data Error)"}
+
         msg = (
             "\n"
             + _c("╔══════════════════════════════════════════════════╗", "90") + "\n"
@@ -600,11 +669,8 @@ class LadderEngine:
             "settings_payload": settings_payload or {}
         })
 
-        # 3) Load + merge settings
-        settings = await self.load_settings(settings_mode, symbol)
-        if settings_payload:
-            settings = LadderSettings.from_dict({**asdict(settings), **settings_payload})
-            await self.save_settings(settings_mode, symbol, settings)
+        # 3) Load + merge settings (Already done above)
+        # settings variable is already populated and updated.
 
         # 🔥 CHECK GLOBAL TRADE LIMIT (Req: "Only 20 stocks must be processed")
         # We use 'max_trades_per_symbol' setting as the GLOBAL limit now.
@@ -807,7 +873,7 @@ class LadderEngine:
         sess.updated_ts = time.time()
 
         try:
-            oid = await self._place_mis_market(symbol=symbol, side=side, qty=qty)
+            oid = await self._place_mis_market(symbol=symbol, side=side, qty=qty, ltp=ltp)
         except Exception as e:
             logger.error(f"ENTRY_FAILED user={self.user_id} symbol={symbol} err={e}")
             sess.leg_state.status = "REJECTED"
@@ -951,11 +1017,33 @@ class LadderEngine:
 
 
     
-    async def _place_mis_market(self, symbol: str, side: Side, qty: int) -> str:
-        """Place MIS market order via Kite in the order worker."""
-        def _place(api_key: str, access_token: str, sym: str, s: Side, q: int) -> str:
+    async def _place_mis_market(self, symbol: str, side: Side, qty: int, ltp: float = 0.0) -> str:
+        """Place MIS market order via Kite in the order worker. Verified Capital check if ltp > 0."""
+        def _place(api_key: str, access_token: str, sym: str, s: Side, q: int, ref_ltp: float) -> str:
             kite = KiteConnect(api_key=api_key)
             kite.set_access_token(access_token)
+            
+            # ✅ Capital Check (User Request)
+            if ref_ltp > 0:
+                try:
+                    # Fetch equity margins
+                    m = kite.margins(segment="equity")
+                    avail = float(m.get("equity", {}).get("available", {}).get("live_balance") or 0)
+                    
+                    # Approx MIS margin (assuming 5x starts -> 20%). 
+                    # We use a conservative 25% to be safe, or just 20%.
+                    # Value = Price * Qty. Required = Value / 5.
+                    val = ref_ltp * q
+                    req = val / 5.0
+                    
+                    if avail < req:
+                        raise Exception(f"Insufficient Capital: Avail={avail:.2f} Req~={req:.2f} (Val={val:.2f})")
+                    
+                except Exception as e:
+                    # If it's the insufficient capital exception, re-raise it. 
+                    # If it's a network error fetching margins, we arguably should strictly fail too per user request.
+                    raise e
+
             return kite.place_order(
                 variety=kite.VARIETY_REGULAR,
                 exchange=kite.EXCHANGE_NSE,
@@ -980,7 +1068,8 @@ class LadderEngine:
                 access_token=self.access_token,
                 sym=symbol,
                 s=side,
-                q=qty
+                q=qty,
+                ref_ltp=ltp
             )
             latency = (time.perf_counter() - t0) * 1000
             logger.info(
@@ -1043,6 +1132,44 @@ class LadderEngine:
         except Exception:
             # never crash hot path
             return
+
+    async def handle_order_update(self, payload: Dict[str, Any]) -> None:
+        """
+        Called when we receive an order update via WebSocket Ingest.
+        Payload struct: { "order_id": "...", "status": "REJECTED", "symbol": "...", "tradingsymbol": "...", "status_message": "..." }
+        """
+        # Symbol might be in payload as 'tradingsymbol' or 'symbol'
+        symbol = (payload.get("tradingsymbol") or payload.get("symbol") or "").strip().upper()
+        status = str(payload.get("status") or "").strip().upper()
+        reason = str(payload.get("status_message") or payload.get("reason") or "")
+        
+        if not symbol:
+            return
+
+        sess = self.sessions.get(symbol)
+        if not sess:
+            return
+
+        # Handle Rejection / Failure
+        if status in ("REJECTED", "CANCELLED", "FAILURE"):
+            logger.warning(f"❌ ORDER {status} user={self.user_id} symbol={symbol} reason={reason}")
+            
+            if sess.leg_state:
+                # Only update if currently running/idle to avoid overwriting final states
+                if sess.leg_state.status in ("RUNNING", "IDLE"):
+                    sess.leg_state.status = "REJECTED"
+                    sess.leg_state.reason = reason or "Order Rejected"
+            
+            # Stop session to prevent infinite retries or stuck state
+            sess.active = False
+            sess.updated_ts = time.time()
+            
+            await self._snapshot(sess)
+            await push_event(self.redis, self.user_id, symbol, "ORDER_UPDATE", {
+                "status": status,
+                "reason": reason,
+                "order_id": payload.get("order_id")
+            })
 
 
     async def _poller(self) -> None:
@@ -1270,7 +1397,7 @@ class LadderEngine:
         logger.info("ADD_PLACE user=%s symbol=%s side=%s add_qty=%s ltp=%s",
                     self.user_id, sess.symbol, st.side, qty_step, ltp)
         try:
-            oid = await self._place_mis_market(symbol=sess.symbol, side=st.side, qty=qty_step)
+            oid = await self._place_mis_market(symbol=sess.symbol, side=st.side, qty=qty_step, ltp=ltp)
 
             exec_avg = await self._get_executed_avg_price(str(oid))
             fill_price = exec_avg if (exec_avg and exec_avg > 0) else float(ltp)

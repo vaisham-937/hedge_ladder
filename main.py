@@ -29,6 +29,17 @@ ws_log   = logging.getLogger("WS")
 lad_log  = logging.getLogger("LADDER")
 
 # ------------------------------------------------
+# ✅ SILENCE NOISY LOGS
+# ------------------------------------------------
+class EndpointFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        # Filter out health/status checks to keep terminal clean
+        return record.getMessage().find("/api/zerodha-status") == -1
+
+# Filter uvicorn access logs
+logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
+
+# ------------------------------------------------
 # Add an in-memory Tick Hub
 # ------------------------------------------------
 
@@ -238,6 +249,7 @@ async def circuit_prefetch_loop():
 @app.on_event("startup")
 async def _startup_tasks():
     asyncio.create_task(circuit_prefetch_loop(), name="circuit_prefetch_loop")
+    asyncio.create_task(auto_squareoff_loop(), name="auto_squareoff_loop")
 
 
 # ------------------------------------------------- 
@@ -300,103 +312,117 @@ async def ws_ingest(ws: WebSocket):
                 msg = json.loads(raw)
             except Exception:
                 continue
-            if msg.get("type") != "ticks":
-                continue
-            ticks = msg.get("ticks") or []
-            if not ticks:
-                continue
-            ws_log.info("📦 Received %d ticks from Zerodha user=%s", len(ticks), uid)
+            msg_type = msg.get("type")
             eng = ENGINE_HUB.get(uid)
-            for t in ticks:
-    # -------- normalize token/ltp ----------
-                token = t.get("token") or t.get("instrument_token") or t.get("instrumentToken")
-                ltp   = t.get("ltp")   or t.get("last_price")       or t.get("lastPrice")
 
-                try:
-                    token = int(token or 0)
-                    ltp   = float(ltp or 0)
-                except:
+            # ------------------------------------------------
+            # 1️⃣ HANDLE TICKS
+            # ------------------------------------------------
+            if msg_type == "ticks":
+                ticks = msg.get("ticks") or []
+                if not ticks:
                     continue
+                
+                ws_log.debug("📦 Received %d ticks user=%s", len(ticks), uid)
+                
+                for t in ticks:
+                    # -------- normalize token/ltp ----------
+                    token = t.get("token") or t.get("instrument_token") or t.get("instrumentToken")
+                    ltp   = t.get("ltp")   or t.get("last_price")       or t.get("lastPrice")
 
-                if token <= 0 or ltp <= 0:
-                    continue
-
-                # -------- normalize symbol ----------
-                sym = (t.get("symbol") or t.get("tradingsymbol") or t.get("tradingSymbol") or "").upper().strip()
-                if not sym:
-                    sym = TOKEN_SYMBOL_RAM[uid].get(token, "")
-                if not sym:
-                    sym = GLOBAL_TOKEN_SYMBOL.get(token, "")
-                if sym:
-                    TOKEN_SYMBOL_RAM[uid][token] = sym
-
-                # -------- normalize quantities ----------
-                tbq = t.get("tbq") or t.get("buy_quantity") or t.get("buyQuantity") or 0
-                tsq = t.get("tsq") or t.get("sell_quantity") or t.get("sellQuantity") or 0
-                try:
-                    tbq = int(tbq or 0)
-                    tsq = int(tsq or 0)
-                except:
-                    tbq, tsq = 0, 0
-
-                # -------- normalize ohlc ----------
-                ohlc = t.get("ohlc") or {}
-                op   = t.get("open") or ohlc.get("open")
-                hi   = t.get("high") or ohlc.get("high")
-                lo   = t.get("low")  or ohlc.get("low")
-                prev = t.get("prev") or ohlc.get("close")  # prev-close
-
-                op   = float(op or prev or ltp)
-                hi   = float(hi or ltp)
-                lo   = float(lo or ltp)
-                prev = float(prev or ltp)
-
-                # ---------- TOKEN MAP (RAM) ----------
-                if sym:
-                    SYMBOL_TOKEN_RAM[uid][sym] = token
-                    add_ws_token(uid, token)
-                    if eng:
-                        if getattr(eng, "SYMBOL_TOKEN_RAM", None) is None:
-                            eng.SYMBOL_TOKEN_RAM = {}
-                        eng.SYMBOL_TOKEN_RAM.setdefault(uid, {})[sym] = token
-
-                # ---------- TickHub RAM ----------
-                TICK_HUB.update_tick(uid, token, {
-                    "ltp": ltp, "tbq": tbq, "tsq": tsq,
-                    "prev": prev, "open": op, "high": hi, "low": lo,
-                    "symbol": sym, "token": token
-                })
-
-                # ---------- LADDER ----------
-                if eng:
                     try:
-                        await eng.ingest_tick(token, ltp)
-                    except Exception:
-                        lad_log.exception("Ladder ingest failed")
+                        token = int(token or 0)
+                        ltp   = float(ltp or 0)
+                    except:
+                        continue
 
-                # ---------- DASHBOARD WS ----------
-                if sym:
-                    c = get_cached_circuit(sym)
-                    upper = c.get("upper")
-                    lower = c.get("lower")
-                    await TICK_HUB.broadcast(uid, {
-                        "symbol": sym,
-                        "ltp": ltp,
-                        "tbq": tbq,
-                        "tsq": tsq,
-                        "prev": prev,
-                        "open": op,     
-                        "high": hi,
-                        "low": lo,
-                        "upper_circuit": upper,  
-                        "lower_circuit": lower,
+                    if token <= 0 or ltp <= 0:
+                        continue
+
+                    # -------- normalize symbol ----------
+                    sym = (t.get("symbol") or t.get("tradingsymbol") or t.get("tradingSymbol") or "").upper().strip()
+                    if not sym:
+                        sym = TOKEN_SYMBOL_RAM[uid].get(token, "")
+                    if not sym:
+                        sym = GLOBAL_TOKEN_SYMBOL.get(token, "")
+                    if sym:
+                        TOKEN_SYMBOL_RAM[uid][token] = sym
+
+                    # -------- normalize quantities ----------
+                    tbq = t.get("tbq") or t.get("buy_quantity") or t.get("buyQuantity") or 0
+                    tsq = t.get("tsq") or t.get("sell_quantity") or t.get("sellQuantity") or 0
+                    try:
+                        tbq = int(tbq or 0)
+                        tsq = int(tsq or 0)
+                    except:
+                        tbq, tsq = 0, 0
+
+                    # -------- normalize ohlc ----------
+                    ohlc = t.get("ohlc") or {}
+                    op   = t.get("open") or ohlc.get("open")
+                    hi   = t.get("high") or ohlc.get("high")
+                    lo   = t.get("low")  or ohlc.get("low")
+                    prev = t.get("prev") or ohlc.get("close")
+
+                    op   = float(op or prev or ltp)
+                    hi   = float(hi or ltp)
+                    lo   = float(lo or ltp)
+                    prev = float(prev or ltp)
+
+                    # ---------- TOKEN MAP (RAM) ----------
+                    if sym:
+                        SYMBOL_TOKEN_RAM[uid][sym] = token
+                        add_ws_token(uid, token)
+                        if eng:
+                            if getattr(eng, "SYMBOL_TOKEN_RAM", None) is None:
+                                eng.SYMBOL_TOKEN_RAM = {}
+                            eng.SYMBOL_TOKEN_RAM.setdefault(uid, {})[sym] = token
+
+                    # ---------- TickHub RAM ----------
+                    TICK_HUB.update_tick(uid, token, {
+                        "ltp": ltp, "tbq": tbq, "tsq": tsq,
+                        "prev": prev, "open": op, "high": hi, "low": lo,
+                        "symbol": sym, "token": token
                     })
+
+                    # ---------- LADDER ----------
+                    if eng:
+                        try:
+                            await eng.ingest_tick(token, ltp)
+                        except Exception:
+                            lad_log.exception("Ladder ingest failed")
+
+                    # ---------- DASHBOARD BROADCAST ----------
+                    if sym:
+                        c = get_cached_circuit(sym)
+                        upper = c.get("upper")
+                        lower = c.get("lower")
+                        await TICK_HUB.broadcast(uid, {
+                            "symbol": sym,
+                            "ltp": ltp,
+                            "tbq": tbq,
+                            "tsq": tsq,
+                            "prev": prev,
+                            "open": op,     
+                            "high": hi,
+                            "low": lo,
+                            "upper_circuit": upper,  
+                            "lower_circuit": lower,
+                        })
+
+            # ------------------------------------------------
+            # 2️⃣ HANDLE ORDER UPDATE
+            # ------------------------------------------------
+            elif msg_type == "order_update":
+                # ✅ Handle ORDER UPDATES (Rejections, Fills)
+                payload = msg.get("payload")
+                if eng and payload:
+                    asyncio.create_task(eng.handle_order_update(payload))
     except Exception:
         ws_log.exception("❌ INGEST WS crashed user=%s", uid)
 
     finally:
-        ws_log.warning("📤 INGEST disconnected user=%s", uid)
-
+        pass
 
 
 # ------------------------------------------------
@@ -1177,27 +1203,7 @@ async def api_ladder_state(request: Request):
         return JSONResponse([], status_code=500)
 
 
-# class KillReq(BaseModel):
-#     enabled: bool = True
 
-# @app.post("/api/kill-switch")
-# async def api_kill_switch(request: Request):
-#     user_id = request.session.get("user_id")
-#     if not user_id:
-#         return JSONResponse({"error": "Not logged in"}, 401)
-
-#     data = await request.json()
-#     enabled = bool(data.get("enabled", True))
-
-#     try:
-#         eng = await get_engine_for_user(int(user_id))
-#         if enabled:
-#             return await eng.kill_all()
-#         else:
-#             await eng.set_kill(False)
-#             return {"status": "kill_cleared"}
-#     except Exception as e:
-#         return JSONResponse({"error": str(e)}, 500)
 
 class KillSwitchReq(BaseModel):
     enabled: bool = True
@@ -1257,13 +1263,16 @@ async def api_squareoff(request: Request):
     except Exception as e:
         return JSONResponse({"error": str(e)}, 500)
 
-@app.post("/api/squareoff_all")  # Exit all
-async def api_squareoff_all(request: Request):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return JSONResponse({"error": "Not logged in"}, 401)
-
+# ────────────────────────────────────────────────────────────────
+#               CORE SQUARE-OFF LOGIC (Standalone)
+# ────────────────────────────────────────────────────────────────
+async def execute_squareoff_all(user_id: int):
+    """
+    Core function to square off all positions for a user.
+    Can be called by API route OR background scheduler.
+    """
     user_id = int(user_id)
+    logging.info(f"Starting Square-off all positions for user {user_id}")
 
     try:
         kite = get_kite_for_user(user_id)
@@ -1299,10 +1308,10 @@ async def api_squareoff_all(request: Request):
                     order_type=kite.ORDER_TYPE_MARKET,
                 )
                 placed.append({"symbol": sym, "qty": abs(q), "order_id": oid})
+                logging.info(f"Square-off order placed: {sym} | qty: {abs(q)} | oid: {oid}")
             except Exception as e:
                 # Log error but CONTINUE cleanup
-                print(f"❌ Squareoff order failed for {sym}: {e}")
-
+                logging.error(f"Square-off order failed for {sym} user {user_id}: {e}")
             symbols_to_cleanup.add(sym)
 
         # 2) Clean ladder state from MEMORY engine (very important)
@@ -1348,11 +1357,75 @@ async def api_squareoff_all(request: Request):
         # Clear Global Count
         r.delete(f"ladder:global_count:{user_id}")
 
-        return {"status": "squareoff_all_placed", "count": len(placed), "orders": placed}
+        return {"status": "Square-off completed", "count": len(placed), "orders": placed}
 
     except Exception as e:
-        return JSONResponse({"error": str(e)}, 500)
+        # Rethrow or return error dict so caller handles it
+        logging.error(f"Square-off all execution failed: {e}")
+        return {"error": str(e)}
 
+
+@app.post("/api/squareoff_all")  # Exit all
+async def api_squareoff_all(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, 401)
+
+    result = await execute_squareoff_all(int(user_id))
+    if "error" in result:
+        return JSONResponse(result, 500)
+    return result
+
+# ────────────────────────────────────────────────────────────────
+#               AUTO SQUARE-OFF AT 3:20 PM IST
+# ────────────────────────────────────────────────────────────────
+async def auto_squareoff_loop():
+    """
+    Background task: checks every 60 seconds.
+    Triggers square-off at exactly 15:20 IST on weekdays.
+    """
+    triggered_today = None  # Track if already triggered today
+    
+    while True:
+        now = _now_ist()
+        today_date = now.date()
+        
+        # Skip weekends
+        if now.weekday() >= 5:
+            await asyncio.sleep(60)
+            continue
+
+        # ✅ Check if time is 15:20 and not triggered yet today
+        if now.hour == 15 and now.minute == 20 and triggered_today != today_date:
+            logging.info("⏰ AUTO SQUARE-OFF TRIGGERED at 15:20 IST")
+
+            triggered_today = today_date  # Mark as triggered for today
+
+            cursor = 0
+            while True:
+                cursor, keys = r.scan(cursor=cursor, match="access_token:*", count=100)
+                for key in keys:
+                    try:
+                        uid_str = key.decode().split(":")[-1] if isinstance(key, bytes) else key.split(":")[-1]
+                        if not uid_str.isdigit():
+                            continue
+                        user_id = int(uid_str)
+
+                        # Only process if token still exists
+                        if r.exists(key):
+                            # ✅ FIXED: Call extracted function, NOT the route handler
+                            await execute_squareoff_all(user_id)
+                    except Exception as e:
+                        logging.error(f"Error processing auto square-off for key {key}: {e}")
+
+                if cursor == 0:
+                    break
+            logging.info("=" * 60)
+            logging.info("✅ [ AUTO SQUARE-OFF ] COMPLETED | USER=%s | 🚀 STATUS=SUCCESS", user_id)
+            logging.info("=" * 60)
+        
+        # Sleep for 1 second (check frequently for precision)
+        await asyncio.sleep(1)
 
 
 @app.post("/api/trade")

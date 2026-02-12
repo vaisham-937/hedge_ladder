@@ -7,15 +7,25 @@ from pydantic import BaseModel
 import asyncio
 from typing import Dict, Optional, Any, List
 from ladder_engine import LadderEngine, LadderSettings
-import redis, json, time, datetime, pytz, os
+import redis.asyncio as aioredis
+import json, time, datetime, pytz, os, re
+import sys
+
 import logging
 from fastapi import WebSocket, WebSocketDisconnect
 from collections import defaultdict
 import time
+# Removed invalid import
+
 
 # ----------------- APP   -------------------
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="SUPER_SECRET_KEY_123", same_site="lax")
+app.add_middleware(
+    SessionMiddleware,
+    secret_key="SUPER_SECRET_KEY_123",
+    same_site="lax",
+    https_only=False
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 logging.basicConfig(
@@ -27,6 +37,39 @@ logging.basicConfig(
 tick_log = logging.getLogger("TICKS")
 ws_log   = logging.getLogger("WS")
 lad_log  = logging.getLogger("LADDER")
+
+def _supports_ansi() -> bool:
+    try:
+        return sys.stdout.isatty()
+    except Exception:
+        return False
+
+def _c(text: str, code: str) -> str:
+    if not _supports_ansi():
+        return str(text)
+    return f"\033[{code}m{text}\033[0m"
+
+def _log_universal_settings(user_id: int, settings: Dict[str, Any]) -> None:
+    msg = (
+        "\n"
+        + _c("╔══════════════════════════════════════════════════════╗", "90") + "\n"
+        + _c("║   UNIVERSAL SETTINGS SAVED                           ║", "1;96") + "\n"
+        + _c("╠══════════════════════════════════════════════════════╣", "90") + "\n"
+        + _c(f"║ User ID : {str(user_id):<43}║", "97") + "\n"
+        + _c(f"║ QtyMode : {str(settings.get('qty_mode', '-')):<43}║", "93") + "\n"
+        + _c(f"║ Capital : {str(settings.get('per_trade_capital', '-')):<43}║", "92") + "\n"
+        + _c(f"║ Qty     : {str(settings.get('per_trade_qty', '-')):<43}║", "92") + "\n"
+        + _c(f"║ Thresh% : {str(settings.get('threshold_pct', '-')):<43}║", "94") + "\n"
+        + _c(f"║ SL%     : {str(settings.get('stop_loss_pct', '-')):<43}║", "91") + "\n"
+        + _c(f"║ TSL%    : {str(settings.get('trailing_sl_pct', '-')):<43}║", "95") + "\n"
+        + _c(f"║ Cycles  : {str(settings.get('ladder_cycles', '-')):<43}║", "96") + "\n"
+        + _c(f"║ MaxAdds : {str(settings.get('max_adds_per_leg', '-')):<43}║", "96") + "\n"
+        + _c(f"║ MaxTrade: {str(settings.get('max_trades_per_symbol', '-')):<43}║", "1;33") + "\n"
+        + _c("╚══════════════════════════════════════════════════════╝", "90")
+    )
+    logging.getLogger("SETTINGS").info(msg)
+
+# Removed invalid include_router
 
 # ------------------------------------------------
 # ✅ SILENCE NOISY LOGS
@@ -102,24 +145,31 @@ def add_ws_token(user_id: int, token: int):
 
 
 @app.get("/api/ws-tokens")
-def api_ws_tokens(request: Request, user_id: int = Query(None)):
-    # If called from browser session
-    sess_uid = request.session.get("user_id")
+async def api_ws_tokens(user_id: int = Query(...)):
+    """⚡ Worker-only endpoint
+    NO session overhead.
+    NO request object parsing."""
+    tokens = WS_TOKENS_RAM.get(user_id, set())
+    return {
+        "user_id": user_id,
+        "tokens": sorted(list(tokens))
+    }
 
-    # If called by worker (local)
-    if user_id is not None:
-        # allow only localhost calls (basic guard)
-        client = request.client.host if request.client else ""
-        if client not in ("127.0.0.1", "localhost"):
-            return JSONResponse({"error": "forbidden"}, 403)
-        uid = int(user_id)
-    else:
-        if not sess_uid:
-            return JSONResponse({"error": "Not logged in"}, 401)
-        uid = int(sess_uid)
 
-    toks = sorted(list(WS_TOKENS_RAM.get(uid, set())))
-    return {"user_id": uid, "tokens": toks}
+@app.get("/api/ws-tokens/session")
+async def api_ws_tokens_session(request: Request):
+    """
+    🌐 Browser-only endpoint
+    Uses session safely.
+    """
+    uid = request.session.get("user_id")
+    if not uid:
+        return JSONResponse({"error": "Not logged in"}, status_code=401)
+    tokens = WS_TOKENS_RAM.get(int(uid), set())
+    return {
+        "user_id": uid,
+        "tokens": sorted(list(tokens))
+    }
 
 
 class TickHub:
@@ -167,13 +217,15 @@ class TickHub:
             prev = float(t.get("prev", ltp) or ltp)
             high = float(t.get("high", ltp) or ltp)
             low  = float(t.get("low", ltp) or ltp)
-            opn  = float(t.get("open", prev) or prev)
+            opn_raw = t.get("open", 0)
+            opn  = float(opn_raw) if opn_raw not in (None, "") else 0.0
 
             out[sym] = {
                 "symbol": sym,
                 "ltp": ltp,
                 "tbq": int(t.get("tbq", 0) or 0),
                 "tsq": int(t.get("tsq", 0) or 0),
+                "volume": int(t.get("volume", 0) or 0),
                 "prev": prev,
                 "open": opn,
                 "high": high,
@@ -210,13 +262,14 @@ async def circuit_prefetch_loop():
                 # fetch circuits in small batches (avoid heavy calls)
                 kite = None
                 try:
-                    kite = get_kite_for_user(int(uid))
+                    kite = await get_kite_for_user(int(uid))
+                    if not kite: continue
                 except:
                     continue
                 # Kite quote supports multiple instruments  We fetch only those missing/expired
                 to_fetch = []
                 for sym in list(syms)[:200]:
-                    c = get_cached_circuit(sym)
+                    c = await get_cached_circuit(sym)
                     if not c or (time.time() - float(c.get("ts", 0) or 0)) > CIRCUIT_TTL_SEC:
                         to_fetch.append(f"NSE:{sym}")
 
@@ -239,9 +292,10 @@ async def circuit_prefetch_loop():
                                 "ts": time.time()
                             }
                             CIRCUIT_RAM[sym] = payload
-                            r.setex(f"circuit:{sym}", CIRCUIT_TTL_SEC, json.dumps(payload))
+                            await r.setex(f"circuit:{sym}", CIRCUIT_TTL_SEC, json.dumps(payload))
                     except:
                         continue
+
 
         except Exception:
             continue
@@ -250,6 +304,7 @@ async def circuit_prefetch_loop():
 async def _startup_tasks():
     asyncio.create_task(circuit_prefetch_loop(), name="circuit_prefetch_loop")
     asyncio.create_task(auto_squareoff_loop(), name="auto_squareoff_loop")
+    asyncio.create_task(daily_reset_loop(), name="daily_reset_loop")
 
 
 # ------------------------------------------------- 
@@ -275,7 +330,7 @@ async def ws_ticks(ws: WebSocket):
         for t in snap.values():
             sym = (t.get("symbol") or "").upper()
             if sym:
-                c = get_cached_circuit(sym)
+                c = await get_cached_circuit(sym)
                 t["upper_circuit"] = c.get("upper")
                 t["lower_circuit"] = c.get("lower")
             ticks.append(t)
@@ -351,11 +406,13 @@ async def ws_ingest(ws: WebSocket):
                     # -------- normalize quantities ----------
                     tbq = t.get("tbq") or t.get("buy_quantity") or t.get("buyQuantity") or 0
                     tsq = t.get("tsq") or t.get("sell_quantity") or t.get("sellQuantity") or 0
+                    vol = t.get("volume") or t.get("volume_traded") or t.get("volumeTraded") or 0
                     try:
                         tbq = int(tbq or 0)
                         tsq = int(tsq or 0)
+                        vol = int(vol or 0)
                     except:
-                        tbq, tsq = 0, 0
+                        tbq, tsq, vol = 0, 0, 0
 
                     # -------- normalize ohlc ----------
                     ohlc = t.get("ohlc") or {}
@@ -364,10 +421,22 @@ async def ws_ingest(ws: WebSocket):
                     lo   = t.get("low")  or ohlc.get("low")
                     prev = t.get("prev") or ohlc.get("close")
 
-                    op   = float(op or prev or ltp)
+                    op   = float(op) if op not in (None, "") else 0.0
                     hi   = float(hi or ltp)
                     lo   = float(lo or ltp)
                     prev = float(prev or ltp)
+
+                    # Keep/fetch real open if tick payload doesn't carry it.
+                    if op <= 0 and sym:
+                        try:
+                            old_tick = TICK_HUB.ticks.get(uid, {}).get(token, {})
+                            old_open = float(old_tick.get("open") or 0)
+                            if old_open > 0:
+                                op = old_open
+                            else:
+                                op = await get_cached_open_price(uid, sym)
+                        except Exception:
+                            op = 0.0
 
                     # ---------- TOKEN MAP (RAM) ----------
                     if sym:
@@ -381,6 +450,7 @@ async def ws_ingest(ws: WebSocket):
                     # ---------- TickHub RAM ----------
                     TICK_HUB.update_tick(uid, token, {
                         "ltp": ltp, "tbq": tbq, "tsq": tsq,
+                        "volume": vol,
                         "prev": prev, "open": op, "high": hi, "low": lo,
                         "symbol": sym, "token": token
                     })
@@ -394,7 +464,7 @@ async def ws_ingest(ws: WebSocket):
 
                     # ---------- DASHBOARD BROADCAST ----------
                     if sym:
-                        c = get_cached_circuit(sym)
+                        c = await get_cached_circuit(sym)
                         upper = c.get("upper")
                         lower = c.get("lower")
                         await TICK_HUB.broadcast(uid, {
@@ -402,6 +472,7 @@ async def ws_ingest(ws: WebSocket):
                             "ltp": ltp,
                             "tbq": tbq,
                             "tsq": tsq,
+                            "volume": vol,
                             "prev": prev,
                             "open": op,     
                             "high": hi,
@@ -430,69 +501,67 @@ async def ws_ingest(ws: WebSocket):
 # ------------------------------------------------
 ENGINE_HUB: Dict[int, LadderEngine] = {}
 
-def get_kite_for_user(user_id: int) -> KiteConnect:
-    """
-    ✅ api_key: from saved credentials hash (zerodha:keys:{user_id})
-    ✅ access_token: ONLY from redis key access_token:{user_id} (24h TTL)
-    """
-    keys = r.hgetall(f"zerodha:keys:{user_id}")
-    api_key = (keys or {}).get("api_key")
-    access_token = r.get(f"access_token:{user_id}")
+async def get_kite_for_user(user_id: int):
+    user_id = int(user_id)
+    keys = await r.hgetall(f"zerodha:keys:{user_id}")
+    if not keys: return None
+    
+    token = await r.get(f"access_token:{user_id}")
+    if not token: return None
 
-    if not api_key:
-        raise RuntimeError("Zerodha API key missing. Save credentials first.")
-    if not access_token:
-        raise RuntimeError("Zerodha not connected / token expired")
-
-    kite = KiteConnect(api_key=str(api_key))
-    kite.set_access_token(str(access_token))
+    kite = KiteConnect(api_key=keys.get("api_key"))
+    kite.set_access_token(token)
     return kite
 
-async def get_engine_for_user(user_id: int) -> LadderEngine:
-    keys = r.hgetall(f"zerodha:keys:{user_id}")
-    api_key = (keys or {}).get("api_key")
-    access_token = r.get(f"access_token:{user_id}")
+async def get_engine_for_user(user_id: int):
+    user_id = int(user_id)
+    eng = ENGINE_HUB.get(user_id)
+    if eng is not None:
+        # Ensure poller/order worker is alive; otherwise ingest_tick will ignore ticks.
+        if not getattr(eng, "_running", False):
+            await eng.start()
+        return eng
 
-    if not api_key:
-        raise RuntimeError("Zerodha API key missing. Save credentials first.")
-    if not access_token:
-        raise RuntimeError("Zerodha not connected / token expired")
+    # Get credentials
+    keys = await r.hgetall(f"zerodha:keys:{user_id}")
+    if not keys: return None
+    
+    token = await r.get(f"access_token:{user_id}")
+    if not token: return None
 
-    redis_url = REDIS_URL or "redis://127.0.0.1:6379/0"
-
-    eng = ENGINE_HUB.get(int(user_id))
-    if eng is None or eng.api_key != str(api_key) or eng.access_token != str(access_token):
-        eng = LadderEngine(
-            redis_url=redis_url,
-            user_id=int(user_id),
-            api_key=str(api_key),
-            access_token=str(access_token),
-        )
-        ENGINE_HUB[int(user_id)] = eng
-        await eng.start()
-    else:
-        await eng.start()
-
-    # inject RAM mapping
-    eng.SYMBOL_TOKEN_RAM = SYMBOL_TOKEN_RAM
+    # Create engine
+    redis_url = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+    eng = LadderEngine(
+        redis_url=redis_url,
+        user_id=user_id,
+        api_key=keys.get("api_key"),
+        access_token=token
+    )
+    await eng.start()
+    ENGINE_HUB[user_id] = eng
     return eng
 
+from dotenv import load_dotenv
+import os
 
-
+load_dotenv()  # 🔥 this loads .env into os.environ
 
 # ------------------------------------------------
 # REDIS
 REDIS_URL = os.getenv("REDIS_URL")
 if REDIS_URL:
-    r = redis.Redis.from_url(REDIS_URL, decode_responses=True)
+    r = aioredis.from_url(REDIS_URL, decode_responses=True)
 else:
-    r = redis.Redis(host="127.0.0.1", port=6379, db=0, decode_responses=True)
+    r = aioredis.Redis(host="127.0.0.1", port=6379, db=0, decode_responses=True)
+
 
 # ============================================================
 # ✅ CIRCUIT CACHE (Redis + in-memory TTL)
 # ============================================================
 CIRCUIT_RAM: Dict[str, Dict[str, Any]] = {}   # symbol -> {"upper":..,"lower":..,"ts":..}
 CIRCUIT_TTL_SEC = 30 * 60                     # 30 min (same day ok)
+OPEN_RAM: Dict[str, Dict[str, Any]] = {}      # symbol -> {"open":..,"ts":..}
+OPEN_TTL_SEC = 12 * 60 * 60                   # cache open price for trading day window
 
 def _now_ist():
     ist = pytz.timezone("Asia/Kolkata")
@@ -505,12 +574,13 @@ def _is_market_time_for_circuit():
         return False
     return True
 
-def get_cached_circuit(symbol: str) -> Dict[str, Any]:
+
+async def get_cached_circuit(sym: str) -> Dict[str, Any]:
     """
     Fast path: RAM -> Redis.
     Returns dict: {"upper": float|None, "lower": float|None, "ts": epoch}
     """
-    sym = symbol.upper().strip()
+    sym = sym.upper().strip()
     if not sym:
         return {}
 
@@ -520,7 +590,7 @@ def get_cached_circuit(symbol: str) -> Dict[str, Any]:
         return c
 
     # 2) Redis cache
-    raw = r.get(f"circuit:{sym}")
+    raw = await r.get(f"circuit:{sym}")
     if raw:
         try:
             d = json.loads(raw)
@@ -531,6 +601,57 @@ def get_cached_circuit(symbol: str) -> Dict[str, Any]:
             pass
 
     return {}
+
+
+async def get_cached_open_price(user_id: int, sym: str) -> float:
+    """
+    Fetch and cache day's open price.
+    Priority: RAM -> Redis -> Kite quote.
+    """
+    sym = (sym or "").upper().strip()
+    if not sym:
+        return 0.0
+
+    now_ts = time.time()
+
+    # 1) RAM cache
+    c = OPEN_RAM.get(sym)
+    if c and (now_ts - float(c.get("ts", 0) or 0)) < OPEN_TTL_SEC:
+        try:
+            return float(c.get("open") or 0.0)
+        except Exception:
+            return 0.0
+
+    # 2) Redis cache (date-scoped)
+    day = _now_ist().strftime("%Y%m%d")
+    redis_key = f"open:{day}:{sym}"
+    raw = await r.get(redis_key)
+    if raw not in (None, ""):
+        try:
+            val = float(raw)
+            if val > 0:
+                OPEN_RAM[sym] = {"open": val, "ts": now_ts}
+                return val
+        except Exception:
+            pass
+
+    # 3) Kite quote fallback
+    try:
+        kite = await get_kite_for_user(int(user_id))
+        if not kite:
+            return 0.0
+        q = kite.quote([f"NSE:{sym}"]) or {}
+        row = q.get(f"NSE:{sym}", {}) or {}
+        ohlc = row.get("ohlc") or {}
+        val = float(ohlc.get("open") or row.get("open") or 0.0)
+        if val > 0:
+            OPEN_RAM[sym] = {"open": val, "ts": now_ts}
+            await r.set(redis_key, str(val), ex=OPEN_TTL_SEC)
+            return val
+    except Exception:
+        return 0.0
+
+    return 0.0
 
 
 
@@ -551,70 +672,16 @@ class CredentialForm(BaseModel):
 # ------------------------------------------------
 # UI ROUTES
 # ------------------------------------------------
-@app.get("/", response_class=HTMLResponse)
-def index():
-    return open(os.path.join(BASE_DIR, "templates/index.html"), encoding="utf-8").read()
-
-# ------------------------------------------------
-# AUTHENTICATION 
-# ------------------------------------------------
-@app.post("/register")
-def register(username: str = Form(...), password: str = Form(...)):
-    # username already exists?
-    if r.exists(f"username_to_id:{username}"):
-        return RedirectResponse("/?error=exists", status_code=302)
-
-    # 🔢 generate numeric user_id
-    user_id = r.incr("user_counter")   # 1,2,3...
-
-    # map username → id
-    r.set(f"username_to_id:{username}", user_id)
-
-    # store user data  create user hash safely
-    r.hset(f"user:{user_id}", "username", str(username))
-    r.hset(f"user:{user_id}", "password", pwd.hash(password[:72]))
-
-    return RedirectResponse("/", status_code=302)
-
-
-@app.post("/login")
-def login(request: Request, username: str = Form(...), password: str = Form(...)):
-    user_id = r.get(f"username_to_id:{username}")
-    if not user_id:
-        return RedirectResponse("/?error=login", status_code=302)
-
-    user = r.hgetall(f"user:{user_id}")
-    if not user:
-        return RedirectResponse("/?error=login", status_code=302)
-
-    # ✅ prevent bcrypt crash if user types/pastes very long input
-    try:
-        ok = pwd.verify(password[:72], user["password"])
-    except Exception as e:
-        print("❌ Password verify failed:", e)
-        return RedirectResponse("/?error=hash", status_code=302)
-    if not ok:
-        return RedirectResponse("/?error=login", status_code=302)
-
-    request.session["user_id"] = int(user_id)
-    request.session["username"] = username
-    return RedirectResponse("/dashboard", status_code=303)
-
-
-
-@app.get("/logout")
-def logout(request: Request):
-    request.session.clear()
-    return RedirectResponse("/")
-
-
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
+    # Single-user mode: pin user_id to 1 if not set
     if "user_id" not in request.session:
-        return RedirectResponse("/")
+        request.session["user_id"] = 1
+        request.session["username"] = "User1"
 
     user_id = request.session["user_id"]          # int
-    username = request.session.get("username","")
+    username = request.session.get("username", "")
+    print("SESSION:", dict(request.session))
 
     html = open(
         os.path.join(BASE_DIR, "templates", "dashboard.html"),
@@ -640,8 +707,8 @@ async def save_credentials(request: Request):
     if not api_key or not api_secret:
         return JSONResponse({"error": "API key & secret required"}, 400)
 
-    r.hset(f"zerodha:keys:{user}", "api_key", str(api_key))
-    r.hset(f"zerodha:keys:{user}", "api_secret", str(api_secret))
+    await r.hset(f"zerodha:keys:{user}", "api_key", str(api_key))
+    await r.hset(f"zerodha:keys:{user}", "api_secret", str(api_secret))
 
     return {"status": "saved"}
 
@@ -661,7 +728,7 @@ async def save_automation_mode(request: Request):
     if mode not in ("MANUAL", "AUTO"):
         return JSONResponse({"error": "mode must be MANUAL or AUTO"}, 400)
     
-    r.set(f"automation:mode:{user_id}", mode)
+    await r.set(f"automation:mode:{user_id}", mode)
     return {"status": "saved", "mode": mode}
 
 @app.get("/api/automation-mode")
@@ -671,8 +738,8 @@ async def get_automation_mode(request: Request):
     if not user_id:
         return JSONResponse({"error": "Not logged in"}, 401)
     
-    mode = r.get(f"automation:mode:{user_id}") or "MANUAL"
-    return {"mode": mode}
+    mode = await r.get(f"automation:mode:{user_id}")
+    return {"mode": mode or "MANUAL"}
 
 # ------------------------------------------------
 # UNIVERSAL LADDER SETTINGS
@@ -695,8 +762,10 @@ async def save_universal_settings(request: Request):
         if field not in settings:
             return JSONResponse({"error": f"Missing field: {field}"}, 400)
     
-    r.set(f"universal:settings:{user_id}", json.dumps(settings))
+    _log_universal_settings(int(user_id), settings)
+    await r.set(f"universal:settings:{user_id}", json.dumps(settings))
     return {"status": "saved"}
+
 
 @app.get("/api/universal-settings")
 async def get_universal_settings(request: Request):
@@ -705,10 +774,11 @@ async def get_universal_settings(request: Request):
     if not user_id:
         return JSONResponse({"error": "Not logged in"}, 401)
     
-    raw = r.get(f"universal:settings:{user_id}")
+    raw = await r.get(f"universal:settings:{user_id}")
     if raw:
         try:
             settings = json.loads(raw)
+
             # ✅ Merge with defaults in case of new fields (like max_trades_per_symbol)
             defaults = {
                 "qty_mode": "CAPITAL", "per_trade_capital": 1000, "per_trade_qty": 1,
@@ -754,8 +824,9 @@ async def save_stock_settings(request: Request):
     if not symbol:
         return JSONResponse({"error": "Symbol required"}, 400)
     
-    r.set(f"stock:settings:{user_id}:{symbol}", json.dumps(settings))
+    await r.set(f"stock:settings:{user_id}:{symbol}", json.dumps(settings))
     return {"status": "saved", "symbol": symbol}
+
 
 @app.get("/api/stock-settings")
 async def get_stock_settings(request: Request, symbol: str):
@@ -765,11 +836,12 @@ async def get_stock_settings(request: Request, symbol: str):
         return JSONResponse({"error": "Not logged in"}, 401)
     
     symbol = symbol.strip().upper()
-    raw = r.get(f"stock:settings:{user_id}:{symbol}")
+    raw = await r.get(f"stock:settings:{user_id}:{symbol}")
     
     if raw:
         try:
             settings = json.loads(raw)
+
             return {"symbol": symbol, "settings": settings}
         except:
             pass
@@ -784,14 +856,15 @@ async def list_stock_settings(request: Request):
         return JSONResponse({"error": "Not logged in"}, 401)
     
     pattern = f"stock:settings:{user_id}:*"
-    keys = r.keys(pattern)
+    keys = await r.keys(pattern)
     
     result = []
     for key in keys:
-        symbol = key.split(":")[-1]
-        raw = r.get(key)
+        symbol = key.split(":")[-1] if isinstance(key, str) else key.decode().split(":")[-1]
+        raw = await r.get(key)
         if raw:
             try:
+
                 settings = json.loads(raw)
                 result.append({"symbol": symbol, "settings": settings})
             except:
@@ -812,20 +885,21 @@ async def delete_stock_settings(request: Request):
     if not symbol:
         return JSONResponse({"error": "Symbol required"}, 400)
     
-    r.delete(f"stock:settings:{user_id}:{symbol}")
+    await r.delete(f"stock:settings:{user_id}:{symbol}")
     return {"status": "deleted", "symbol": symbol}
+
 
 
 # ------------------------------------------------
 # ZERODHA LOGIN (Kite)
 # ------------------------------------------------
 @app.get("/connect/zerodha")
-def connect_zerodha(request: Request):
+async def connect_zerodha(request: Request):
     user = request.session.get("user_id")
     if not user:
         return RedirectResponse("/")
 
-    keys = r.hgetall(f"zerodha:keys:{user}")
+    keys = await r.hgetall(f"zerodha:keys:{user}")
     if not keys:
         return RedirectResponse("/dashboard?error=nokeys")
 
@@ -833,11 +907,12 @@ def connect_zerodha(request: Request):
     print("🔗🔗 Redirecting to Zerodha 🔗🔗")
     return RedirectResponse(kite.login_url())
 
+
 # -------------------------------------------------
 # ZERODHA CALLBACK
 # -------------------------------------------------
 @app.get("/zerodha/callback")
-def zerodha_callback(
+async def zerodha_callback(
     request: Request,
     request_token: str = None,
     status: str = None
@@ -852,12 +927,13 @@ def zerodha_callback(
         return RedirectResponse("/")
 
     # 3️⃣ Fetch Zerodha keys (already stored earlier)
-    keys = r.hgetall(f"zerodha:keys:{user_id}")
+    keys = await r.hgetall(f"zerodha:keys:{user_id}")
     if not keys or "api_key" not in keys or "api_secret" not in keys:
         return RedirectResponse("/dashboard?error=missing_keys")
 
     # 4️⃣ Generate access token
     kite = KiteConnect(api_key=keys["api_key"])
+
     try:
         session = kite.generate_session(
             request_token=request_token,
@@ -872,28 +948,30 @@ def zerodha_callback(
     # 5️⃣ SAVE TO REDIS (🔥 THIS IS THE FIX 🔥)
     TTL = 60 * 60 * 6   # ~6 hours (same trading day)
 
-    r.setex(f"access_token:{user_id}", TTL, access_token)
-    r.setex(f"api_key:{user_id}", TTL, keys["api_key"])
+    await r.setex(f"access_token:{user_id}", TTL, access_token)
+    await r.setex(f"api_key:{user_id}", TTL, keys["api_key"])
 
     # 6️⃣ DEBUG CONFIRMATION (VERY IMPORTANT)
-    print("✅ access_token stored 24h user:", user_id, "ttl:", r.ttl(f"access_token:{user_id}"))
+    ttl_val = await r.ttl(f"access_token:{user_id}")
+    print("✅ access_token stored 24h user:", user_id, "ttl:", ttl_val)
     print("✅ Zerodha connected for user:", user_id)
     return RedirectResponse("/dashboard")
 
 
 
+
 @app.get("/api/zerodha-status")
-def zerodha_status(request: Request):
+async def zerodha_status(request: Request):
     user_id = request.session.get("user_id")
     if not user_id:
         return {"connected": False}
     
-    keys = r.hgetall(f"zerodha:keys:{user_id}")
+    keys = await r.hgetall(f"zerodha:keys:{user_id}")
     api_key = (keys or {}).get("api_key")
-    access_token = r.get(f"access_token:{user_id}")
+    access_token = await r.get(f"access_token:{user_id}")
 
     if api_key and access_token:
-        ttl = r.ttl(f"access_token:{user_id}")
+        ttl = await r.ttl(f"access_token:{user_id}")
         if ttl <= 0:
             return {"connected": False}
         return {
@@ -901,6 +979,7 @@ def zerodha_status(request: Request):
             "expiry": int(time.time()) + ttl
 }
     return {"connected": False}
+
 
 # ------------------------------------------------
 # MARKET STATUS (09:15 - 15:30)
@@ -964,61 +1043,139 @@ def market_status():
 
 @app.get("/api/circuit/{symbol}")
 async def get_circuit(symbol: str):
-    raw = r.get(f"circuit:{symbol.upper()}")
+    raw = await r.get(f"circuit:{symbol.upper()}")
     return json.loads(raw) if raw else {}
+
 
 
 # ------------------------------------------------
 # CHARTINK WEBHOOK 
 # ------------------------------------------------
-@app.post("/webhook/chartink/{user_id}")
-async def chartink_webhook(request: Request, user_id: int):
-    data = await request.json()
+@app.post("/webhook/chartink")
+async def chartink_webhook(request: Request):
+    # Accept both JSON and form payloads from Chartink/webhook providers.
+    data = {}
+    try:
+        data = await request.json()
+    except Exception:
+        try:
+            form = await request.form()
+            data = dict(form)
+        except Exception:
+            data = {}
+
+    # Some providers wrap actual payload in a JSON string field.
+    for nested_key in ("message", "payload", "data"):
+        nested_raw = data.get(nested_key)
+        if isinstance(nested_raw, str):
+            try:
+                nested_obj = json.loads(nested_raw)
+                if isinstance(nested_obj, dict):
+                    merged = dict(data)
+                    merged.update(nested_obj)
+                    data = merged
+                    break
+            except Exception:
+                pass
+
+    ws_log.info("Chartink webhook hit | content-type=%s", request.headers.get("content-type"))
+
+    # Backward compatible default (existing behavior was fixed to user 1).
+    # If sender passes user_id, route alerts to that user.
+    try:
+        user_id = int(data.get("user_id") or request.query_params.get("user_id") or 1)
+    except Exception:
+        user_id = 1
+    ws_log.info("Chartink user_id resolved | user=%s | query=%s | data_keys=%s", user_id, dict(request.query_params), list(data.keys()))
 
     ist = pytz.timezone("Asia/Kolkata")
     now = datetime.datetime.now(ist)
     if now.weekday() >= 5:
         return {"status": "ignored", "reason": "Weekend"}
 
-    scan_name = data.get("scan_name", "Chartink")
-    stocks_str = data.get("stocks", "")
+    scan_name = data.get("scan_name") or data.get("scan") or "Chartink"
+    stocks_raw = (
+        data.get("stocks")
+        or data.get("symbols")
+        or data.get("symbol")
+        or data.get("nsecode")
+        or ""
+    )
+    ws_log.info("Chartink payload | scan=%s | stocks_raw_type=%s", scan_name, type(stocks_raw).__name__)
+
+    if isinstance(stocks_raw, (list, tuple)):
+        raw_symbols = [str(x) for x in stocks_raw]
+    else:
+        raw_symbols = [p for p in re.split(r"[\n,;]+", str(stocks_raw)) if p and p.strip()]
+
+    # Fallback: if no direct stocks field, try extracting symbols from payload text.
+    if not raw_symbols:
+        haystack = " ".join(str(v) for v in data.values() if v is not None)
+        candidates = re.findall(r"(?:NSE:|BSE:)?[A-Za-z][A-Za-z0-9_.-]{1,24}", haystack)
+        for c in candidates:
+            s = str(c).strip().upper()
+            if s.startswith("NSE:") or s.startswith("BSE:"):
+                s = s[4:]
+            if not s:
+                continue
+            # Prefer valid instrument symbols; if map unavailable, keep candidate.
+            if not GLOBAL_SYMBOL_TOKEN or s in GLOBAL_SYMBOL_TOKEN:
+                raw_symbols.append(s)
 
     today = now.strftime("%Y-%m-%d")
     redis_key = f"chartink_alerts:{user_id}:{today}"
     seen_key = f"chartink_seen:{user_id}:{today}:{scan_name}"
 
+    parsed_symbols = []
     new_stocks = []
 
-    for s in stocks_str.split(","):
-        symbol = s.strip()
+    ws_log.info("Chartink raw symbols | count=%s | sample=%s", len(raw_symbols), raw_symbols[:10])
+
+    for s in raw_symbols:
+        symbol = str(s).strip().upper().strip("'\"")
+        if symbol.startswith("NSE:"):
+            symbol = symbol[4:]
+        if symbol.startswith("BSE:"):
+            symbol = symbol[4:]
         if not symbol:
             continue
+        parsed_symbols.append(symbol)
 
-        if r.sismember(seen_key, symbol):
+        if await r.sismember(seen_key, symbol):
             continue
 
         # ✅ mark seen
-        r.sadd(seen_key, symbol)
+        await r.sadd(seen_key, symbol)
+
         new_stocks.append(symbol)
 
         # 🔥 TOKEN ENSURE
         tok = SYMBOL_TOKEN_RAM.get(user_id, {}).get(symbol) or GLOBAL_SYMBOL_TOKEN.get(symbol)
         if tok:
             add_ws_token(user_id, int(tok))
+        else:
+            ws_log.debug("Chartink token missing | user=%s | symbol=%s", user_id, symbol)
 
-    if not new_stocks:
-        return {"status": "ignored"}
+    if not parsed_symbols:
+        ws_log.warning("Chartink webhook ignored: no symbols in payload | user=%s keys=%s", user_id, list(data.keys()))
+        return {"status": "ignored", "reason": "no_symbols"}
+
+    # If all were already seen today, still push for dashboard visibility.
+    display_stocks = new_stocks if new_stocks else parsed_symbols
 
     packet = {
         "id": int(time.time() * 1000),
         "scan": scan_name,
-        "stocks": new_stocks,
+        "stocks": display_stocks,
         "time": now.strftime("%H:%M:%S")
     }
-    print(f"📥 Chartink Packet → {packet}")
-
-    r.lpush(redis_key, json.dumps(packet))
-    r.ltrim(redis_key, 0, 200)
+    ws_log.info("Chartink packet | user=%s | scan=%s | parsed=%s | new=%s | display=%s", user_id, scan_name, len(parsed_symbols), len(new_stocks), len(display_stocks))
+    ws_log.info(f"📥📩 Chartink webhook received 📥📩 -→ {packet}")
+    
+    # 🔴 Await Redis calls
+    await r.lpush(redis_key, json.dumps(packet))
+    await r.ltrim(redis_key, 0, 200)
+    ws_log.info("Chartink stored | key=%s | list_len=%s", redis_key, await r.llen(redis_key))
 
     return {"status": "success"}
 
@@ -1026,18 +1183,27 @@ async def chartink_webhook(request: Request, user_id: int):
 # GET ALERTS (Dashboard)
 # ------------------------------------------------
 @app.get("/api/alerts")
-def get_alerts(request: Request):
+async def get_alerts(request: Request):
     user_id = request.session.get("user_id")
     if not user_id:
+        ws_log.warning("GET /api/alerts blocked: no session user_id")
         return []
 
     ist = pytz.timezone("Asia/Kolkata")
     today = datetime.datetime.now(ist).strftime("%Y-%m-%d")
 
     redis_key = f"chartink_alerts:{user_id}:{today}"
-    raw = r.lrange(redis_key, 0, -1)
+    raw = await r.lrange(redis_key, 0, -1)
+    ws_log.info("GET /api/alerts | user=%s | key=%s | count=%s", user_id, redis_key, len(raw))
+
+    # Backward compatibility: webhook may have been writing to user 1.
+    if not raw and int(user_id) != 1:
+        fallback_key = f"chartink_alerts:1:{today}"
+        raw = await r.lrange(fallback_key, 0, -1)
+        ws_log.info("GET /api/alerts fallback | key=%s | count=%s", fallback_key, len(raw))
 
     return [json.loads(x) for x in raw]
+
 
 
 # ------------------------------------------------
@@ -1111,7 +1277,7 @@ async def api_ladder_squareoff(request: Request, body: LadderSquareoffReq):
     if not symbol:
         return JSONResponse({"error": "Symbol missing"}, 400)
 
-    # 1️⃣ Try to use LADDER ENGINE first (Best for state consistency & stopping re-entry)
+    # 1?? Try to use LADDER ENGINE first (Best for state consistency & stopping re-entry)
     eng = ENGINE_HUB.get(int(user_id))
     if eng:
         # Check if session exists (active or not)
@@ -1121,9 +1287,13 @@ async def api_ladder_squareoff(request: Request, body: LadderSquareoffReq):
             res = await eng.squareoff_symbol(symbol, reason="MANUAL_BTN")
             return res
 
-    # 2️⃣ Fallback: Direct Zerodha Squareoff (if engine lost track or not active)
-    kite = get_kite_for_user(int(user_id))
+    # 2?? Fallback: Direct Zerodha Squareoff (if engine lost track or not active)
+    kite = await get_kite_for_user(int(user_id))
+    if not kite:
+        return JSONResponse({"error": "Kite not connected"}, 401)
+    
     pos = kite.positions().get("net", [])
+
     net_qty = 0
     for p in pos:
         if str(p.get("tradingsymbol", "")).upper() == symbol:
@@ -1131,8 +1301,20 @@ async def api_ladder_squareoff(request: Request, body: LadderSquareoffReq):
             break
             
     if net_qty == 0:
-        # 🧹 Remove stale ladder entry
-        r.delete(f"ladder:state:{user_id}:{symbol}")
+        # Keep ladder entry for current day (mark complete)
+        key = f"ladder:state:{user_id}:{symbol}"
+        raw = await r.get(key)
+        if raw:
+            try:
+                data = json.loads(raw)
+                data["active"] = False
+                data.setdefault("session_day", datetime.datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d"))
+                if data.get("leg_state"):
+                    data["leg_state"]["status"] = "COMPLETE"
+                    data["leg_state"]["reason"] = "NO_POSITION"
+                await r.set(key, json.dumps(data))
+            except Exception:
+                pass
         # Also ensure memory cleanup
         if eng and hasattr(eng, "sessions") and symbol in eng.sessions:
              eng.sessions.pop(symbol, None)
@@ -1149,11 +1331,21 @@ async def api_ladder_squareoff(request: Request, body: LadderSquareoffReq):
         product=kite.PRODUCT_MIS,
         order_type=kite.ORDER_TYPE_MARKET,
     )
-     #🧱 Clean up ladder state after placing exit
-    r.delete(f"ladder:state:{user_id}:{symbol}")
-    return {"status": "squareoff_placed", "symbol": symbol, "qty": qty, "order_id": oid}
-
-@app.get("/api/ladder/sessions")
+    #?? Keep ladder state after placing exit (mark complete)
+    key = f"ladder:state:{user_id}:{symbol}"
+    raw = await r.get(key)
+    if raw:
+        try:
+            data = json.loads(raw)
+            data["active"] = False
+            data.setdefault("session_day", datetime.datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d"))
+            if data.get("leg_state"):
+                data["leg_state"]["status"] = "COMPLETE"
+                data["leg_state"]["reason"] = "SQUAREOFF_PLACED"
+            await r.set(key, json.dumps(data))
+        except Exception:
+            pass
+    return {"status": "squareoff_placed", "symbol": symbol, "qty": qty, "order_id": oid}@app.get("/api/ladder/sessions")
 async def ladder_sessions(request: Request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -1184,20 +1376,32 @@ async def api_ladder_state(request: Request):
         if eng:
             out = await eng.list_sessions()
 
-        # 2️⃣ Fallback to Redis (if no live sessions)
-        if not out:
-            keys = r.keys(f"ladder:state:{user_id}:*")
-            for k in keys:
-                raw = r.get(k)
-                if not raw:
-                    continue
-                try:
-                    data = json.loads(raw)
-                    out.append(data)
-                except Exception:
-                    continue
+        # 2️⃣ Merge Redis snapshots (keep completed for the day)
+        keys = await r.keys(f"ladder:state:{user_id}:*")
+        for k in keys:
+            raw = await r.get(k)
+            if not raw:
+                continue
+            try:
+                data = json.loads(raw)
+            except Exception:
+                continue
+            sym = str(data.get("symbol", "")).upper()
+            if not sym:
+                continue
+            if not any(str(x.get("symbol", "")).upper() == sym for x in out):
+                out.append(data)
 
-        return JSONResponse(out)
+        # Filter: keep only current day
+        today = datetime.datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d")
+        filtered = []
+        for s in out:
+            day = s.get("session_day")
+            if day and day != today:
+                continue
+            filtered.append(s)
+
+        return JSONResponse(filtered)
     except Exception as e:
         print("❌ /api/ladder/state error:", e)
         return JSONResponse([], status_code=500)
@@ -1239,7 +1443,10 @@ async def api_squareoff(request: Request):
     if not symbol:
         return JSONResponse({"error": "Symbol missing"}, 400)
     try:
-        kite = get_kite_for_user(int(user_id))
+        kite = await get_kite_for_user(int(user_id))
+        if not kite:
+             return JSONResponse({"error": "Kite not connected"}, 401)
+             
         pos = kite.positions().get("net", [])
         net_qty = 0
         for p in pos:
@@ -1247,7 +1454,26 @@ async def api_squareoff(request: Request):
                 net_qty = int(p.get("quantity", 0) or 0)
                 break
         if net_qty == 0:
-            return {"status": "no_position", "symbol": symbol}
+        # Keep ladder entry for current day (mark complete)
+            key = f"ladder:state:{user_id}:{symbol}"
+            raw = await r.get(key)
+            if raw:
+                try:
+                    data = json.loads(raw)
+                    data["active"] = False
+                    data.setdefault("session_day", datetime.datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d"))
+                    if data.get("leg_state"):
+                        data["leg_state"]["status"] = "COMPLETE"
+                        data["leg_state"]["reason"] = "NO_POSITION"
+                    await r.set(key, json.dumps(data))
+                except Exception:
+                    pass
+    # Also ensure memory cleanup
+            eng = ENGINE_HUB.get(int(user_id))
+            if eng and hasattr(eng, "sessions") and symbol in eng.sessions:
+                eng.sessions.pop(symbol, None)
+            return {"status": "no_position", "symbol": symbol}     
+        # ✅ PLACE SQUAREOFF ORDER   
         side = kite.TRANSACTION_TYPE_SELL if net_qty > 0 else kite.TRANSACTION_TYPE_BUY
         qty = abs(net_qty)
         oid = kite.place_order(
@@ -1260,6 +1486,7 @@ async def api_squareoff(request: Request):
             order_type=kite.ORDER_TYPE_MARKET,
         )
         return {"status": "squareoff_placed", "symbol": symbol, "qty": qty, "order_id": oid}
+
     except Exception as e:
         return JSONResponse({"error": str(e)}, 500)
 
@@ -1275,8 +1502,12 @@ async def execute_squareoff_all(user_id: int):
     logging.info(f"Starting Square-off all positions for user {user_id}")
 
     try:
-        kite = get_kite_for_user(user_id)
+        kite = await get_kite_for_user(user_id)
+        if not kite:
+             return {"error": "Kite not connected"}
+             
         pos = kite.positions().get("net", [])
+
 
         placed = []
         symbols_to_cleanup = set()
@@ -1325,37 +1556,47 @@ async def execute_squareoff_all(user_id: int):
                 except Exception:
                     pass
 
-        # 3) Clean ladder state from REDIS so dashboard won't show stale rows
-        # delete: state + locks (+ optionally stock settings)
+        # 3) Keep ladder state for the day (mark complete) + clear locks
         del_keys = []
+        today = datetime.datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d")
         for sym in symbols_to_cleanup:
+            key = f"ladder:state:{user_id}:{sym}"
+            raw = await r.get(key)
+            if raw:
+                try:
+                    data = json.loads(raw)
+                    data["active"] = False
+                    data.setdefault("session_day", today)
+                    if data.get("leg_state"):
+                        data["leg_state"]["status"] = "COMPLETE"
+                        data["leg_state"]["reason"] = "SQUAREOFF_ALL"
+                    await r.set(key, json.dumps(data))
+                except Exception:
+                    pass
             del_keys.extend([
-                f"ladder:state:{user_id}:{sym}",
                 f"ladder:lock:{user_id}:{sym}:entry",
                 f"ladder:lock:{user_id}:{sym}:add",
                 f"ladder:lock:{user_id}:{sym}:exit",
-                # Optional: comment next line if you want to keep saved stock-wise settings
-                # f"ladder:settings:stock:{user_id}:{sym}",
             ])
         if del_keys:
-            r.delete(*del_keys)
+            await r.delete(*del_keys)
 
         # 4) Optional: remove tokens from ws set (if you want WS to stop tracking these)
         # If you want this, only remove tokens for symbols cleanup.
         # (depends on how you manage symbol->token mapping)
         for sym in symbols_to_cleanup:
-            token = r.get(f"symbol_token:{sym}")
+            token = await r.get(f"symbol_token:{sym}")
             if token and str(token).isdigit():
-                r.srem(f"ws:{user_id}:tokens", int(token))
+                await r.srem(f"ws:{user_id}:tokens", int(token))
 
         # 5) Reset Trade Counts (Server-Side) so "Fresh Auto-Start" works seamlessly
         # This allows re-trading same symbols if user explicitly resets via Kill Switch
-        count_keys = r.keys(f"ladder:count:{user_id}:*")
+        count_keys = await r.keys(f"ladder:count:{user_id}:*")
         if count_keys:
-             r.delete(*count_keys)
+             await r.delete(*count_keys)
         
         # Clear Global Count
-        r.delete(f"ladder:global_count:{user_id}")
+        await r.delete(f"ladder:global_count:{user_id}")
 
         return {"status": "Square-off completed", "count": len(placed), "orders": placed}
 
@@ -1375,6 +1616,35 @@ async def api_squareoff_all(request: Request):
     if "error" in result:
         return JSONResponse(result, 500)
     return result
+
+
+@app.get("/api/auto-squareoff-event")
+async def api_auto_squareoff_event(request: Request):
+    """
+    Dashboard poll endpoint:
+    Returns latest AUTO square-off trigger info for logged-in user.
+    """
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, 401)
+
+    key = f"auto_squareoff:event:{int(user_id)}"
+    raw = await r.get(key)
+    if not raw:
+        return {"triggered": False}
+
+    try:
+        payload = json.loads(raw)
+    except Exception:
+        return {"triggered": False}
+
+    return {
+        "triggered": True,
+        "ts": payload.get("ts"),
+        "time_ist": payload.get("time_ist"),
+        "count": int(payload.get("count", 0)),
+        "status": payload.get("status", "SUCCESS"),
+    }
 
 # ────────────────────────────────────────────────────────────────
 #               AUTO SQUARE-OFF AT 3:20 PM IST
@@ -1403,7 +1673,7 @@ async def auto_squareoff_loop():
 
             cursor = 0
             while True:
-                cursor, keys = r.scan(cursor=cursor, match="access_token:*", count=100)
+                cursor, keys = await r.scan(cursor=cursor, match="access_token:*", count=100)
                 for key in keys:
                     try:
                         uid_str = key.decode().split(":")[-1] if isinstance(key, bytes) else key.split(":")[-1]
@@ -1412,9 +1682,18 @@ async def auto_squareoff_loop():
                         user_id = int(uid_str)
 
                         # Only process if token still exists
-                        if r.exists(key):
+                        if await r.exists(key):
                             # ✅ FIXED: Call extracted function, NOT the route handler
-                            await execute_squareoff_all(user_id)
+                            sq_res = await execute_squareoff_all(user_id)
+                            if "error" not in sq_res:
+                                evt_key = f"auto_squareoff:event:{user_id}"
+                                evt_payload = {
+                                    "ts": int(time.time()),
+                                    "time_ist": now.strftime("%H:%M:%S"),
+                                    "count": int(sq_res.get("count", 0)),
+                                    "status": "SUCCESS",
+                                }
+                                await r.set(evt_key, json.dumps(evt_payload), ex=60 * 60 * 12)
                     except Exception as e:
                         logging.error(f"Error processing auto square-off for key {key}: {e}")
 
@@ -1428,6 +1707,57 @@ async def auto_squareoff_loop():
         await asyncio.sleep(1)
 
 
+async def _delete_keys_by_patterns(patterns: List[str]) -> int:
+    total = 0
+    for pattern in patterns:
+        cursor = 0
+        while True:
+            cursor, keys = await r.scan(cursor=cursor, match=pattern, count=500)
+            if keys:
+                await r.delete(*keys)
+                total += len(keys)
+            if cursor == 0:
+                break
+    return total
+
+
+async def daily_reset_loop():
+    """
+    Background task: clears user data at 08:00 IST daily.
+    Resets credentials, settings, ladder state/locks, alerts, and WS tokens.
+    """
+    triggered_today = None
+    patterns = [
+        "zerodha:keys:*",
+        "access_token:*",
+        "automation:mode:*",
+        "universal:settings:*",
+        "ladder:settings:universal:*",
+        "ladder:settings:stock:*",
+        "ladder:state:*",
+        "ladder:lock:*",
+        "ladder:events:*",
+        "ladder:count:*",
+        "ladder:global_count:*",
+        "chartink_alerts:*",
+        "ws:*:tokens",
+    ]
+
+    while True:
+        now = _now_ist()
+        today_date = now.date()
+
+        if now.hour == 8 and now.minute == 0 and triggered_today != today_date:
+            logging.warning("🧹 DAILY RESET TRIGGERED at 08:00 IST")
+            triggered_today = today_date
+            try:
+                deleted = await _delete_keys_by_patterns(patterns)
+                logging.warning("✅ DAILY RESET DONE | keys_deleted=%s", deleted)
+            except Exception as e:
+                logging.error("❌ DAILY RESET FAILED: %s", e, exc_info=True)
+
+        await asyncio.sleep(1)
+
 @app.post("/api/trade")
 async def place_trade(request: Request):
     user_id = request.session.get("user_id")
@@ -1440,7 +1770,22 @@ async def place_trade(request: Request):
     if not symbol or qty <= 0 or side not in ("BUY", "SELL"):
         return JSONResponse({"error": "Invalid symbol/side/qty"}, 400)
     try:
-        kite = get_kite_for_user(int(user_id))
+        kite = await get_kite_for_user(int(user_id))
+        if not kite:
+             return JSONResponse({"error": "Kite not connected"}, 401)
+
+        # ✅ Price band check (user request): allow only 100–4000 LTP
+        try:
+            q = kite.quote(f"NSE:{symbol}")
+            ltp = float(q.get(f"NSE:{symbol}", {}).get("last_price") or 0)
+        except Exception:
+            ltp = 0
+
+        if ltp <= 0:
+            return JSONResponse({"error": "Unable to fetch LTP for price-band check"}, 400)
+        if ltp < 100 or ltp > 4000:
+            return JSONResponse({"error": f"Price outside allowed range (100-4000): {ltp:.2f}"}, 400)
+
         oid = kite.place_order(
             variety=kite.VARIETY_REGULAR,
             exchange=kite.EXCHANGE_NSE,
@@ -1451,6 +1796,7 @@ async def place_trade(request: Request):
             order_type=kite.ORDER_TYPE_MARKET,
         )
         return {"status": "order_placed", "symbol": symbol, "side": side, "qty": qty, "order_id": oid}
+
     except Exception as e:
         return JSONResponse({"error": str(e)}, 500)
 
@@ -1464,8 +1810,8 @@ async def delete_ladder(request: Request, symbol: str = Query(...)):
 
     symbol = symbol.strip().upper()
 
-    # 1) delete ladder state + locks + stock settings (SYNC redis calls)
-    r.delete(
+    # 1) delete ladder state + locks + stock settings (ASYNC redis calls)
+    await r.delete(
         f"ladder:state:{user_id}:{symbol}",
         f"ladder:lock:{user_id}:{symbol}:entry",
         f"ladder:lock:{user_id}:{symbol}:add",
@@ -1474,9 +1820,9 @@ async def delete_ladder(request: Request, symbol: str = Query(...)):
     )
 
     # 2) remove token from ws set (control set)
-    token = r.get(f"symbol_token:{symbol}")
+    token = await r.get(f"symbol_token:{symbol}")
     if token and str(token).isdigit():
-        r.srem(f"ws:{user_id}:tokens", int(token))
+        await r.srem(f"ws:{user_id}:tokens", int(token))
 
     # 3) also remove in-memory ladder session (IMPORTANT)
     eng = ENGINE_HUB.get(int(user_id))
@@ -1488,4 +1834,7 @@ async def delete_ladder(request: Request, symbol: str = Query(...)):
             pass
 
     return {"status": "deleted", "symbol": symbol}
+
+
+
 

@@ -8,11 +8,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
-  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <!-- Google Fonts: IBM Plex Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
     rel="stylesheet">
 
   <style>
@@ -68,7 +68,7 @@
       background-color: var(--bg-main);
       color: var(--text-main);
       min-height: 100vh;
-      font-family: 'Inter', sans-serif;
+      font-family: 'IBM Plex Sans', sans-serif;
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
       position: relative;
@@ -435,16 +435,16 @@
 
     /* Automation – Red when MANUAL mode (inactive) */
     #automation-badge.badge-red {
-      border-color: #ef444480;
-      color: #f87171;
-      background: linear-gradient(145deg, rgba(239, 68, 68, 0.20), rgba(239, 68, 68, 0.08));
-      box-shadow: 0 0 32px rgba(239, 68, 68, 0.50);
-      text-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+      border-color: #c2410c;
+      color: #c2410c;
+      background: linear-gradient(145deg, rgba(251, 146, 60, 0.20), rgba(251, 146, 60, 0.08));
+      box-shadow: 0 0 18px rgba(251, 146, 60, 0.35);
+      text-shadow: none;
     }
 
     #automation-badge.badge-red .status-dot {
-      background: #ef4444;
-      box-shadow: 0 0 18px #ef4444, 0 0 32px rgba(239, 68, 68, 0.70);
+      background: #c2410c;
+      box-shadow: 0 0 8px rgba(194, 65, 12, 0.5);
     }
 
     /* ─── HOVER – subtle lift & glow boost ──────────────────────── */
@@ -521,7 +521,7 @@
 
     /* --- Gradient Text --- */
     .text-gradient {
-      background: linear-gradient(to right, #f8fafc, #38bdf8);
+      background: linear-gradient(to right, #0919c7, #1a0882);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -814,16 +814,17 @@
       background: rgba(244, 63, 94, 0.1);
       color: #fb7185;
       border: 2px solid rgba(251, 113, 133, 0.5);
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-size: 6px;
       font-weight: 700;
       letter-spacing: 0.05em;
       transition: all 0.3s ease;
       white-space: nowrap;
-      min-width: 80px;
+      min-width: 40px;
       display: inline-block;
       box-sizing: border-box;
+      line-height: 1.1;
     }
 
     .squareoff-btn:hover {
@@ -1082,197 +1083,997 @@
       background: rgba(56, 189, 248, 0.1);
       border-color: rgba(56, 189, 248, 0.3);
     }
-  </style>
-</head>
 
+    /* ================= EXCEL LIGHT THEME OVERRIDES ================= */
+    :root {
+      --bg-main: #f7f9fc;
+      --bg-surface-1: #ffffff;
+      --bg-surface-2: #f1f5f9;
+      --primary: #217346;
+      --primary-glow: rgba(33, 115, 70, 0.25);
+      --secondary: #2563eb;
+      --secondary-glow: rgba(37, 99, 235, 0.25);
+      --accent: #22c55e;
+      --accent-glow: rgba(34, 197, 94, 0.25);
+      --success: #16a34a;
+      --success-glow: rgba(22, 163, 74, 0.25);
+      --danger: #dc2626;
+      --danger-glow: rgba(220, 38, 38, 0.25);
+      --warning: #d97706;
+      --text-main: #111827;
+      --text-muted: #4b5563;
+      --text-dim: #6b7280;
+      --glass-bg: #ffffff;
+      --glass-border: #d1d5db;
+      --glass-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+    }
+
+    body {
+      background-color: #f5f7fb !important;
+      color: #111827 !important;
+      font-size: clamp(12px, 0.9vw + 10px, 16px);
+      background-image:
+        linear-gradient(to right, rgba(148, 163, 184, 0.28) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.28) 1px, transparent 1px),
+        radial-gradient(circle at 15% 10%, rgba(34, 197, 94, 0.08), transparent 35%),
+        radial-gradient(circle at 85% 5%, rgba(37, 99, 235, 0.08), transparent 35%);
+      background-size: 26px 26px, 26px 26px, 100% 100%, 100% 100%;
+      background-attachment: fixed;
+    }
+
+    body::before {
+      display: none !important;
+    }
+
+    #particle-canvas {
+      display: none !important;
+    }
+
+    .glass,
+    .glass-panel {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    header.glass {
+      background: #ffffffee !important;
+      border-bottom: 1px solid #d1d5db !important;
+    }
+
+    .magic-border-container {
+      background: #ffffff !important;
+      border: 1px solid #d1d5db !important;
+    }
+
+    table {
+      border-collapse: collapse !important;
+    }
+
+    th,
+    td {
+      border: 1px solid #e2e8f0 !important;
+      color: #111827 !important;
+    }
+
+    thead th {
+      background: #f1f5f9 !important;
+      color: #111827 !important;
+      font-weight: 700 !important;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fafc !important;
+    }
+
+    tbody tr:hover {
+      background: #eef2f7 !important;
+    }
+
+    /* Disable row hover effects for both dashboard tables */
+    #alerts-body tr,
+    #ladderRows tr {
+      transition: none !important;
+    }
+
+    /* Faster row drag: disable transitions while dragging */
+    #alerts-body.row-dnd-active tr {
+      transition: none !important;
+    }
+
+    #alerts-body tr:hover,
+    #ladderRows tr:hover {
+      background: inherit !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    input,
+    select,
+    textarea {
+      background: #ffffff !important;
+      color: #111827 !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #9ca3af !important;
+    }
+
+    /* Zerodha credentials modal (dark premium) */
+    #credModal .cred-card {
+      background: linear-gradient(180deg, #0b1220 0%, #0c1527 100%);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow:
+        0 24px 60px rgba(2, 6, 23, 0.65),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    #credModal input {
+      background: rgba(30, 41, 59, 0.7) !important;
+      color: #e2e8f0 !important;
+      border: 1px solid rgba(148, 163, 184, 0.25) !important;
+    }
+
+    #credModal input::placeholder {
+      color: #94a3b8 !important;
+    }
+
+    #credModal .cred-subtle {
+      color: #7dd3fc;
+    }
+
+    .status-pill {
+      background: #ffffff !important;
+      border: 1px solid #d1d5db !important;
+      color: #111827 !important;
+      box-shadow: 0 1px 6px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    .badge-green,
+    .badge-amber,
+    .badge-red,
+    .badge-gray {
+      background: #f8fafc !important;
+      border: 1px solid #d1d5db !important;
+      color: #111827 !important;
+    }
+
+    .badge-green .badge-label {
+      color: #166534 !important;
+    }
+
+    .badge-amber .badge-label {
+      color: #92400e !important;
+    }
+
+    .badge-red .badge-label {
+      color: #991b1b !important;
+    }
+
+    .badge-gray .badge-label {
+      color: #374151 !important;
+    }
+
+    .trade-btn {
+      background: #ffffff !important;
+      color: #111827 !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: none !important;
+    }
+
+    .trade-btn:hover {
+      background: #eef2f7 !important;
+    }
+
+    .squareoff-btn {
+      background: #fee2e2 !important;
+      color: #b91c1c !important;
+      border: 1px solid #fca5a5 !important;
+      box-shadow: none !important;
+    }
+
+    .squareoff-btn:hover {
+      background: #fecaca !important;
+      color: #991b1b !important;
+    }
+
+    .text-slate-100,
+    .text-slate-200,
+    .text-slate-300,
+    .text-slate-400,
+    .text-slate-500,
+    .text-slate-600 {
+      color: #111827 !important;
+    }
+
+    /* Top bar tighter */
+    header .py-2 {
+      padding-top: 0.5rem !important;
+      padding-bottom: 0.5rem !important;
+    }
+
+    header h1 {
+      font-size: 1.15rem !important;
+    }
+
+    header .status-pill {
+      padding: 0 5px !important;
+      font-size: 0.5rem !important;
+      margin-bottom: 2px;
+      border-radius: 12px !important;
+      line-height: 1 !important;
+      align-items: center !important;
+    }
+    header .status-pill .pulse-ring {
+      width: 14px !important;
+      height: 14px !important;
+    }
+    header .status-pill .status-dot {
+      width: 8px !important;
+      height: 8px !important;
+    }
+
+    .status-pill {
+      gap: 4px !important;
+    }
+
+    .status-pill .badge-label {
+      margin-left: 0 !important;
+      line-height: 1 !important;
+    }
+
+    /* All buttons slightly smaller */
+    button,
+    .trade-btn {
+      font-size: 0.74rem !important;
+      padding: 6px 12px !important;
+    }
+    /* Compact topbar action buttons */
+    .btn-primary,
+    .btn-warning,
+    .btn-danger {
+      font-size: 0.55rem !important;
+      padding: 3px 9px !important;
+      min-width: auto !important;
+      letter-spacing: 0.4px !important;
+      line-height: 1 !important;
+    }
+    /* Keep action buttons compact */
+    .trade-buy,
+    .trade-sell,
+    .squareoff-btn {
+      padding: 0 !important;
+      min-width: 0 !important;
+      line-height: 1 !important;
+    }
+
+    /* Excel-like table containers */
+    #active-alerts-table,
+    .magic-border-container {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 0 !important;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12) !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+
+    #active-alerts-table > .overflow-x-auto,
+    #active-alerts-table .overflow-x-auto,
+    .magic-border-container > .glass,
+    .magic-border-container > .glass > .overflow-x-auto {
+      border-radius: 0 !important;
+    }
+
+    #active-alerts-table .overflow-x-auto {
+      border: 0 !important;
+    }
+
+    #active-alerts-table .group > .absolute {
+      display: none !important;
+    }
+
+    #active-alerts-table .overflow-x-auto,
+    .magic-border-container .overflow-x-auto {
+      background: #ffffff !important;
+    }
+    #alerts-fit-wrap {
+      overflow-x: auto !important;
+    }
+
+    #alerts-fit-table th,
+    #alerts-fit-table td {
+      padding-left: 1px !important;
+      padding-right: 1px !important;
+      padding-top: 1px !important;
+      padding-bottom: 1px !important;
+      line-height: 1.05 !important;
+    }
+    #alerts-fit-table th:not(:first-child),
+    #alerts-fit-table td:not(:first-child) {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+
+    #active-alerts-table thead,
+    .magic-border-container thead {
+      background: #0f172a !important;
+      color: #e4ecf6 !important;
+    }
+
+    #active-alerts-table thead th,
+    .magic-border-container thead th {
+      border: 1px solid #1f2937 !important;
+      background: #0f172a !important;
+      color: #e2e8f0 !important;
+      font-weight: 700 !important;
+    }
+
+    #active-alerts-table tbody td,
+    .magic-border-container tbody td {
+      border: 1px solid #cbd5e1 !important;
+      background: #ffffff !important;
+      color: #111827 !important;
+    }
+    /* Keep per-field colors visible in live alerts table */
+    #alerts-fit-table td[data-field="pct"]  { color: #1d4ed8 !important; font-weight: 800 !important; }
+    #alerts-fit-table td[data-field="fo"]   { color: #0c8076e4 !important; font-weight: 800 !important; }
+    #alerts-fit-table td[data-field="fo"],
+    #alerts-fit-table td[data-field="fh"],
+    #alerts-fit-table td[data-field="fl"]   { font-size: 10px !important; }
+    #alerts-fit-table td[data-field="symbol"].symbol-active {
+      background: #dcfce7 !important;
+      color: #166534 !important;
+      font-weight: 800 !important;
+    }
+    #alerts-fit-table td[data-field="symbol"] {
+      text-align: left !important;
+    }
+
+
+    /* Execution columns (EB/ES) — make text black for clarity */
+    #alerts-fit-table th[data-add-col*="EB"],
+    #alerts-fit-table th[data-add-col*="ES"],
+    #alerts-fit-table td[data-lfield*="_eb"],
+    #alerts-fit-table td[data-lfield*="_es"] {
+      color: #000000 !important;
+      font-weight: 800 !important;
+    }
+
+    /* Alerts table hover arrows for horizontal scroll */
+    .alerts-scroll-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: #e2e8f0;
+      border-radius: 10px;
+      opacity: 0;
+      pointer-events: auto;
+      transition: opacity 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+      z-index: 30;
+      backdrop-filter: blur(8px);
+    }
+
+    .alerts-scroll-arrow:hover,
+    .alerts-scroll-arrow:focus-visible {
+      opacity: 1;
+      background: rgba(14, 165, 233, 0.25);
+      border-color: rgba(14, 165, 233, 0.6);
+    }
+
+    .alerts-scroll-left {
+      left: 6px;
+    }
+
+    .alerts-scroll-right {
+      right: 6px;
+    }
+    #alerts-fit-table .b-col {
+      background: #ecfeff !important;
+      color: #0e7490 !important;
+      font-weight: 700 !important;
+    }
+    #alerts-fit-table .s-col {
+      background: #fff1f2 !important;
+      color: #be123c !important;
+      font-weight: 700 !important;
+    }
+    #alerts-fit-table td[data-lfield="pnl"] {
+      color: #166534 !important;
+      font-weight: 800 !important;
+    }
+    #alerts-fit-table td,
+    #alerts-fit-table th {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
+    }
+    #alerts-fit-table thead th {
+      position: static;
+    }
+    #alerts-fit-table thead th {
+      cursor: move;
+      user-select: none;
+    }
+    #alerts-fit-table td[data-field],
+    #alerts-fit-table td[data-lfield] {
+      text-align: right !important;
+    }
+    #alerts-fit-table td[data-field="symbol"] {
+      text-align: left !important;
+    }
+
+    #active-alerts-table tbody tr:nth-child(even) td,
+    #active-alerts-table tbody tr:nth-child(odd) td {
+      background: #ffffff !important;
+    }
+
+    #alerts-empty {
+      background: #e2e8f0 !important;
+      color: #374151 !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 8px !important;
+    }
+
+
+    /* Reduce blur/soft glow across UI */
+    .shadow-2xl,
+    .shadow-lg,
+    .shadow-inner,
+    .shadow-glow-amber,
+    .shadow-glow-emerald {
+      box-shadow: none !important;
+    }
+
+    .backdrop-blur-lg,
+    .backdrop-blur-md {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    /* Excel-like pills for counts and modes */
+    #alerts-count,
+    #ladder-count {
+      color: #111827 !important;
+      font-weight: 700 !important;
+    }
+
+    #ladder-pnl-pill {
+      background: #d9f3ef !important;
+      border: 1px solid #6ee7d8 !important;
+      color: #0f766e !important;
+    }
+
+    #overall-pnl-ladders {
+      color: #0f766e !important;
+    }
+
+    .mode-switch-container {
+      background: #f6f7fa !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 999px !important;
+      padding: 4px !important;
+      box-shadow: none !important;
+    }
+
+    #mode-manual-btn,
+    #mode-auto-btn {
+      background: #eef2ff !important;
+      border: 1px solid #94a3b8 !important;
+      color: #08183b !important;
+    }
+
+    #mode-manual-btn.active {
+  background: #fff7ed !important;      /* light orange bg */
+  border: 2px solid #ea580c !important; /* dark orange border */
+  color: #9a3412 !important;            /* deep orange text */
+  font-weight: 700;
+  box-shadow: none !important;
+}
+
+    #mode-auto-btn.active {
+  background: #ecfdf5 !important;
+  border: 2px solid #16a34a !important;
+  color: #065f46 !important;
+  font-weight: 700;
+  box-shadow: none !important;
+}
+
+    #active-alerts-table .status-pill,
+    #status-badge,
+    #market-badge,
+    #automation-badge {
+      background: #ffffff !important;
+      border: 1px solid #94a3b8 !important;
+      color: #111827 !important;
+    }
+
+    #automation-badge.badge-green .badge-label {
+      color: #166534 !important;
+    }
+
+    #automation-badge.badge-green .status-dot {
+      background: #22c55e !important;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.5) !important;
+    }
+
+    #automation-badge.badge-red .badge-label,
+    #automation-badge.badge-amber .badge-label {
+      color: #c2410c !important;
+    }
+
+    #automation-badge.badge-red .status-dot,
+    #automation-badge.badge-amber .status-dot {
+      background: #fb923c !important;
+      box-shadow: 0 0 6px rgba(251, 146, 60, 0.5) !important;
+    }
+
+    /* Keep both Manual/Auto toggle buttons same green when active */
+    #mode-manual-btn.active,
+    #mode-auto-btn.active {
+      background: #dcfce7 !important;
+      border-color: #4ade80 !important;
+      color: #166534 !important;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.35) !important;
+    }
+
+    #mode-manual-btn,
+    #mode-auto-btn {
+      border-color: #94a3b8 !important;
+    }
+
+    #mode-manual-btn.active,
+    #mode-manual-btn.active * {
+      color: #111827 !important;
+    }
+
+    /* Action buttons: keep color borders, dark text */
+    .btn-primary {
+      border-color: #60a5fa !important;
+      color: #1d4ed8 !important;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.18) !important;
+      background: #eff6ff !important;
+    }
+
+    .btn-warning {
+      border-color: #f59e0b !important;
+      color: #92400e !important;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.18) !important;
+      background: #fff7ed !important;
+    }
+
+    .btn-danger {
+      border-color: #f87171 !important;
+      color: #991b1b !important;
+      box-shadow: 0 2px 8px rgba(248, 113, 113, 0.18) !important;
+      background: #fef2f2 !important;
+    }
+
+    /* Hover glow like Connect for Square All + Kill */
+    .btn-warning:hover {
+      background: #fffbeb !important;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.35), 0 0 24px rgba(245, 158, 11, 0.2) !important;
+      transform: translateY(-1px);
+    }
+
+    .btn-danger:hover {
+      background: #fff1f2 !important;
+      box-shadow: 0 0 12px rgba(248, 113, 113, 0.35), 0 0 24px rgba(248, 113, 113, 0.2) !important;
+      transform: translateY(-1px);
+    }
+
+    .section-header {
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+    }
+
+    .mode-switch-container {
+      overflow: hidden !important;
+    }
+
+    .pill-active-alerts,
+    .pill-active-ladders {
+      background: #f8fafc !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    .pill-active-alerts span,
+    .pill-active-ladders span {
+      color: #111827 !important;
+    }
+
+    .pill-net-pnl {
+      background: #d1fae5 !important;
+      border: 1px solid #34d399 !important;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.18) !important;
+    }
+
+    .pill-net-pnl span {
+      color: #065f46 !important;
+    }
+
+    #alerts-count,
+    #overall-pnl-ladders,
+    #ladder-count {
+      color: #111827 !important;
+    }
+
+    /* Prevent top-bar overlap on small widths */
+    header .max-w-7xl {
+      flex-wrap: wrap !important;
+      row-gap: 6px !important;
+    }
+
+    header .flex.items-center.gap-3 {
+      flex-wrap: wrap !important;
+    }
+
+    header .flex.flex-wrap.items-center.gap-2 {
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+    }
+
+    header .flex.gap-2,
+    header .flex.gap-3 {
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+    }
+
+    /* Top bar strict single-line layout */
+    .topbar-main {
+      flex-wrap: nowrap !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      align-items: center;
+    }
+
+    .topbar-main .topbar-right {
+      flex-wrap: nowrap !important;
+      align-items: center;
+    }
+
+    header button {
+      white-space: nowrap !important;
+    }
+
+    /* Active Alerts count pill */
+    #alerts-count {
+      background: #fde68a;
+      padding: 1px 7px;
+      border-radius: 999px;
+      border: 1px solid #f59e0b;
+    }
+
+    /* Active Ladders pill */
+    #ladder-count {
+      background: #e2e8f0;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #94a3b8;
+    }
+
+    /* Final attractive Manual/Auto toggle look */
+    .mode-switch-container {
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%) !important;
+      border: 1px solid #475569 !important;
+      border-radius: 999px !important;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12) !important;
+      padding: 2px !important;
+    }
+
+    #mode-indicator {
+      border: 1px solid rgba(255, 255, 255, 0.9) !important;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2) !important;
+    }
+
+    #mode-manual-btn,
+    #mode-auto-btn {
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      color: #334155 !important;
+      font-weight: 700 !important;
+      border-radius: 999px !important;
+      transition: all 0.25s ease !important;
+    }
+
+    #mode-manual-btn:hover,
+    #mode-auto-btn:hover {
+      background: rgba(148, 163, 184, 0.15) !important;
+      color: #0f172a !important;
+    }
+
+    #mode-manual-btn.active {
+      background: #fff7ed !important;
+      border: 1px solid #fdba74 !important;
+      color: #9a3412 !important;
+      box-shadow: 0 2px 10px rgba(251, 146, 60, 0.25) !important;
+    }
+
+    #mode-auto-btn.active {
+      background: #ecfdf5 !important;
+      border: 1px solid #6ee7b7 !important;
+      color: #065f46 !important;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.25) !important;
+    }
+
+    .blink-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      display: inline-block;
+      animation: blink-pulse 1.4s infinite ease-in-out;
+    }
+
+    .blink-amber {
+      background: #5102b0;
+      box-shadow: 0 0 4px rgba(9, 129, 180, 0.5);
+    }
+
+    .blink-cyan {
+      background: #0e7490;
+      box-shadow: 0 0 4px rgba(14, 116, 144, 0.5);
+    }
+
+    @keyframes blink-pulse {
+      0%,
+      100% {
+        opacity: 0.35;
+        transform: scale(0.9);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+    }
+
+    /* Universal Settings Modal – Correct Background */
+#universalSettingsModal > .flex > div {
+  background: #f1f5f9 !important;   /* slate-100 */
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  max-width: 26rem !important;
+  padding: 0.6rem !important;
+}
+
+
+    #universalSettingsModal h2,
+    #universalSettingsModal p,
+    #universalSettingsModal label,
+    #universalSettingsModal span,
+    #universalSettingsModal strong {
+      color: #111827 !important;
+      text-shadow: none !important;
+    }
+
+    #universalSettingsModal input,
+    #universalSettingsModal select {
+      background: #ffffff !important;
+      color: #111827 !important;
+      border: 1px solid #cbd5e1 !important;
+      padding: 4px 8px !important;
+      font-size: 12px !important;
+      border-radius: 8px !important;
+      height: 30px !important;
+    }
+
+    #universalSettingsModal label {
+      font-size: 10px !important;
+    }
+
+    #universalSettingsModal h2 {
+      font-size: 1.1rem !important;
+    }
+
+    #universalSettingsModal p {
+      font-size: 11px !important;
+    }
+
+    /* Section blocks inside Universal Settings */
+#universalSettingsModal .bg-slate-900,
+#universalSettingsModal .bg-slate-800,
+#universalSettingsModal .bg-slate-950\/50 {
+  background: #ffffff !important;
+  border: 1px solid #dbeafe !important;
+}
+
+
+    /* Semantic meaning back */
+  #universalSettingsModal .text-emerald-400 { color: #15803d !important; }
+  #universalSettingsModal .text-rose-400    { color: #b91c1c !important; }
+  #universalSettingsModal .text-cyan-400    { color: #0369a1 !important; }
+  #universalSettingsModal .text-amber-400   { color: #ee7327 !important; }
+  #universalSettingsModal .text-blue-400    { color: #1d4ed8 !important; }
+
+  #universalSettingsModal input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(136, 167, 234, 0.15);
+}
+/* Entry Threshold label – primary action */
+#universalSettingsModal label[for="us-entry-enabled"] {
+  color: #17e7e3 !important;   /* strong blue */
+  font-weight: 700;
+}
+
+/* Subtext under label */
+#universalSettingsModal label[for="us-entry-enabled"] span {
+  color: #e8edf3 !important;   /* slate gray */
+  font-weight: 500;
+}
+</style>
+</head>
 <body class="min-h-screen">
   <canvas id="particle-canvas"></canvas>
 
   <!-- TOP BAR -->
   <header class="fixed top-0 left-0 w-full z-50 glass backdrop-blur-lg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3 sm:gap-5">
+<div class="topbar-main w-full px-2 sm:px-3 lg:px-4 py-0 flex items-center">
+      <div class="topbar-right w-full flex items-center justify-between gap-0.5 sm:gap-1">
+        <div class="flex items-center gap-0.5 sm:gap-1">
         <div
-          class="w-8 h-8 sm:w-7 sm:h-7 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center shadow-lg shadow-cyan-700/30">
-          <i class="fa-solid fa-chart-line text-white text-sm sm:text-lg"></i>
-        </div>
-        <div>
-          <h1 class="text-xl sm:text-2xl font-bold tracking-tight leading-tight">
-            <span class="text-slate-100">WeWin</span>
-            <span class="text-cyan-400">Algo</span>
-          </h1>
-          <p class="text-[10px] sm:text-xs text-slate-400 -mt-0.5">Edge • Live</p>
-        </div>
-        <div class="hidden md:flex items-center gap-3 ml-4 sm:ml-6 status-pill">
-          <i class="fa-solid fa-user-circle text-cyan-400"></i>
-          <span class="text-xs sm:text-sm">{{USERNAME}}</span>
-          <span class="text-slate-600">|</span>
-          <span class="font-mono text-slate-400 text-xs sm:text-sm">{{USER_ID}}</span>
-        </div>
-      </div>
+          class="mode-switch-container relative inline-flex items-center bg-white/80 backdrop-blur-md border border-slate-300 rounded-full p-0.5 shadow-sm"
+          style="min-width: 92px; height: 20px;">
+            <div id="mode-indicator" class="absolute inset-y-0.5 left-0.5 w-1/2 rounded-full pointer-events-none
+           bg-gradient-to-r from-cyan-500/30 to-teal-500/30
+           transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)]
+           shadow-lg shadow-cyan-500/20">
+            </div>
 
-      <div class="flex flex-wrap items-center gap-2 sm:gap-4 ml-auto sm:ml-0">
-        <!-- Status Badges Container - Scrollable on very small screens if needed -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 max-w-[200px] sm:max-w-none no-scrollbar">
-          <!-- Zerodha -->
-          <div id="status-badge" class="status-pill badge-gray shrink-0">
-            <div class="pulse-ring">
-              <span></span><span></span>
+            <button id="mode-manual-btn" onclick="setAutomationMode('MANUAL')"
+              class="relative z-10 flex-1 px-1 py-0.5 rounded-full text-[9px] font-semibold border border-transparent transition-all duration-300 tracking-wide">
+              <div class="flex items-center gap-0 justify-center">
+                <i class="fa-solid fa-hand-pointer text-[9px]"></i>
+                <span class="mode-dot hidden w-2 h-2 rounded-full bg-rose-400"></span>
+              </div>
+            </button>
+
+            <button id="mode-auto-btn" onclick="setAutomationMode('AUTO')"
+              class="relative z-10 flex-1 px-1 py-0.5 rounded-full text-[9px] font-semibold border border-transparent transition-all duration-300 tracking-wide">
+              <div class="flex items-center gap-0 justify-center">
+                <i class="fa-solid fa-robot text-[9px]"></i>
+                <span class="mode-dot hidden w-2 h-2 rounded-full bg-emerald-400"></span>
+              </div>
+            </button>
+        </div>
+
+          <button onclick="openUniversalSettings()"
+            class="p-0 bg-slate-800/50 border border-slate-700 rounded-md hover:bg-slate-700/50 transition-all duration-300 group text-[8px] font-bold w-6 h-5 flex items-center justify-center"
+            title="">
+            <i class="fa-solid fa-sliders text-[8px] text-slate-400 group-hover:text-cyan-400 transition-colors"></i>
+          </button>
+
+        <div class="pill-net-pnl flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800/60 border border-slate-700 shadow-inner">
+          <span class="text-[8px] uppercase tracking-wider text-green-400 font-medium">NET PNL</span>
+          <span id="overall-pnl-top" class="text-xs font-bold font-mono tabular-nums">0.00</span>
+        </div>
+
+        </div>
+        <!-- Status + Action group pushed to far right -->
+        <div class="flex items-center gap-0.5 sm:gap-1">
+          <div class="flex items-center gap-1 overflow-x-auto pb-0 max-w-[200px] sm:max-w-none no-scrollbar">
+            <!-- Zerodha -->
+            <div id="status-badge" class="status-pill badge-gray shrink-0">
+              <div class="pulse-ring">
+                <span></span><span></span>
+                <div class="status-dot"></div>
+              </div>
+              <span class="badge-label ml-1 font-bold">KITE</span>
+            </div>
+
+            <!-- Market -->
+            <div id="market-badge" class="status-pill badge-gray shrink-0">
+              <div class="pulse-ring">
+                <span></span><span></span>
+                <div class="status-dot"></div>
+              </div>
+              <span class="badge-label ml-1 font-bold">MKT</span>
+            </div>
+
+            <!-- WS -->
+            <div id="ws-badge" class="status-pill badge-gray shrink-0">
+              <div class="pulse-ring">
+                <span></span><span></span>
+                <div class="status-dot"></div>
+              </div>
+              <span class="badge-label ml-1 font-bold">WS</span>
+            </div>
+          </div>
+
+          <!-- Automation Mode Badge -->
+          <div id="automation-badge" class="status-pill badge-amber hidden sm:flex">
+            <div class="pulse-ring connected">
               <div class="status-dot"></div>
             </div>
-            <span class="badge-label ml-1 hidden sm:inline">ZERODHA</span>
-            <span class="badge-label ml-1 inline sm:hidden">KITE</span>
+            <span id="automation-label" class="badge-label ml-1">
+              MANUAL1
+            </span>
           </div>
 
-          <!-- Market -->
-          <div id="market-badge" class="status-pill badge-gray shrink-0">
-            <div class="pulse-ring">
-              <span></span><span></span>
-              <div class="status-dot"></div>
-            </div>
-            <span class="badge-label ml-1 hidden sm:inline">MARKET</span>
-            <span class="badge-label ml-1 inline sm:hidden">MKT</span>
-          </div>
+          <div class="h-5 w-px bg-slate-700/50 mx-0.5 hidden lg:block"></div>
 
-          <!-- WS -->
-          <div id="ws-badge" class="status-pill badge-gray shrink-0">
-            <div class="pulse-ring">
-              <span></span><span></span>
-              <div class="status-dot"></div>
-            </div>
-            <span class="badge-label ml-1 font-bold">WS</span>
-          </div>
+          <button onclick="openCred()" class="btn-primary px-1.5 sm:px-2 min-w-[auto] sm:min-w-[70px] py-0 text-[9px]">
+            <i class="fa-solid fa-link text-[12px]"></i> <span class="hidden sm:inline">CON</span>
+          </button>
+          <button onclick="squareoffAll()" class="btn-warning px-1.5 sm:px-2 min-w-[auto] sm:min-w-[70px] py-0 text-[9px]">
+            <i class="fa-solid fa-arrows-rotate text-[12px]"></i> <span class="hidden sm:inline">SQR</span>
+          </button>
+          <button onclick="killSwitch()" class="btn-danger px-1.5 sm:px-2 min-w-[auto] sm:min-w-[70px] py-0 text-[9px]">
+            <i class="fa-solid fa-power-off text-[12px]"></i> <span class="hidden sm:inline">KIL</span>
+          </button>
         </div>
-
-        <!-- Automation Mode Badge -->
-        <div id="automation-badge" class="status-pill badge-amber hidden sm:flex">
-          <div class="pulse-ring connected">
-            <div class="status-dot"></div>
-          </div>
-          <span id="automation-label" class="badge-label ml-1">
-            MANUAL MODE
-          </span>
-        </div>
-
-
-        <div class="h-5 w-px bg-slate-700/50 mx-2 hidden lg:block"></div>
-
-        <div class="flex gap-2 sm:gap-3">
-          <button onclick="openCred()" class="btn-primary px-3 sm:px-6 min-w-[auto] sm:min-w-[120px]">
-            <i class="fa-solid fa-link text-sm"></i> <span class="hidden sm:inline">Connect</span>
-          </button>
-          <button onclick="squareoffAll()" class="btn-warning px-3 sm:px-6 min-w-[auto] sm:min-w-[120px]">
-            <i class="fa-solid fa-arrows-rotate text-sm"></i> <span class="hidden sm:inline">Square All</span>
-          </button>
-          <button onclick="killSwitch()" class="btn-danger px-3 sm:px-6 min-w-[auto] sm:min-w-[120px]">
-            <i class="fa-solid fa-power-off text-sm"></i> <span class="hidden sm:inline">KILL</span>
-          </button>
         </div>
       </div>
     </div>
   </header>
 
   <!-- MAIN CONTENT -->
-  <main class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pb-10 pt-48 space-y-14">
+  <main class="max-w-7xl mx-auto px-0 pb-6 pt-6 space-y-4">
 
     <!-- LIVE SIGNALS -->
     <section>
-      <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h2 class="text-2xl font-bold flex items-center gap-3">
-          <div class="p-2.5 bg-amber-500/15 rounded-xl border border-amber-500/20 shadow-lg shadow-amber-500/10">
-            <i class="fa-solid fa-bolt text-amber-400"></i>
-          </div>
-          <span class="text-gradient">Live Chartink Signals</span>
-        </h2>
-        <div class="flex flex-wrap items-center gap-3">
-          <!-- Active Alerts Counter -->
-          <div class="flex items-center gap-3 bg-slate-800/50 border border-slate-700 rounded-full px-5 py-2">
-            <span class="text-xs uppercase tracking-wider text-slate-400 font-medium">Active Alerts</span>
-            <span id="alerts-count" class="text-lg font-bold text-slate-100 tabular-nums">0</span>
-          </div>
-
-          <!-- Dual Mode Toggle / Segmented Control -->
-          <div
-            class="mode-switch-container relative inline-flex items-center bg-slate-900/60 backdrop-blur-md border border-slate-700/60 rounded-full p-1 shadow-inner shadow-black/40"
-            style="min-width: 220px; height: 42px;">
-
-            <!-- Sliding indicator -->
-            <div id="mode-indicator" class="absolute inset-y-1 left-1 w-1/2 rounded-full
-           bg-gradient-to-r from-cyan-500/30 to-teal-500/30
-           transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)]
-           shadow-lg shadow-cyan-500/20">
-            </div>
-
-            <!-- Manual -->
-            <button id="mode-manual-btn" onclick="setAutomationMode('MANUAL')"
-              class="relative z-10 flex-1 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold border-2 transition-all duration-300">
-              <div class="flex items-center gap-2 justify-center">
-                <i class="fa-solid fa-hand-pointer text-xs"></i>
-                ManualControl
-                <span class="mode-dot hidden w-2 h-2 rounded-full bg-rose-400"></span>
-              </div>
-            </button>
-
-            <!-- Auto -->
-            <button id="mode-auto-btn" onclick="setAutomationMode('AUTO')"
-              class="relative z-10 flex-1 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold border-2 transition-all duration-300">
-              <div class="flex items-center gap-2 justify-center">
-                <i class="fa-solid fa-robot text-xs"></i>
-                FullAutomation
-                <span class="mode-dot hidden w-2 h-2 rounded-full bg-emerald-400"></span>
-              </div>
-            </button>
-          </div>
-
-
-          <!-- Universal Settings Button -->
-          <button onclick="openUniversalSettings()"
-            class="p-2.5 bg-slate-800/50 border border-slate-700 rounded-full hover:bg-slate-700/50 transition-all duration-300 group"
-            title="Configure Universal Settings">
-            <i class="fa-solid fa-sliders text-slate-400 group-hover:text-cyan-400 transition-colors"></i>
-          </button>
-        </div>
-      </div>
+      <div class="section-header mt-0 mb-0"></div>
 
       <!-- ACTIVE ALERTS TABLE -->
       <div id="active-alerts-table"
-        class="glass-panel rounded-md p-1 border border-slate-700/50 relative overflow-hidden group hover:border-cyan-500/30 transition-all duration-500">
+        class="glass-panel rounded-md p-0 border border-slate-700/50 relative overflow-hidden group hover:border-cyan-500/30 transition-all duration-500">
 
         <!-- Decoration -->
         <div
           class="absolute -top-20 -right-20 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl group-hover:bg-cyan-500/10 transition-all duration-700">
         </div>
-        <div class="overflow-x-auto custom-scrollbar relative z-10 bg-slate-900/30">
-          <table class="w-full text-xs text-left border-collapse">
+        <div id="alerts-sticky-head">
+          <div class="alerts-sticky-inner"></div>
+        </div>
+        <button type="button" class="alerts-scroll-arrow alerts-scroll-left" onclick="scrollAlertsTable(-1)" aria-label="Scroll left">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+        <button type="button" class="alerts-scroll-arrow alerts-scroll-right" onclick="scrollAlertsTable(1)" aria-label="Scroll right">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+        <div id="alerts-fit-wrap" class="overflow-x-auto custom-scrollbar relative z-10 bg-slate-900/30">
+          <table id="alerts-fit-table" class="min-w-[2000px] w-full text-[10px] text-left border-collapse">
             <thead
               class="text-[10px] uppercase bg-slate-900/80 text-slate-400 sticky top-0 z-20 backdrop-blur-md shadow-lg border-b border-slate-700/50">
               <tr>
+                <th scope="col" data-col="symbol" class="w-14 px-0.5 py-2 font-extrabold text-slate-200 text-[11px] font-mono tracking-wide whitespace-nowrap text-left">Symbol</th>
+              <th scope="col" data-col="ltp" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">LTP</th>
+                <th scope="col" data-col="open" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">Open</th>
+                <th scope="col" data-col="pclose" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">PCl</th>
                 <th scope="col"
-                  class="px-3 py-4 font-extrabold text-cyan-400 border-r border-slate-800/50 text-sm font-mono tracking-wider">
-                  Scan</th>
-                <th scope="col" class="px-2 py-4 font-semibold text-sm font-mono tracking-wide">Time</th>
-                <th scope="col" class="px-3 py-4 font-extrabold text-slate-200 text-sm font-mono tracking-wider">Symbol
-                </th>
-                <th scope="col" class="px-3 py-4 font-bold text-center text-sm font-mono tracking-wide">LTP</th>
-                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-red-400/90">LC</th>
-                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-emerald-400/90">UC
-                </th>
-                <th scope="col"
-                  class="px-2 py-4 font-extrabold text-center text-sm font-mono text-cyan-400 min-w-[70px] tracking-wider">
-                  % Chg</th>
-                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-slate-300">FR O</th>
-                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-slate-300">FR H</th>
-                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-slate-300"> FR L</th>
-                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-slate-300">TBQ</th>
-                <th scope="col" class="px-2 py-4 font-semibold text-center text-sm font-mono text-slate-300">TSQ</th>
-                <th scope="col" class="px-2 py-4 font-bold text-center text-sm font-mono text-emerald-400">Buy V</th>
-                <th scope="col" class="px-2 py-4 font-bold text-center text-sm font-mono text-red-400">Sell V</th>
-                <th scope="col"
-                  class="px-3 py-4 text-center font-extrabold text-sm font-mono text-slate-200 min-w-[120px] bg-slate-900 tracking-wider">
+                  data-col="pct" class="w-[48px] px-0 py-2 font-extrabold text-center text-[10px] font-mono text-blue-400 tracking-tight">
+                  %Chg</th>
+                <th scope="col" data-col="fo" class="w-[46px] px-1 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CO</th>
+                <th scope="col" data-col="fh" class="w-[50px] px-1.5 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CH</th>
+                <th scope="col" data-col="fl" class="w-[50px] px-1.5 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CL</th>
+                <th scope="col" data-col="lc" class="w-[52px] px-0 py-2 font-semibold text-center text-[10px] font-mono text-slate-300">LC</th>
+                <th scope="col" data-col="uc" class="w-[52px] px-0 py-2 font-semibold text-center text-[10px] font-mono text-slate-300">UC</th>
+                <th scope="col" data-col="tbq" class="w-[54px] px-0 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-emerald-500">TBQ</th>
+                <th scope="col" data-col="tsq" class="w-[54px] px-0 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-red-500">TSQ</th>
+                <th scope="col" data-col="tcr" class="w-[54px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">TURN</th>
+                <th scope="col" data-col="action"
+                  class="w-10 px-0 py-2 text-center font-extrabold text-[10px] font-mono text-slate-200 bg-slate-900 tracking-tight">
                   Action</th>
+                <th scope="col" data-col="cycle" class="w-8 px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight">Cycle</th>
+                <th scope="col" data-col="pnl" class="w-[50px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight">PnL</th>
+                <th scope="col" data-col="status" class="w-[54px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight">Status</th>
               </tr>
             </thead>
-            <tbody id="alerts-body" class="divide-y divide-slate-800/50 text-slate-300">
+            <tbody id="alerts-body" class="divide-y divide-slate-800/50 text-slate-300 whitespace-nowrap">
               <!-- JS populates this -->
             </tbody>
           </table>
@@ -1288,105 +2089,48 @@
     </section>
 
 
-    <!-- ACTIVE POSITIONS / LADDERS -->
-    <section>
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h2 class="text-2xl font-bold flex items-center gap-3">
-          <div class="p-2.5 bg-cyan-500/15 rounded-xl border border-cyan-500/20 shadow-lg shadow-cyan-500/10">
-            <i class="fa-solid fa-cubes text-cyan-400"></i>
-          </div>
-          <span class="text-gradient">Active Ladders</span>
-        </h2>
-
-        <div class="flex flex-wrap gap-4">
-          <div id="ladder-pnl-pill"
-            class="flex items-center gap-4 px-6 py-2.5 rounded-full bg-slate-800/60 border border-slate-700 shadow-inner">
-            <span class="text-xs uppercase tracking-wider text-slate-400 font-medium">Net PnL</span>
-            <span id="overall-pnl-ladders" class="text-xl font-bold font-mono tabular-nums">0.00</span>
-          </div>
-          <div class="flex items-center gap-3 px-5 py-2.5 bg-slate-800/50 border border-slate-700 rounded-full">
-            <span class="text-xs uppercase tracking-wider text-slate-400 font-medium">Active Ladders</span>
-            <span id="ladder-count" class="text-lg font-bold text-slate-100 tabular-nums">0</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="magic-border-container">
-        <div class="glass rounded-2xl overflow-hidden shadow-2xl">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="text-white-400 text-xs uppercase tracking-wider font-sans border-b-2 border-white/10">
-                  <th class="p-5 pl-7 text-left">Symbol</th>
-                  <th class="p-5 text-center">Cycle</th>
-                  <th class="p-5 text-center">Leg</th>
-                  <th class="p-5 text-center">Qty</th>
-                  <th class="p-5 text-center">LTP</th>
-                  <th class="p-5 text-center">Avg</th>
-                  <th class="p-5 text-center">Extreme</th>
-                  <th class="p-5 text-center">Next Add</th>
-                  <th class="p-5 text-center">SL</th>
-                  <th class="p-5 text-center">TSL</th>
-                  <th class="p-5 text-center">PnL</th>
-                  <th class="p-5 text-center">Status</th>
-                  <th class="p-5 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody id="ladderRows" class="divide-y divide-slate-800/60 bg-slate-900/25">
-                <tr>
-                  <td colspan="13" class="p-16 text-center text-slate-500 italic">
-                    No active ladder positions at the moment
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
   </main>
 
   <!-- ================= TRADE MODAL ================= -->
   <div id="tradeModal"
-    class="fixed inset-0 hidden bg-black/70 backdrop-blur-md flex items-center justify-center z-50 modal px-4">
-    <div class="glass rounded-3xl p-8 w-full max-w-lg shadow-2xl shadow-black/60 border border-slate-600/40">
-      <div class="flex justify-between items-center mb-7">
-        <h3 class="text-2xl font-bold text-cyan-300 flex items-center gap-3">
-          <i class="fa-solid fa-cubes text-cyan-400"></i>
+    class="fixed inset-0 hidden bg-black/70 backdrop-blur-md flex items-center justify-center z-50 modal px-3">
+    <div class="glass rounded-2xl p-2.5 w-full max-w-sm shadow-2xl shadow-black/60 border border-slate-600/40">
+      <div class="flex justify-between items-center mb-1.5">
+        <h3 class="text-lg font-bold text-cyan-300 flex items-center gap-2">
+          <i class="fa-solid fa-cubes text-cyan-300"></i>
           Ladder Strategy
         </h3>
-        <button onclick="closeTradeModal()" class="text-slate-400 hover:text-white text-2xl transition-colors">
+        <button onclick="closeTradeModal()" class="text-slate-400 hover:text-white text-xl transition-colors">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
       <div
-        class="mb-7 p-5 bg-slate-950/60 rounded-2xl border border-slate-700 text-center flex items-center justify-center gap-5 shadow-inner">
+        class="mb-0.5 p-1 bg-slate-950/60 rounded-md border border-slate-700 text-center flex items-center justify-center gap-1 shadow-inner">
         <!-- Input for Symbol with Datalist -->
         <input id="tm-symbol" list="available-stocks"
-          class="text-2xl font-bold text-white bg-transparent border-b border-dashed border-slate-600 focus:border-cyan-400 outline-none w-48 text-center uppercase placeholder-slate-600 transition-colors"
+          class="text-lg font-bold text-white bg-transparent border-b border-dashed border-slate-600 focus:border-cyan-400 outline-none w-36 text-center uppercase placeholder-slate-600 transition-colors"
           oninput="tmSymbol = this.value.toUpperCase()" placeholder="SYMBOL">
         <datalist id="available-stocks"></datalist>
 
         <!-- Toggle for Side -->
         <button id="tm-side" onclick="toggleTradeSide()"
-          class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold border border-slate-600 transition-all cursor-pointer select-none shadow-lg">
+          class="px-2 py-1 bg-slate-900 hover:bg-slate-800 rounded-lg text-xs font-bold border border-slate-600 transition-all cursor-pointer select-none shadow-lg text-emerald-300">
         </button>
       </div>
 
       <!-- Form fields -->
       <!-- Settings Mode Selector (Manual Control Only) -->
-      <div id="settings-mode-selector" class="mb-6">
-        <label class="block text-sm font-medium text-slate-300 mb-3">Settings Configuration</label>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div id="settings-mode-selector" class="mb-0.5">
+        <label class="block text-[11px] font-medium text-white mb-0.5">Settings Configuration</label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-0.5">
           <button type="button" onclick="selectSettingsMode('UNIVERSAL')" id="btn-universal-mode"
-            class="settings-mode-btn px-4 py-3 rounded-xl border-2 transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-sm">
+            class="settings-mode-btn px-3 py-2 rounded-lg border-2 transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs text-slate-100">
             <i class="fa-solid fa-globe"></i>
             Universal Settings
           </button>
           <button type="button" onclick="selectSettingsMode('STOCK')" id="btn-stock-mode"
-            class="settings-mode-btn px-4 py-3 rounded-xl border-2 transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-sm">
+            class="settings-mode-btn px-3 py-2 rounded-lg border-2 transition-all duration-300 flex items-center justify-center gap-2 font-semibold text-xs text-white">
             <i class="fa-solid fa-chart-line"></i>
             Stock-Wise Settings
           </button>
@@ -1395,11 +2139,11 @@
 
       <!-- Stock-Specific Settings Form (shown when STOCK mode selected) -->
       <div id="stock-settings-form">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-5 sm:mb-7">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-1.5 mb-1.5 sm:mb-2">
           <div>
             <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Mode</label>
             <select id="ls-mode"
-              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all cursor-pointer">
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-md px-2.5 py-2 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all cursor-pointer text-xs">
               <option value="UNIVERSAL">Universal</option>
               <option value="STOCK">Stock Specific</option>
             </select>
@@ -1407,93 +2151,93 @@
           <div>
             <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Qty Mode</label>
             <select id="ls-qtymode"
-              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all cursor-pointer">
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-md px-2.5 py-2 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all cursor-pointer text-xs">
               <option value="CAPITAL">Capital Based</option>
               <option value="QTY">Fixed Quantity</option>
             </select>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-1.5 mb-1.5">
           <div>
             <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Capital (₹)</label>
             <input id="ls-capital" type="number" value="1000"
-              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600" />
+              class="w-full sm:w-44 bg-slate-800/50 border border-slate-700 rounded-md px-2.5 py-1.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600 text-xs" />
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Quantity</label>
             <input id="ls-qty" type="number" value="1"
-              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600" />
+              class="w-full sm:w-44 bg-slate-800/50 border border-slate-700 rounded-md px-2.5 py-1.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600 text-xs" />
           </div>
         </div>
 
         <!-- Entry Threshold Section -->
         <div
-          class="col-span-1 sm:col-span-2 mb-6 p-4 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 rounded-xl border border-slate-700/60 shadow-lg shadow-black/20 flex items-center gap-5 group hover:border-cyan-500/30 transition-all duration-300 relative overflow-hidden">
+          class="col-span-1 sm:col-span-2 mb-1 p-1 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 rounded-md border border-slate-700/60 shadow-lg shadow-black/20 flex items-center gap-1 group hover:border-cyan-500/30 transition-all duration-300 relative overflow-hidden">
           <!-- Glow effect -->
           <div class="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           </div>
 
           <div class="relative flex items-center justify-center">
             <input id="ls-entry-enabled" type="checkbox"
-              class="peer w-6 h-6 text-cyan-500 bg-slate-800 border-2 border-slate-600 rounded-md focus:ring-cyan-500 focus:ring-offset-0 focus:ring-2 cursor-pointer transition-all checked:bg-cyan-500 checked:border-cyan-500 hover:border-cyan-400">
+              class="peer w-5 h-5 text-cyan-500 bg-slate-800 border-2 border-slate-600 rounded-md focus:ring-cyan-500 focus:ring-offset-0 focus:ring-2 cursor-pointer transition-all checked:bg-cyan-500 checked:border-cyan-500 hover:border-cyan-400">
           </div>
 
           <label for="ls-entry-enabled"
-            class="relative text-base font-semibold text-slate-200 select-none cursor-pointer flex-1 group-hover:text-cyan-400 transition-colors">
+            class="relative text-[11px] font-semibold text-white select-none cursor-pointer flex-1 leading-tight group-hover:text-cyan-400 transition-colors">
             Entry Threshold
-            <span class="block text-xs text-slate-500 font-normal mt-0.5">Override global threshold setting</span>
+            <span class="block text-[9px] text-slate-500 font-normal mt-0">Override global threshold setting</span>
           </label>
 
           <div
-            class="relative flex items-center gap-3 bg-slate-950/50 p-1.5 rounded-lg border border-slate-700/50 focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all">
-            <span class="text-sm font-bold text-slate-500 pl-2">±</span>
+            class="relative flex items-center gap-1 bg-slate-950/50 p-0.5 rounded-lg border border-slate-700/50 focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all">
+            <span class="text-xs font-bold text-slate-500 pl-2">±</span>
             <input id="ls-entry-pct" type="number" step="0.01" value="0.5" placeholder="0.5"
-              class="w-20 bg-transparent border-none p-0 text-center text-slate-100 font-bold text-lg focus:ring-0 placeholder-slate-700"
+              class="w-10 bg-transparent border-none p-0 text-center text-slate-100 font-bold text-xs focus:ring-0 placeholder-slate-700"
               title="Triggers BUY if > X%, SELL if < -X% (from Day Open)" />
-            <span class="text-sm font-bold text-cyan-500 pr-2">%</span>
+            <span class="text-xs font-bold text-cyan-500 pr-2">%</span>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5 mb-6 sm:mb-8">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-1.5 mb-1.5 sm:mb-2">
           <div>
-            <label class="block text-xs font-bold text-violet-400 uppercase tracking-wider mb-2">Threshold %</label>
+            <label class="block text-[10px] font-bold text-violet-400 uppercase tracking-wider mb-0.5">Threshold %</label>
             <input id="ls-threshold" type="number" step="0.01" value="1"
-              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-md px-2.5 py-1.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all text-xs" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">SL %</label>
+            <label class="block text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-0.5">SL %</label>
             <input id="ls-sl" type="number" step="0.01" value="1"
-              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-md px-2.5 py-1.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all text-xs" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">Trailing SL %</label>
+            <label class="block text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-0.5">Trailing SL %</label>
             <input id="ls-tsl" type="number" step="0.01" value="1"
-              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-md px-2.5 py-1.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all text-xs" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">Cycles</label>
+            <label class="block text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-0.5">Cycles</label>
             <input id="ls-cycles" type="number" value="1"
-              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
-            <span class="block text-xs text-slate-500 mt-1">Number of strategy repetitions</span>
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-md px-2.5 py-1.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all text-xs" />
+            <span class="block text-[9px] text-slate-700 font-semibold mt-0">Number of strategy repetitions</span>
           </div>
 
           <div class="col-span-1 sm:col-span-1">
-            <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Max Adds</label>
+            <label class="block text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5">Max Adds</label>
             <input id="ls-maxadds" type="number" value="2"
-              class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
-            <span class="block text-xs text-slate-500 mt-1">Max additional orders per cycle</span>
+              class="w-full bg-slate-800/50 border border-slate-700 rounded-md px-2.5 py-1.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all text-xs" />
+            <span class="block text-[9px] text-slate-700 font-semibold mt-0">Max additional orders per cycle</span>
           </div>
         </div>
       </div>
 
-      <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
+      <div class="flex flex-col sm:flex-row gap-1.5 sm:gap-2 mt-2">
         <button onclick="confirmTrade()"
-          class="flex-1 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-bold py-3 sm:py-3.5 rounded-xl shadow-lg shadow-cyan-700/30 transition-all flex items-center justify-center gap-2 text-sm sm:text-base">
+          class="flex-1 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-bold py-1.5 rounded-lg shadow-lg shadow-cyan-700/30 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
           <i class="fa-solid fa-rocket"></i> Launch Strategy
         </button>
         <button onclick="closeTradeModal()"
-          class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 font-medium py-3 sm:py-3.5 rounded-xl transition-colors text-sm sm:text-base">
+          class="flex-1 bg-slate-700 hover:bg-slate-600 border border-slate-500 text-white font-medium py-1.5 rounded-lg transition-colors text-xs sm:text-sm">
           Cancel
         </button>
       </div>
@@ -1507,16 +2251,24 @@
 
   <!-- ================= CREDENTIALS MODAL - Professional Style ================= -->
   <div id="credModal"
-    class="fixed inset-0 hidden bg-black/75 backdrop-blur-md flex items-center justify-center z-50 px-4">
+    class="fixed inset-0 hidden bg-slate-950/70 backdrop-blur-md flex items-center justify-center z-50 px-4">
     <div
-      class="bg-[#0f172a] rounded-2xl p-6 sm:p-10 w-full max-w-md border border-slate-700/50 shadow-2xl shadow-black/40">
+      class="cred-card rounded-3xl p-6 sm:p-7 w-full max-w-sm">
 
       <!-- Header -->
-      <div class="flex items-center justify-between mb-6 sm:mb-8">
-        <h2 class="text-xl sm:text-2xl font-semibold text-cyan-400 flex items-center gap-3">
-          <i class="fa-solid fa-shield-halved text-cyan-500"></i>
-          Zerodha API
-        </h2>
+      <div class="flex items-center justify-between mb-4 sm:mb-5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center shadow-[0_0_20px_rgba(34,211,238,0.35)]">
+            <i class="fa-solid fa-shield-halved text-cyan-300"></i>
+          </div>
+          <div>
+            <h2 class="text-base sm:text-lg font-semibold text-slate-100">Connect Broker</h2>
+            <div class="flex items-center gap-2 text-[11px] cred-subtle">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              Encrypted & Secure
+            </div>
+          </div>
+        </div>
         <button onclick="closeCred()" class="text-slate-400 hover:text-slate-200 transition-colors text-xl"
           title="Close">
           <i class="fa-solid fa-xmark"></i>
@@ -1524,41 +2276,41 @@
       </div>
 
       <!-- Description -->
-      <p class="text-xs sm:text-sm text-slate-400 mb-6 sm:mb-8 leading-relaxed">
-        Securely connect your Zerodha account.
+      <p class="text-xs sm:text-sm text-slate-300/80 mb-4 sm:mb-5 leading-relaxed">
+        Enter your Zerodha Kite API credentials. These are stored locally for trading execution.
       </p>
 
       <!-- Form -->
-      <form class="space-y-4 sm:space-y-6">
+      <form class="space-y-3 sm:space-y-4">
 
         <!-- API Key -->
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            API Key
+          <label class="block text-[11px] font-semibold text-slate-300 mb-2 tracking-widest">
+            API KEY
           </label>
           <div class="relative">
-            <input id="api_key" type="password" placeholder="xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 sm:px-5 py-3 sm:py-3.5 text-slate-200 text-sm sm:text-base
-                   placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 
+            <input id="api_key" type="text" placeholder="Already saved" autocomplete="off" spellcheck="false" class="w-full bg-white border border-slate-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-slate-900 text-sm
+                   placeholder:text-slate-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 
                    transition-all duration-200 outline-none" />
             <button type="button" onclick="toggleVisibility('api_key', this)"
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-300 transition-colors"
               title="Show/Hide">
-              <i class="fa-solid fa-eye"></i>
+              <i class="fa-solid fa-key"></i>
             </button>
           </div>
         </div>
 
         <!-- API Secret -->
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">
-            API Secret
+          <label class="block text-[11px] font-semibold text-slate-300 mb-2 tracking-widest">
+            API SECRET
           </label>
           <div class="relative">
-            <input id="api_secret" type="password" placeholder="xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-900/60 border border-slate-700 rounded-lg px-4 sm:px-5 py-3 sm:py-3.5 text-slate-200 text-sm sm:text-base
-                   placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 
+            <input id="api_secret" type="text" placeholder="Already saved" autocomplete="off" spellcheck="false" class="w-full bg-white border border-slate-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-slate-900 text-sm
+                   placeholder:text-slate-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 
                    transition-all duration-200 outline-none" />
             <button type="button" onclick="toggleVisibility('api_secret', this)"
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-300 transition-colors"
               title="Show/Hide">
               <i class="fa-solid fa-eye"></i>
             </button>
@@ -1566,18 +2318,18 @@
         </div>
 
         <!-- Buttons -->
-        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
+        <div class="flex flex-col gap-3 mt-5">
           <button type="button" onclick="saveCred()"
-            class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 sm:py-3.5 rounded-lg 
-                 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 text-sm sm:text-base">
+            class="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold py-2.5 rounded-xl 
+                 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-700/30 text-sm">
             <i class="fa-solid fa-floppy-disk"></i>
-            Save
+            Save Secure Credentials
           </button>
 
-          <button type="button" onclick="connectZerodha()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 sm:py-3.5 rounded-lg 
-                 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base">
+          <button type="button" onclick="connectZerodha()" class="flex-1 bg-slate-900/40 hover:bg-slate-800 border border-slate-700/60 text-slate-200 font-medium py-2.5 sm:py-3 rounded-xl 
+                 transition-all duration-200 flex items-center justify-center gap-2 text-sm">
             <i class="fa-solid fa-right-to-bracket"></i>
-            Login
+            Log in to Kite
           </button>
         </div>
       </form>
@@ -1589,11 +2341,11 @@
     class="fixed inset-0 hidden bg-black/75 backdrop-blur-md z-50 overflow-y-auto custom-scrollbar">
     <div class="flex min-h-full items-center justify-center p-4">
       <div
-        class="bg-[#0f172a] rounded-2xl p-6 sm:p-10 w-full max-w-2xl border border-slate-700/50 shadow-2xl shadow-black/40 relative">
+        class="bg-[#0f172a] rounded-2xl p-4 sm:p-6 w-full max-w-[36rem] border border-slate-700/50 shadow-2xl shadow-black/40 relative">
 
         <!-- Header -->
-        <div class="flex items-center justify-between mb-6 sm:mb-8">
-          <h2 class="text-xl sm:text-2xl font-semibold text-cyan-400 flex items-center gap-3">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xl sm:text-[1.7rem] font-semibold text-cyan-400 flex items-center gap-2.5">
             <i class="fa-solid fa-sliders text-cyan-500"></i>
             Universal Settings
           </h2>
@@ -1604,7 +2356,7 @@
         </div>
 
         <!-- Description -->
-        <p class="text-xs sm:text-sm text-slate-400 mb-6 sm:mb-8 leading-relaxed">
+        <p class="text-xs sm:text-sm text-slate-400 mb-2 leading-relaxed">
           Configure default ladder settings. These will be used in <strong class="text-cyan-400">Full
             Automation</strong>
           mode
@@ -1612,14 +2364,14 @@
         </p>
 
         <!-- Form -->
-        <form class="space-y-4 sm:space-y-6">
+        <form class="space-y-2">
 
           <!-- Mode Selection -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Qty Mode</label>
               <select id="us-qtymode"
-                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all cursor-pointer">
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all cursor-pointer">
                 <option value="CAPITAL">Capital Based</option>
                 <option value="QTY">Fixed Quantity</option>
               </select>
@@ -1628,7 +2380,7 @@
 
           <!-- Entry Threshold Section -->
           <div
-            class="col-span-1 sm:col-span-2 mb-6 p-4 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 rounded-xl border border-slate-700/60 shadow-lg shadow-black/20 flex items-center gap-5 group hover:border-cyan-500/30 transition-all duration-300 relative overflow-hidden">
+            class="col-span-1 sm:col-span-2 mb-2 p-2 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 rounded-xl border border-slate-700/60 shadow-lg shadow-black/20 flex items-center gap-2 group hover:border-cyan-500/30 transition-all duration-300 relative overflow-hidden">
             <!-- Glow effect -->
             <div
               class="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -1636,11 +2388,11 @@
 
             <div class="relative flex items-center justify-center">
               <input id="us-entry-enabled" type="checkbox"
-                class="peer w-6 h-6 text-cyan-500 bg-slate-800 border-2 border-slate-600 rounded-md focus:ring-cyan-500 focus:ring-offset-0 focus:ring-2 cursor-pointer transition-all checked:bg-cyan-500 checked:border-cyan-500 hover:border-cyan-400">
+                class="peer w-5 h-5 text-cyan-500 bg-slate-800 border-2 border-slate-600 rounded-md focus:ring-cyan-500 focus:ring-offset-0 focus:ring-2 cursor-pointer transition-all checked:bg-cyan-500 checked:border-cyan-500 hover:border-cyan-400">
             </div>
 
             <label for="us-entry-enabled"
-              class="relative text-base font-semibold text-yellow-400 select-none cursor-pointer flex-1 group-hover:text-cyan-400 transition-colors">
+              class="relative text-[0.95rem] font-semibold text-yellow-400 select-none cursor-pointer flex-1 group-hover:text-cyan-400 transition-colors">
               Enable Entry Price Threshold
               <span class="block text-xs text-slate-500 font-normal mt-0.5">Triggers trade only if price moves % from
                 Day
@@ -1648,76 +2400,76 @@
             </label>
 
             <div
-              class="relative flex items-center gap-3 bg-slate-950/50 p-1.5 rounded-lg border border-slate-700/50 focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all">
+              class="relative flex items-center gap-2 bg-slate-950/50 p-1 rounded-lg border border-slate-700/50 focus-within:border-cyan-500/50 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all">
               <span class="text-sm font-bold text-slate-500 pl-2">±</span>
               <input id="us-entry-pct" type="number" step="0.01" value="0.5" placeholder="0.5"
-                class="w-20 bg-transparent border-none p-0 text-center text-slate-100 font-bold text-lg focus:ring-0 placeholder-slate-700"
+                class="w-14 bg-transparent border-none p-0 text-center text-slate-100 font-bold text-base focus:ring-0 placeholder-slate-700"
                 title="Triggers BUY if > X%, SELL if < -X% (from Day Open)" />
               <span class="text-sm font-bold text-cyan-500 pr-2">%</span>
             </div>
           </div>
 
           <!-- Capital & Quantity -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Capital (₹)</label>
               <input id="us-capital" type="number" value="1000"
-                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600" />
+                class="w-full sm:w-44 bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600" />
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Quantity</label>
               <input id="us-qty" type="number" value="1"
-                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600" />
+                class="w-full sm:w-44 bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all placeholder-slate-600" />
             </div>
           </div>
 
           <!-- Ladder Parameters -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5 mt-5">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
             <div>
-              <label class="block text-xs font-bold text-sky-400 uppercase tracking-wider mb-2">Threshold %</label>
+              <label class="block text-xs font-bold text-sky-400 uppercase tracking-wider mb-2 us-threshold-label">Threshold %</label>
               <input id="us-threshold" type="number" step="0.01" value="1"
-                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-2">stop Loss %</label>
+              <label class="block text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 us-sl-label">stop Loss %</label>
               <input id="us-sl" type="number" step="0.01" value="1"
-                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">Trailing SL %</label>
+              <label class="block text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 us-tsl-label">Trailing SL %</label>
               <input id="us-tsl" type="number" step="0.01" value="1"
-                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
             </div>
             <div>
               <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Cycles</label>
               <input id="us-cycles" type="number" value="1"
-                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
-              <span class="block text-xs text-slate-400 mt-1">Number of strategy repetitions</span>
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+              <span class="block text-[11px] text-slate-700 font-semibold mt-1">Number of strategy repetitions</span>
             </div>
             <div class="col-span-1 sm:col-span-1">
               <label class="block text-xs font-bold text-amber-500 uppercase tracking-wider mb-2">Max Adds</label>
               <input id="us-maxadds" type="number" value="2"
-                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
-              <span class="block text-xs text-slate-400 mt-1">Max additional orders per cycle</span>
+                class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all" />
+              <span class="block text-[11px] text-slate-700 font-semibold mt-1">Max additional orders per cycle</span>
             </div>
             <div class="col-span-1 sm:col-span-1">
               <label class="block text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2">Trade Limit /
                 day</label>
-              <input id="us-maxtrades" type="number" value="1" min="1"
-                class="w-full bg-slate-800/80 border border-cyan-500/50 rounded-xl px-4 py-3.5 text-white font-bold tracking-wide focus:border-blue-400 focus:bg-slate-900 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all shadow-[0_0_15px_rgba(59,130,246,0.25)]"
+              <input id="us-maxtrades" type="number" value="10" 
+                class="w-full bg-slate-800/80 border border-cyan-500/50 rounded-xl px-3.5 py-2.5 text-white font-bold tracking-wide focus:border-blue-400 focus:bg-slate-900 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all shadow-[0_0_15px_rgba(59,130,246,0.25)]"
                 title="Max number of auto-trades allowed per symbol per session" />
             </div>
           </div>
 
           <!-- Save Button -->
-          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
+          <div class="flex flex-col sm:flex-row gap-2 mt-3">
             <button type="button" onclick="saveUniversalSettings()"
-              class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-3 sm:py-3.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 text-sm sm:text-base">
+              class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 text-sm sm:text-base">
               <i class="fa-solid fa-floppy-disk"></i>
               Save Settings
             </button>
             <button type="button" onclick="closeUniversalSettings()"
-              class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 sm:py-3.5 rounded-lg transition-all duration-200 text-sm sm:text-base">
+              class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 rounded-lg transition-all duration-200 text-sm sm:text-base">
               Cancel
             </button>
           </div>
@@ -1743,24 +2495,43 @@
     let currentSettingsMode = "UNIVERSAL"; // UNIVERSAL or STOCK
 
     // automation mode
-    let automationMode = "MANUAL"; // MANUAL or AUTO
+    let automationMode = "MANUAL"; // MANUAL or
     let pendingAutoModeSwitch = false; // ✅ Flag to auto-enable AUTO after settings save
     let automationEnabledSymbols = new Set(); // ✅ Snapshot of symbols when automation was enabled
     let processedAutoTradeSymbols = new Map(); // ✅ Track symbols trade count (Symbol -> Count)
     let manuallySquaredOffSymbols = new Set(); // ✅ Blacklist for manually killed symbols
+    let LAST_AUTO_SQ_TS = 0; // show auto square-off popup only once per event
 
     // ws
     let TICK_WS = null;
+    // UI: dynamic ladder columns based on settings
+    let MAX_ADDS_UI = 2;
+    let MAX_CYCLES_UI = 1;
     let WS_READY = false;
-    let WS_RETRY = 1500;
+    let WS_RETRY_MIN = 500;
+    let WS_RETRY_MAX = 10000;
+    let WS_RETRY_CUR = WS_RETRY_MIN;
+    let WS_RETRY_TIMER = null;
+    let WS_STALE_TIMER = null;
+    let LAST_TICK_AT = 0;
+    let MARKET_OPEN = false;
 
     let TICK_BUFFER = {};
     let TICK_FLUSH_TIMER = null;
     let LADDER_META = {};  // ✅ Store ladder metadata: symbol → {avg, qty, side, ltp}
+    let LAST_CYCLE_INDEX = {}; // symbol -> last seen cycle index
+    let LAST_CYCLE_STATUS = {}; // symbol -> last seen status
+    let CYCLE_TRACKING_READY = false; // avoid initial-load toasts
 
 
     /* ---------- HELPERS ---------- */
     function $(id) { return document.getElementById(id); }
+
+    function clampRange(v, min, max, fallback) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return fallback;
+      return Math.min(max, Math.max(min, n));
+    }
 
     // WS status
     function setWs(ok, txt) {
@@ -1822,28 +2593,27 @@
     }
 
     /**
-     * Freeze window: market close ke baad 15:31 -> next day 09:00 tak
-     *  - 15:31-23:59 => freeze
-     *  - 00:00-08:59 => freeze
-     *  - 09:00-15:30 => allow
+     * Alerts should stay visible whenever backend sends data.
+     * Keep this gate disabled.
      */
     function isAlertFreezeWindow() {
-      const { h, m } = istHM();
-      if (h < 9) return true;
-      if (h > 15) return true;
-      if (h === 15 && m >= 31) return true;
       return false;
     }
 
     /* ---------- SESSION + STATUS ---------- */
     async function checkSession() {
-      const r = await fetch("/api/zerodha-status");
-      if (!r.ok) {
-        alert("Login first!");
-        window.location.href = "/";
-        return false;
+      try {
+        const r = await fetch("/api/zerodha-status");
+        if (!r.ok) {
+          // Keep dashboard accessible even if status endpoint is unavailable.
+          console.warn("zerodha-status not reachable; continuing in offline mode");
+          return true;
+        }
+        return true;
+      } catch (e) {
+        console.warn("zerodha-status fetch failed; continuing in offline mode", e);
+        return true;
       }
-      return true;
     }
 
     // Zerodha status
@@ -1861,19 +2631,38 @@
         if (z.connected || z.status === "connected") {
           badge.classList.add("badge-green", "connected");
           ring.classList.add("connected");
-          label.textContent = "ZERODHA LIVE";
+          label.textContent = "KITELIVE";
         } else {
           badge.classList.add("badge-red");
-          label.textContent = "ZERODHA OFFLINE";
+          label.textContent = "KITEOFF";
         }
       } catch (e) {
         badge.classList.add("badge-red");
-        label.textContent = "ZERODHA ERROR";
+        label.textContent = "KITEERROR";
       }
+    }
+
+    // Poll backend event raised by 15:20 IST auto square-off loop
+    async function checkAutoSquareoffEvent() {
+      try {
+        const res = await fetch("/api/auto-squareoff-event", { cache: "no-store" });
+        if (!res.ok) return;
+        const d = await res.json();
+        if (!d || !d.triggered) return;
+
+        const ts = Number(d.ts || 0);
+        if (!ts || ts <= LAST_AUTO_SQ_TS) return;
+        LAST_AUTO_SQ_TS = ts;
+
+        const t = d.time_ist ? `${d.time_ist} IST` : "15:20 IST";
+        const c = Number(d.count || 0);
+        showMsg(`⏰ AUTO SQUARE-OFF TRIGGERED (${t}) | Orders: ${c}`, true);
+      } catch (_) { }
     }
 
     // Market status
     function updateMarketBadge(marketOpen) {
+      MARKET_OPEN = !!marketOpen;
       const badge = $("market-badge");
       const ring = badge.querySelector('.pulse-ring');
       const label = badge.querySelector('.badge-label');
@@ -1884,10 +2673,10 @@
       if (marketOpen) {
         badge.classList.add("badge-green", "connected");
         ring.classList.add("connected");
-        label.textContent = "MARKET OPEN";
+        label.textContent = "MKTOPEN";
       } else {
         badge.classList.add("badge-red");
-        label.textContent = "MARKET CLOSED";
+        label.textContent = "MKTCLOSE";
       }
     }
 
@@ -1896,11 +2685,18 @@
      * - Freeze window me polling OFF
      * - 09:00 ke baad polling ON (market open ho ya na ho)
      */
+    function clearAlertsUI() {
+      const tbody = $("alerts-body");
+      if (tbody) tbody.innerHTML = "";
+      const empty = $("alerts-empty");
+      if (empty) empty.classList.remove("hidden");
+      setAlertCount(0);
+      subscribed.clear();
+      ALERT_ROW_KEYS.clear();
+      LAST_ALERTS_RENDER = null;
+    }
+
     function manageAlertsPolling() {
-      if (isAlertFreezeWindow()) {
-        stopAlertsPolling();
-        return;
-      }
       startAlertsPolling();
     }
 
@@ -1919,21 +2715,54 @@
     }
 
     /* ---------- WS START ---------- */
+    function scheduleWsReconnect() {
+      if (WS_RETRY_TIMER) return;
+      const jitter = Math.floor(Math.random() * 250);
+      const delay = WS_RETRY_CUR + jitter;
+      WS_RETRY_TIMER = setTimeout(() => {
+        WS_RETRY_TIMER = null;
+        startTickWS();
+      }, delay);
+      WS_RETRY_CUR = Math.min(WS_RETRY_CUR * 2, WS_RETRY_MAX);
+    }
+
+    function startWsStaleWatch() {
+      if (WS_STALE_TIMER) return;
+      WS_STALE_TIMER = setInterval(() => {
+        if (!WS_READY || !MARKET_OPEN) return;
+        if (!LAST_TICK_AT) return;
+        const age = Date.now() - LAST_TICK_AT;
+        if (age > 8000) {
+          try { TICK_WS.close(); } catch { }
+        }
+      }, 2000);
+    }
+
+    function stopWsStaleWatch() {
+      if (WS_STALE_TIMER) clearInterval(WS_STALE_TIMER);
+      WS_STALE_TIMER = null;
+    }
+
     function startTickWS() {
       if (TICK_WS && TICK_WS.readyState <= 1) return;
 
       setWs(false, "WS: Connecting");
+      stopWsStaleWatch();
       TICK_WS = new WebSocket(wsUrl());
 
       TICK_WS.onopen = () => {
         WS_READY = true;
+        WS_RETRY_CUR = WS_RETRY_MIN;
+        LAST_TICK_AT = Date.now();
+        startWsStaleWatch();
         setWs(true, "WS: LIVE");
       };
 
       TICK_WS.onclose = () => {
         WS_READY = false;
         setWs(false, "WS: Reconnecting");
-        setTimeout(startTickWS, WS_RETRY);
+        stopWsStaleWatch();
+        scheduleWsReconnect();
       };
 
       TICK_WS.onerror = () => {
@@ -1943,6 +2772,7 @@
       TICK_WS.onmessage = ev => {
         let d;
         try { d = JSON.parse(ev.data); } catch { return; }
+        LAST_TICK_AT = Date.now();
 
         // snapshot support
         if (d.type === "snapshot" && Array.isArray(d.ticks)) {
@@ -1951,7 +2781,7 @@
             TICK_BUFFER[String(t.symbol).toUpperCase()] = t;
           }
           if (!TICK_FLUSH_TIMER) {
-            TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
+            TICK_FLUSH_TIMER = setTimeout(flushTickUI, 100);
           }
           return;
         }
@@ -1959,7 +2789,7 @@
         if (!d.symbol) return;
         TICK_BUFFER[String(d.symbol).toUpperCase()] = d;
         if (!TICK_FLUSH_TIMER) {
-          TICK_FLUSH_TIMER = setTimeout(flushTickUI, 250);
+          TICK_FLUSH_TIMER = setTimeout(flushTickUI, 100);
         }
       };
     }
@@ -1976,15 +2806,34 @@
     }
 
     function paintPnlCell(el, pnl) {
-      el.classList.remove("text-emerald-400", "text-red-400", "text-slate-300");
+      el.classList.remove("text-emerald-700", "text-rose-700", "text-slate-500", "text-emerald-400", "text-red-400", "text-slate-300");
       if (pnl > 0) {
-        el.classList.add("text-emerald-400", "font-semibold");
-        el.style.textShadow = "0 0 8px rgba(16,185,129,0.5)";
+        el.classList.add("font-bold");
+        el.style.setProperty("color", "#15803d", "important");
+        el.style.setProperty("background-color", "#ffffff", "important");
+        el.style.textShadow = "none";
       } else if (pnl < 0) {
-        el.classList.add("text-red-400", "font-semibold");
-        el.style.textShadow = "0 0 8px rgba(244,63,94,0.4)";
+        el.classList.add("font-bold");
+        el.style.setProperty("color", "#dc2626", "important");
+        el.style.setProperty("background-color", "#ffffff", "important");
+        el.style.textShadow = "none";
       } else {
-        el.classList.add("text-slate-300");
+        el.style.setProperty("color", "#475569", "important");
+        el.style.setProperty("background-color", "#ffffff", "important");
+        el.style.textShadow = "none";
+      }
+    }
+
+    function paintPctCell(el, pct) {
+      if (!el) return;
+      el.classList.remove("text-emerald-400", "text-red-400", "text-slate-400", "text-blue-400");
+      el.style.removeProperty("text-shadow");
+      if (pct > 0) {
+        el.style.setProperty("color", "#15803d", "important"); // dark green
+      } else if (pct < 0) {
+        el.style.setProperty("color", "#991b1b", "important"); // dark red
+      } else {
+        el.style.setProperty("color", "#64748b", "important"); // neutral
       }
     }
 
@@ -2022,10 +2871,14 @@
         const ltp = Number(d.ltp || 0);
         if (ltp <= 0) continue;
 
-        const prev = Number(d.prev || ltp);
-        const open = Number(d.open || prev || ltp);
-        const high = Number(d.high || ltp);
-        const low = Number(d.low || ltp);
+        const prev = Number(d.prev ?? d.prev_close ?? d.ohlc?.close ?? ltp);
+        const openRaw = d.open ?? d.ohlc?.open;
+        const highRaw = d.high ?? d.ohlc?.high;
+        const lowRaw = d.low ?? d.ohlc?.low;
+
+        const open = (openRaw !== null && openRaw !== undefined && openRaw !== "") ? Number(openRaw) : 0;
+        const high = (highRaw !== null && highRaw !== undefined && highRaw !== "") ? Number(highRaw) : 0;
+        const low = (lowRaw !== null && lowRaw !== undefined && lowRaw !== "") ? Number(lowRaw) : 0;
         const uc = (d.upper_circuit != null && d.upper_circuit !== "") ? Number(d.upper_circuit) : 0;
         const lc = (d.lower_circuit != null && d.lower_circuit !== "") ? Number(d.lower_circuit) : 0;
 
@@ -2035,13 +2888,31 @@
           const field = node.getAttribute("data-field");
           if (!field) return;
 
-          if (field === "ltp") setTextIfChanged(node, ltp.toFixed(2));
+          if (field === "ltp") {
+            setTextIfChanged(node, ltp.toFixed(2));
+            node.style.color = "#f59e0b";
+          }
+          if (field === "open") {
+            setTextIfChanged(node, open > 0 ? open.toFixed(2) : "--");
+            node.style.color = "#2563eb";
+          }
+          if (field === "pclose") setTextIfChanged(node, prev > 0 ? prev.toFixed(2) : "--");
+          if (field === "vol") setTextIfChanged(node, (d.volume || 0) ? Number(d.volume).toLocaleString('en-IN') : "--");
+          if (field === "tcr") {
+            const vol = Number(d.volume || 0);
+            const tcr = (ltp > 0 && vol > 0) ? ((ltp * vol) / 10000000) : 0;
+            setTextIfChanged(node, tcr > 0 ? tcr.toFixed(2) : "--");
+          }
           if (field === "uc") setTextIfChanged(node, uc > 0 ? uc.toFixed(2) : "--");
           if (field === "lc") setTextIfChanged(node, lc > 0 ? lc.toFixed(2) : "--");
-          if (field === "pct") setTextIfChanged(node, (((ltp - prev) / prev) * 100).toFixed(2) + "%");
-          if (field === "fo") setTextIfChanged(node, open ? (((ltp - open) / open) * 100).toFixed(2) + "%" : "--");
-          if (field === "fh") setTextIfChanged(node, (((ltp - high) / high) * 100).toFixed(2) + "%");
-          if (field === "fl") setTextIfChanged(node, (((ltp - low) / low) * 100).toFixed(2) + "%");
+          if (field === "pct") {
+            const pctVal = prev > 0 ? (((ltp - prev) / prev) * 100) : null;
+            setTextIfChanged(node, pctVal != null ? pctVal.toFixed(2) : "--");
+            if (pctVal != null) paintPctCell(node, pctVal);
+          }
+          if (field === "fo") setTextIfChanged(node, open > 0 ? (((ltp - open) / open) * 100).toFixed(2)  : "--");
+          if (field === "fh") setTextIfChanged(node, high > 0 ? (((ltp - high) / high) * 100).toFixed(2)  : "--");
+          if (field === "fl") setTextIfChanged(node, low > 0 ? (((ltp - low) / low) * 100).toFixed(2)  : "--");
 
           // ✅ Comma separated integers
           if (field === "tbq") setTextIfChanged(node, (d.tbq || 0).toLocaleString('en-IN'));
@@ -2069,22 +2940,7 @@
             paintPnlCell(node, pnl);
           });
 
-          // ✅ NEW: UPDATE EXTREME (highest for BUY, lowest for SELL)
-          if (side === "BUY") {
-            // Track highest price
-            if (!LADDER_META[sym].highest || ltp > LADDER_META[sym].highest) {
-              LADDER_META[sym].highest = ltp;
-              const extremeNodes = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="extreme"]`);
-              extremeNodes.forEach(node => setTextIfChanged(node, ltp.toFixed(2)));
-            }
-          } else if (side === "SELL") {
-            // Track lowest price
-            if (!LADDER_META[sym].lowest || ltp < LADDER_META[sym].lowest) {
-              LADDER_META[sym].lowest = ltp;
-              const extremeNodes = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="extreme"]`);
-              extremeNodes.forEach(node => setTextIfChanged(node, ltp.toFixed(2)));
-            }
-          }
+          // Extreme column removed
         }
       }
       TICK_BUFFER = {};
@@ -2095,14 +2951,187 @@
     }
 
     /* ================= ALERTS (NO REBUILD = NO BLINK) ================= */
+    function fitAlertsTableToWidth() {
+      const wrap = document.getElementById("alerts-fit-wrap");
+      const table = document.getElementById("alerts-fit-table");
+      if (!wrap || !table) return;
+
+      // Keep 1:1 size so values stay readable; use horizontal scroll instead.
+      table.style.zoom = "1";
+    }
+
+    function initAlertsWheelHorizontalScroll() {
+      const wrap = document.getElementById("alerts-fit-wrap");
+      if (!wrap) return;
+      if (wrap.dataset.wheelBound === "1") return;
+      wrap.dataset.wheelBound = "1";
+      wrap.addEventListener("wheel", (e) => {
+        const rect = wrap.getBoundingClientRect();
+        const edgeZone = 64;
+        const onEdge = (e.clientX - rect.left) < edgeZone || (rect.right - e.clientX) < edgeZone;
+        const wantsHorizontal = e.shiftKey || onEdge;
+        if (!wantsHorizontal) return;
+        wrap.scrollLeft += e.deltaY * 1.6;
+        e.preventDefault();
+      }, { passive: false });
+    }
+
+    function scrollAlertsTable(dir) {
+      const wrap = document.getElementById("alerts-fit-wrap");
+      if (!wrap) return;
+      const amount = Math.max(320, Math.floor(wrap.clientWidth * 0.9));
+      wrap.scrollBy({ left: dir * amount, behavior: "auto" });
+    }
+
+    function initAlertsStickyHeader() {
+      const wrap = document.getElementById("alerts-fit-wrap");
+      const table = document.getElementById("alerts-fit-table");
+      const sticky = document.getElementById("alerts-sticky-head");
+      const stickyInner = sticky ? sticky.querySelector(".alerts-sticky-inner") : null;
+      if (!wrap || !table || !sticky || !stickyInner) return;
+
+      const rebuild = () => {
+        stickyInner.innerHTML = "";
+        const head = table.querySelector("thead");
+        if (!head) return;
+        const cloneTable = document.createElement("table");
+        cloneTable.className = table.className;
+        const cloneHead = head.cloneNode(true);
+        cloneTable.appendChild(cloneHead);
+        cloneTable.style.width = `${table.scrollWidth}px`;
+        stickyInner.appendChild(cloneTable);
+        stickyInner.style.width = `${wrap.clientWidth}px`;
+        stickyInner.scrollLeft = wrap.scrollLeft;
+      };
+
+      const update = () => {
+        const rect = table.getBoundingClientRect();
+        const topOffset = 44;
+        const headerHeight = table.querySelector("thead")?.getBoundingClientRect().height || 0;
+        const shouldShow = rect.top < topOffset && rect.bottom > topOffset + headerHeight;
+        sticky.style.display = shouldShow ? "block" : "none";
+        if (shouldShow) {
+          const left = rect.left;
+          stickyInner.style.marginLeft = `${left}px`;
+          stickyInner.style.width = `${rect.width}px`;
+          stickyInner.scrollLeft = wrap.scrollLeft;
+        }
+      };
+
+      wrap.addEventListener("scroll", () => {
+        stickyInner.scrollLeft = wrap.scrollLeft;
+      });
+      window.addEventListener("scroll", update);
+      window.addEventListener("resize", () => {
+        rebuild();
+        update();
+      });
+
+      rebuild();
+      update();
+    }
+
+    function initFastVerticalScroll() {
+      const speed = 1.45;
+      document.addEventListener("wheel", (e) => {
+        if (e.ctrlKey) return;
+        if (e.shiftKey) return;
+        const target = e.target;
+        if (target && target.closest && target.closest("#alerts-fit-wrap")) return;
+        const delta = e.deltaY;
+        if (delta === 0) return;
+        window.scrollBy({ top: delta * (speed - 1), behavior: "auto" });
+      }, { passive: true });
+    }
+
+    function renderCycleHeaders(maxCycles, maxAdds) {
+      const headRow = document.querySelector("#alerts-fit-table thead tr");
+      if (!headRow) return;
+
+      headRow.querySelectorAll("th[data-add-col]").forEach(n => n.remove());
+
+      const cycleTh = headRow.querySelector('th[data-col="cycle"]');
+      if (!cycleTh) return;
+
+      for (let c = 1; c <= maxCycles; c += 1) {
+        for (let i = 1; i <= maxAdds; i += 1) {
+          const th = document.createElement("th");
+          th.setAttribute("data-add-col", `C${c}B${i}`);
+          th.setAttribute("draggable", "true");
+          th.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
+          th.textContent = `C${c}B${i}`;
+          headRow.insertBefore(th, cycleTh);
+        }
+        for (let i = 1; i <= maxAdds; i += 1) {
+          const th = document.createElement("th");
+          th.setAttribute("data-add-col", `C${c}EB${i}`);
+          th.setAttribute("draggable", "true");
+          th.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
+          th.textContent = `C${c}EB${i}`;
+          headRow.insertBefore(th, cycleTh);
+        }
+        for (let i = 1; i <= maxAdds; i += 1) {
+          const th = document.createElement("th");
+          th.setAttribute("data-add-col", `C${c}S${i}`);
+          th.setAttribute("draggable", "true");
+          th.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
+          th.textContent = `C${c}S${i}`;
+          headRow.insertBefore(th, cycleTh);
+        }
+        for (let i = 1; i <= maxAdds; i += 1) {
+          const th = document.createElement("th");
+          th.setAttribute("data-add-col", `C${c}ES${i}`);
+          th.setAttribute("draggable", "true");
+          th.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
+          th.textContent = `C${c}ES${i}`;
+          headRow.insertBefore(th, cycleTh);
+        }
+        const thTsl = document.createElement("th");
+        thTsl.setAttribute("data-add-col", `C${c}TSL`);
+        thTsl.setAttribute("draggable", "true");
+        thTsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thTsl.textContent = `C${c}TSL`;
+        headRow.insertBefore(thTsl, cycleTh);
+
+        const thETsl = document.createElement("th");
+        thETsl.setAttribute("data-add-col", `C${c}ETSL`);
+        thETsl.setAttribute("draggable", "true");
+        thETsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thETsl.textContent = `C${c}ETSL`;
+        headRow.insertBefore(thETsl, cycleTh);
+      }
+
+      ensureAlertsHeaderDraggable();
+      applyAlertsColumnOrder();
+      try { initAlertsWheelHorizontalScroll(); } catch { }
+    }
+
+    async function refreshLadderUIConfig() {
+      try {
+        const res = await fetch("/api/universal-settings");
+        const data = await res.json();
+        const n = Math.max(1, parseInt(data?.settings?.max_adds_per_leg || 2, 10));
+        const c = Math.max(1, parseInt(data?.settings?.ladder_cycles || 1, 10));
+        if (n !== MAX_ADDS_UI || c !== MAX_CYCLES_UI) {
+          MAX_ADDS_UI = n;
+          MAX_CYCLES_UI = c;
+          renderCycleHeaders(MAX_CYCLES_UI, MAX_ADDS_UI);
+          LAST_ALERTS_RENDER = null; // force rebuild
+          await loadAlerts();
+        } else {
+          renderCycleHeaders(MAX_CYCLES_UI, MAX_ADDS_UI);
+        }
+      } catch (e) {
+        renderCycleHeaders(MAX_CYCLES_UI, MAX_ADDS_UI);
+      }
+    }
+
     function startAlertsPolling() {
       if (alertsInterval) return;
       loadAlerts(); // immediate
       alertsInterval = setInterval(() => {
-        if (!isAlertFreezeWindow()) {
-          loadAlerts();
-        }
-      }, 15000);
+        loadAlerts();
+      }, ALERTS_POLL_MS);
     }
 
     function stopAlertsPolling() {
@@ -2126,15 +3155,16 @@
      * - tick updates happen via WS on data-sym cells
      * - ✅ AUTO-TRADE: if automation is ON, auto-start trades for NEW symbols
      */
+    let ALERTS_POLLING = false;
+    const ALERTS_POLL_MS = 3000;
+
     async function loadAlerts() {
+      if (ALERTS_POLLING) return;
+      ALERTS_POLLING = true;
       try {
         const r = await fetch("/api/alerts");
         const data = await r.json();
-
-        // freeze window => don't change UI (keep last)
-        if (isAlertFreezeWindow()) {
-          return;
-        }
+        renderCycleHeaders(MAX_CYCLES_UI, MAX_ADDS_UI);
 
         // signature to avoid needless rebuild
         const sig = JSON.stringify(data || []);
@@ -2183,54 +3213,97 @@
             const fmt = (n) => (n && !isNaN(n)) ? Number(n).toLocaleString('en-IN') : '--';
             const fmtDec = (n) => (n && !isNaN(n)) ? Number(n).toFixed(2) : '--';
 
+            const cycleColsHtml = Array.from({ length: MAX_CYCLES_UI }, (_, cIdx) => {
+              const c = cIdx + 1;
+              const bCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
+                `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col" data-sym="${s}" data-lfield="c${c}_b${idx + 1}">--</td>`
+              ).join("");
+              const ebCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
+                `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col" data-sym="${s}" data-lfield="c${c}_eb${idx + 1}">--</td>`
+              ).join("");
+              const sCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
+                `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${s}" data-lfield="c${c}_s${idx + 1}">--</td>`
+              ).join("");
+              const esCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
+                `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${s}" data-lfield="c${c}_es${idx + 1}">--</td>`
+              ).join("");
+              const tslCols =
+                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_tsl">--</td>` +
+                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_etsl">--</td>`;
+              return bCols + ebCols + sCols + esCols + tslCols;
+            }).join("");
+
             html += `
-<tr class="hover:bg-slate-800/40 transition-colors duration-200 border-b border-slate-800/50 group row-entrance">
-  <td class="px-2 py-3 text-left border-r border-slate-800/30">
-    <div class="truncate w-20 text-cyan-400 font-medium text-sm" title="${a.scan}">${a.scan}</div>
-  </td>
-  <td class="px-1 py-3 text-slate-300 tabular-nums text-xs font-mono">${a.time}</td>
-  <td class="px-2 py-3 font-bold text-slate-200 text-sm font-mono tracking-wide">${s}</td>
+<tr class="hover:bg-slate-800/40 transition-colors duration-200 border-b border-slate-800/50 group row-entrance" draggable="true" data-row-key="${key}">
+  <td class="w-14 px-0.5 py-0.5 font-bold text-slate-200 text-xs font-mono tracking-wide whitespace-nowrap"
+      data-sym="${s}" data-field="symbol">${s}</td>
 
-  <td class="px-1 py-3 text-center tabular-nums text-yellow-400 font-bold text-sm font-mono" data-sym="${s}" data-field="ltp">--</td>
-  <td class="px-1 py-3 text-right tabular-nums text-red-400/80 font-semibold text-xs font-mono" data-sym="${s}" data-field="lc">--</td>
-  <td class="px-1 py-3 text-right tabular-nums text-emerald-400/80 font-semibold text-xs font-mono" data-sym="${s}" data-field="uc">--</td>
-  <td class="px-1 py-3 text-right tabular-nums text-cyan-300 font-bold text-sm font-mono" data-sym="${s}" data-field="pct">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${s}" data-field="ltp">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-mono" data-sym="${s}" data-field="open">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-300 text-[10px] font-mono" data-sym="${s}" data-field="pclose">--</td>
+  <td class="w-[48px] px-1 py-0.5 text-right tabular-nums text-blue-400 font-extrabold text-[11px] font-mono" data-sym="${s}" data-field="pct">--</td>
   
-  <td class="px-1 py-3 text-right tabular-nums text-slate-200 text-[13px] font-mono" data-sym="${s}" data-field="fo">--</td>
-  <td class="px-1 py-3 text-right tabular-nums text-slate-200 text-[13px] font-mono" data-sym="${s}" data-field="fh">--</td>
-  <td class="px-1 py-3 text-right tabular-nums text-slate-200 text-[13px] font-mono" data-sym="${s}" data-field="fl">--</td>
+  <td class="w-[46px] px-1 py-0.5 text-right tabular-nums text-slate-300 text-[10px] font-extrabold font-mono tracking-tight" data-sym="${s}" data-field="fo">--</td>
+  <td class="w-[60px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${s}" data-field="fh">--</td>
+  <td class="w-[60px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${s}" data-field="fl">--</td>
 
-  <td class="px-1 py-3 text-right tabular-nums text-slate-400 font-medium text-xs font-mono" data-sym="${s}" data-field="tbq">--</td>
-  <td class="px-1 py-3 text-right tabular-nums text-slate-400 font-medium text-xs font-mono" data-sym="${s}" data-field="tsq">--</td>
-  <td class="px-1 py-3 text-center tabular-nums text-emerald-500/90 font-semibold text-sm font-mono" data-sym="${s}" data-field="bto">--</td>
-  <td class="px-1 py-3 text-center tabular-nums text-red-500/90 font-semibold text-sm font-mono" data-sym="${s}" data-field="sto">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${s}" data-field="lc">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${s}" data-field="uc">--</td>
+  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${s}" data-field="tbq">--</td>
+  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${s}" data-field="tsq">--</td>
+  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-extrabold font-mono" data-sym="${s}" data-field="tcr">--</td>
 
-  <td class="px-2 py-3 text-center">
-    <div class="flex items-center justify-center gap-3">
-      <button class="px-3 py-1.5 inline-flex items-center justify-center
-         bg-emerald-500/10 hover:bg-emerald-500/20
-         text-emerald-400 text-xs font-bold
-         rounded border border-emerald-500/30
-         transition-all active:scale-95 trade-buy"
-  data-symbol="${s}" data-side="BUY">BUY</button>
-<button class="px-3 py-1.5 inline-flex items-center justify-center
-         bg-red-500/10 hover:bg-red-500/20
-         text-red-400 text-xs font-bold
-         rounded border border-red-500/30
-         transition-all active:scale-95 trade-sell"
-  data-symbol="${s}" data-side="SELL">SELL</button>
-    </div>
-  </td>
+  <td class="w-12 px-1 py-0.5 text-center" data-col="action">
+  <div class="flex items-center justify-center gap-1">
+    <!-- BUY -->
+    <button
+      class="w-4 h-4 text-[8px] font-bold
+             text-emerald-600 border border-emerald-600
+             rounded-sm hover:text-emerald-700 hover:border-emerald-700
+             active:scale-95 trade-buy"
+      data-symbol="${s}" data-side="BUY">
+      B
+    </button>
+
+    <!-- SELL -->
+    <button
+      class="w-4 h-4 text-[8px] font-bold
+             text-red-600 border border-red-600
+             rounded-sm hover:text-red-700 hover:border-red-700
+             active:scale-95 trade-sell"
+      data-symbol="${s}" data-side="SELL">
+      S
+    </button>
+
+    <!-- SQUARE OFF -->
+    <button
+      class="w-5 h-4 text-[8px] font-bold
+             text-slate-600 border border-slate-500
+             rounded-sm hover:text-slate-700 hover:border-slate-700
+             active:scale-95 squareoff-btn"
+      onclick="squareoffLadder('${s}')">
+      SQ
+    </button>
+  </div>
+</td>
+  ${cycleColsHtml}
+  <td class="w-[56px] px-1 py-0.5 text-right text-slate-400 text-[10px] font-mono" data-sym="${s}" data-lfield="cycle">--</td>
+  <td class="w-[50px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono" data-sym="${s}" data-lfield="pnl">--</td>
+  <td class="w-[54px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono" data-sym="${s}" data-lfield="status">--</td>
 </tr>`;
           });
         });
-
         tbody.innerHTML = html;
+        ensureAlertsHeaderDraggable();
+        applyAlertsColumnOrder();
+        try { initAlertsWheelHorizontalScroll(); } catch { }
+        try { initAlertsRowDrag(); } catch { }
+        requestAnimationFrame(fitAlertsTableToWidth);
         setAlertCount(liveCount);
 
-        // ✅ AUTO-TRADE: If automation is ON and we have NEW symbols, auto-start trades
+        // ✅ AUTO-TRADE: If automation is ON and market is OPEN, auto-start trades
         // Only trade symbols that were NOT present when automation was enabled
-        if (automationMode === "AUTO" && newSymbols.size > 0) {
+        if (automationMode === "AUTO" && MARKET_OPEN && newSymbols.size > 0) {
           // Filter out symbols that existed when automation was enabled
           // Note: We do NOT filter by processedAutoTradeSymbols here anymore, 
           // because we want to allow re-entry up to the configured limit.
@@ -2328,7 +3401,295 @@
 
       } catch (e) {
         // ignore
+      } finally {
+        ALERTS_POLLING = false;
       }
+    }
+
+    /* ================= COLUMN DRAG (EXCEL-LIKE) ================= */
+    let ALERTS_COL_DRAG_FROM = null;
+    let ALERTS_COL_DND_BOUND = false;
+    let ALERTS_COL_ORDER = null;
+    let ALERTS_COL_MOUSE_DOWN = null;
+    let ALERTS_COL_DRAGGING = false;
+    let ALERTS_COL_LAST_TARGET = null;
+    let ALERTS_COL_START_X = 0;
+    let ALERTS_COL_START_Y = 0;
+    let ALERTS_COL_ARMED = false;
+
+    let ALERTS_ROW_DND_BOUND = false;
+    let ALERTS_ROW_DRAGGED = null;
+    let ALERTS_ROW_ARMED = false;
+    let ALERTS_ROW_DRAGGING = false;
+    let ALERTS_ROW_MOUSE_DOWN = null;
+    let ALERTS_ROW_START_Y = 0;
+    let ALERTS_ROW_LAST_TARGET = null;
+
+    function ensureAlertsHeaderDraggable() {
+      const headRow = document.querySelector("#alerts-fit-table thead tr");
+      if (!headRow) return;
+      Array.from(headRow.children).forEach(th => {
+        if (th && th.tagName === "TH") th.setAttribute("draggable", "true");
+      });
+    }
+
+    function getAlertsHeaderKey(th) {
+      if (!th) return "";
+      const add = th.getAttribute("data-add-col");
+      if (add) return `add:${add}`;
+      const col = th.getAttribute("data-col");
+      if (col) return `col:${col}`;
+      return `txt:${(th.textContent || "").trim().toUpperCase()}`;
+    }
+
+    function getAlertsCellKey(td) {
+      if (!td) return "";
+      const field = td.getAttribute("data-field");
+      if (field) return `col:${field}`;
+      const col = td.getAttribute("data-col");
+      if (col) return `col:${col}`;
+      const lf = td.getAttribute("data-lfield");
+      if (lf) {
+        if (lf === "cycle" || lf === "pnl" || lf === "status") return `col:${lf}`;
+        const m1 = lf.match(/^c(\d+)_(b|eb|s|es)(\d+)$/i);
+        if (m1) {
+          const c = m1[1];
+          const type = m1[2].toUpperCase();
+          const i = m1[3];
+          return `add:C${c}${type}${i}`;
+        }
+        const m2 = lf.match(/^c(\d+)_(tsl|etsl)$/i);
+        if (m2) {
+          const c = m2[1];
+          const type = m2[2].toUpperCase();
+          return `add:C${c}${type}`;
+        }
+        return `lfield:${lf}`;
+      }
+      return `txt:${(td.textContent || "").trim().toUpperCase()}`;
+    }
+
+    function captureAlertsColumnOrder() {
+      const headRow = document.querySelector("#alerts-fit-table thead tr");
+      if (!headRow) return;
+      ALERTS_COL_ORDER = Array.from(headRow.children).map(getAlertsHeaderKey);
+      try { localStorage.setItem("alertsColOrder", JSON.stringify(ALERTS_COL_ORDER)); } catch { }
+    }
+
+    function applyAlertsColumnOrder() {
+      const table = document.getElementById("alerts-fit-table");
+      if (!table || !ALERTS_COL_ORDER || ALERTS_COL_ORDER.length === 0) return;
+      reorderAlertsColumnsByKey(table, ALERTS_COL_ORDER);
+    }
+
+    function initAlertsColumnDrag() {
+      if (ALERTS_COL_DND_BOUND) return;
+      const table = document.getElementById("alerts-fit-table");
+      if (!table) return;
+      const headRow = table.querySelector("thead tr");
+      if (!headRow) return;
+
+      ALERTS_COL_DND_BOUND = true;
+      ensureAlertsHeaderDraggable();
+      if (!ALERTS_COL_ORDER) {
+        try {
+          const saved = localStorage.getItem("alertsColOrder");
+          if (saved) ALERTS_COL_ORDER = JSON.parse(saved);
+        } catch { }
+      }
+
+      headRow.addEventListener("dragstart", (e) => {
+        const th = e.target.closest("th");
+        if (!th) return;
+        const idx = Array.prototype.indexOf.call(headRow.children, th);
+        if (idx < 0) return;
+        ALERTS_COL_DRAG_FROM = idx;
+        try { e.dataTransfer.setData("text/plain", String(idx)); } catch { }
+        e.dataTransfer.effectAllowed = "move";
+      });
+
+      headRow.addEventListener("dragover", (e) => {
+        if (!e.target.closest("th")) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      });
+
+      headRow.addEventListener("drop", (e) => {
+        const th = e.target.closest("th");
+        if (!th) return;
+        e.preventDefault();
+        const from = ALERTS_COL_DRAG_FROM;
+        const to = Array.prototype.indexOf.call(headRow.children, th);
+        if (from == null || to == null || from === to) return;
+        moveAlertsColumn(table, from, to);
+        ALERTS_COL_DRAG_FROM = null;
+        captureAlertsColumnOrder();
+      });
+
+      // ✅ Fast fallback for left-to-right and right-to-left drag
+      headRow.addEventListener("mousedown", (e) => {
+        const th = e.target.closest("th");
+        if (!th) return;
+        const idx = Array.prototype.indexOf.call(headRow.children, th);
+        if (idx < 0) return;
+        ALERTS_COL_MOUSE_DOWN = idx;
+        ALERTS_COL_ARMED = true;
+        ALERTS_COL_LAST_TARGET = idx;
+        ALERTS_COL_START_X = e.clientX;
+        ALERTS_COL_START_Y = e.clientY;
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (!ALERTS_COL_ARMED && !ALERTS_COL_DRAGGING) return;
+        if ((e.buttons & 1) !== 1) return; // only while mouse button is held
+        if (!ALERTS_COL_DRAGGING) {
+          const dx = Math.abs(e.clientX - ALERTS_COL_START_X);
+          const dy = Math.abs(e.clientY - ALERTS_COL_START_Y);
+          if (dx < 4 && dy < 4) return; // small move -> treat as click/hover
+          ALERTS_COL_DRAGGING = true;
+          ALERTS_COL_ARMED = false;
+        }
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const th = el ? el.closest("th") : null;
+        if (!th || !headRow.contains(th)) return;
+        const to = Array.prototype.indexOf.call(headRow.children, th);
+        const from = ALERTS_COL_MOUSE_DOWN;
+        if (from == null || to == null || from === to) return;
+        if (ALERTS_COL_LAST_TARGET === to) return;
+        ALERTS_COL_LAST_TARGET = to;
+        moveAlertsColumn(table, from, to);
+        ALERTS_COL_MOUSE_DOWN = to;
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (!ALERTS_COL_DRAGGING && !ALERTS_COL_ARMED) return;
+        ALERTS_COL_DRAGGING = false;
+        ALERTS_COL_ARMED = false;
+        ALERTS_COL_MOUSE_DOWN = null;
+        ALERTS_COL_LAST_TARGET = null;
+        captureAlertsColumnOrder();
+      });
+    }
+
+    function initAlertsRowDrag() {
+      if (ALERTS_ROW_DND_BOUND) return;
+      const tbody = document.getElementById("alerts-body");
+      if (!tbody) return;
+      ALERTS_ROW_DND_BOUND = true;
+
+      tbody.addEventListener("dragstart", (e) => {
+        const row = e.target.closest("tr");
+        if (!row) return;
+        ALERTS_ROW_DRAGGED = row;
+        tbody.classList.add("row-dnd-active");
+        row.classList.add("opacity-70");
+        try { e.dataTransfer.setData("text/plain", row.dataset.rowKey || ""); } catch { }
+        e.dataTransfer.effectAllowed = "move";
+      });
+
+      tbody.addEventListener("dragend", () => {
+        if (ALERTS_ROW_DRAGGED) ALERTS_ROW_DRAGGED.classList.remove("opacity-70");
+        ALERTS_ROW_DRAGGED = null;
+        tbody.classList.remove("row-dnd-active");
+      });
+
+      tbody.addEventListener("dragover", (e) => {
+        if (!ALERTS_ROW_DRAGGED) return;
+        const row = e.target.closest("tr");
+        if (!row || row === ALERTS_ROW_DRAGGED) return;
+        e.preventDefault();
+        const rect = row.getBoundingClientRect();
+        const next = (e.clientY - rect.top) > rect.height / 2;
+        tbody.insertBefore(ALERTS_ROW_DRAGGED, next ? row.nextSibling : row);
+      }, { passive: false });
+
+      tbody.addEventListener("drop", (e) => {
+        if (!ALERTS_ROW_DRAGGED) return;
+        e.preventDefault();
+      });
+
+      // Fast fallback drag (mouse move reorder)
+      tbody.addEventListener("mousedown", (e) => {
+        const row = e.target.closest("tr");
+        if (!row) return;
+        ALERTS_ROW_MOUSE_DOWN = row;
+        ALERTS_ROW_ARMED = true;
+        ALERTS_ROW_START_Y = e.clientY;
+        ALERTS_ROW_LAST_TARGET = row;
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (!ALERTS_ROW_ARMED && !ALERTS_ROW_DRAGGING) return;
+        if (!ALERTS_ROW_DRAGGING) {
+          if (Math.abs(e.clientY - ALERTS_ROW_START_Y) < 3) return;
+          ALERTS_ROW_DRAGGING = true;
+          ALERTS_ROW_ARMED = false;
+          if (ALERTS_ROW_MOUSE_DOWN) tbody.classList.add("row-dnd-active");
+        }
+        const row = e.target.closest("tr");
+        if (!row || row === ALERTS_ROW_MOUSE_DOWN) return;
+        if (ALERTS_ROW_LAST_TARGET === row) return;
+        ALERTS_ROW_LAST_TARGET = row;
+        const rect = row.getBoundingClientRect();
+        const next = (e.clientY - rect.top) > rect.height / 2;
+        tbody.insertBefore(ALERTS_ROW_MOUSE_DOWN, next ? row.nextSibling : row);
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (!ALERTS_ROW_DRAGGING && !ALERTS_ROW_ARMED) return;
+        ALERTS_ROW_DRAGGING = false;
+        ALERTS_ROW_ARMED = false;
+        ALERTS_ROW_MOUSE_DOWN = null;
+        ALERTS_ROW_LAST_TARGET = null;
+        tbody.classList.remove("row-dnd-active");
+      });
+    }
+
+    // horizontal scroll handled by mouse wheel (no slider)
+
+    function reorderAlertsColumnsByKey(table, orderKeys) {
+      const rows = Array.from(table.querySelectorAll("tr"));
+      rows.forEach(row => {
+        const cells = Array.from(row.children);
+        if (!cells.length) return;
+        const used = new Set();
+        const byKey = new Map();
+        cells.forEach((c, idx) => {
+          const k = (row.parentElement && row.parentElement.tagName === "THEAD")
+            ? getAlertsHeaderKey(c)
+            : getAlertsCellKey(c);
+          if (!byKey.has(k)) byKey.set(k, idx);
+        });
+
+        const frag = document.createDocumentFragment();
+        orderKeys.forEach(k => {
+          const idx = byKey.get(k);
+          if (idx != null && !used.has(idx)) {
+            used.add(idx);
+            frag.appendChild(cells[idx]);
+          }
+        });
+        cells.forEach((c, idx) => {
+          if (!used.has(idx)) frag.appendChild(c);
+        });
+        row.appendChild(frag);
+      });
+    }
+
+    function moveAlertsColumn(table, from, to) {
+      const rows = Array.from(table.querySelectorAll("tr"));
+      rows.forEach(row => {
+        const cells = Array.from(row.children);
+        if (from < 0 || to < 0 || from >= cells.length || to >= cells.length) return;
+        const moving = cells[from];
+        if (!moving) return;
+        if (to >= cells.length - 1) {
+          row.appendChild(moving);
+        } else {
+          row.insertBefore(moving, cells[to]);
+        }
+      });
+      // no rebind needed (delegated)
     }
 
     /* ================= AUTOMATION MODE SWITCH ================= */
@@ -2425,29 +3786,28 @@
         autoDot.classList.add("bg-emerald-400");
         manualDot.classList.add("hidden");
 
-        // 🟢 Header badge - GREEN for AUTO
-        badge.classList.add("badge-green");
+        // 🟢 Header badge - GREEN for        badge.classList.add("badge-green");
         ring.classList.add("connected");
-        label.textContent = "FULL AUTOMATION";
+        label.textContent = "AUTOMODE";
       } else {
         indicator.style.transform = "translateX(0%)";
-        indicator.className = "absolute inset-y-1 left-1 w-1/2 rounded-full bg-gradient-to-r from-fuchsia-600/20 to-pink-600/20 backdrop-blur-md transition-all duration-500 ease-[cubic-bezier(.4,0,.2,1)] shadow-inner shadow-fuchsia-500/20";
+        indicator.className = "absolute inset-y-1 left-1 w-1/2 rounded-full bg-gradient-to-r from-orange-400/20 to-amber-500/20 backdrop-blur-md transition-all duration-500 ease-[cubic-bezier(.4,0,.2,1)] shadow-inner shadow-orange-400/20";
 
         // Toggle buttons
-        manualBtn.classList.add("active", "bg-fuchsia-500/15", "border-fuchsia-400/40", "text-white");
+        manualBtn.classList.add("active", "bg-orange-500/20", "border-orange-400/40", "text-orange-700");
         manualBtn.classList.remove("bg-slate-800", "border-slate-600", "text-slate-300");
         autoBtn.classList.remove("active", "bg-emerald-600", "border-emerald-500", "text-white");
         autoBtn.classList.add("bg-slate-800", "border-slate-600", "text-slate-300");
 
         manualDot.classList.remove("hidden");
         manualDot.classList.remove("bg-emerald-400", "bg-amber-400");
-        manualDot.classList.add("bg-fuchsia-500");
+        manualDot.classList.add("bg-orange-400");
         autoDot.classList.add("hidden");
 
-        // 🔴 Header badge - RED for MANUAL
-        badge.classList.add("border-fuchsia-400/40", "bg-fuchsia-500/15", "text-fuchsia-300", "shadow-inner");
+        // 🟠 Header badge - ORANGE for MANUAL
+        badge.classList.add("border-orange-400/60", "bg-orange-500/15", "text-orange-700", "shadow-inner");
         ring.classList.add("connected");
-        label.textContent = "MANUAL MODE";
+        label.textContent = "MANUL";
       }
     }
 
@@ -2490,7 +3850,7 @@
         $("us-cycles").value = s.ladder_cycles || 1;
         $("us-cycles").value = s.ladder_cycles || 1;
         $("us-maxadds").value = s.max_adds_per_leg || 2;
-        $("us-maxtrades").value = s.max_trades_per_symbol || 1;
+        $("us-maxtrades").value = parseInt(s.max_trades_per_symbol || "1");
       } catch (e) {
         console.error("Failed to load universal settings:", e);
       }
@@ -2501,7 +3861,7 @@
         qty_mode: $("us-qtymode").value,
         entry_threshold_enabled: $("us-entry-enabled").checked,
         entry_threshold_pct: parseFloat($("us-entry-pct").value || "0.5"),
-        per_trade_capital: parseFloat($("us-capital").value || "1000"),
+        per_trade_capital: clampRange($("us-capital").value || "1000", 100, 4000, 1000),
         per_trade_qty: parseInt($("us-qty").value || "1"),
         threshold_pct: parseFloat($("us-threshold").value || "1"),
         stop_loss_pct: parseFloat($("us-sl").value || "1"),
@@ -2521,6 +3881,7 @@
 
         showMsg("✅ Universal settings saved", false);
         closeUniversalSettings();
+        await refreshLadderUIConfig();
 
         // ✅ If user clicked Full Automation before configuring, auto-enable it now
         if (pendingAutoModeSwitch) {
@@ -2583,7 +3944,7 @@
 
     async function loadStockSettingsToTradeModal(symbol) {
       try {
-        const res = await fetch(`/ api / stock - settings ? symbol = ${symbol} `);
+        const res = await fetch(`/api/stock-settings?symbol=${encodeURIComponent(symbol)}`);
         const data = await res.json();
 
         if (data.settings) {
@@ -2722,17 +4083,28 @@
     }
 
     /* ================= CREDENTIALS ================= */
-    function openCred() { credModal.classList.remove("hidden"); }
+    function openCred() {
+      credModal.classList.remove("hidden");
+      try {
+        api_key.value = "";
+        api_secret.value = "";
+        api_key.placeholder = "Already saved";
+        api_secret.placeholder = "Already saved";
+      } catch { }
+    }
     function closeCred() { credModal.classList.add("hidden"); }
     function saveCred() {
+      const payload = { api_key: api_key.value, api_secret: api_secret.value };
+      closeCred();
+      try { showMsg("✅ Saved", false); } catch { }
       fetch("/api/save-credentials", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api_key: api_key.value, api_secret: api_secret.value })
-      }).then(() => closeCred());
+        body: JSON.stringify(payload),
+        keepalive: true
+      }).catch(() => { try { showMsg("❌ Save failed", true); } catch { } });
     }
     function connectZerodha() { window.location = "/connect/zerodha"; }
-    function logout() { window.location = "/logout"; }
 
     /* ================= OVERALL PNL ================= */
     function setOverallPnl(val) {
@@ -2741,6 +4113,20 @@
       // top bar (agar aap rakhna chahte ho)
       const elTop = document.getElementById("overall-pnl");
       if (elTop) elTop.textContent = pnl.toFixed(2);
+
+      // top bar mini pnl
+      const elTopMini = document.getElementById("overall-pnl-top");
+      if (elTopMini) elTopMini.textContent = pnl.toFixed(2);
+      const topPill = elTopMini ? elTopMini.closest(".pill-net-pnl") : null;
+      if (topPill) {
+        topPill.classList.remove(
+          "bg-emerald-900/20", "border-emerald-600/40", "text-emerald-300",
+          "bg-red-900/20", "border-red-600/40", "text-red-300",
+          "bg-cyan-900/20", "border-cyan-600/40", "text-cyan-300"
+        );
+        // Always green per request
+        topPill.classList.add("bg-emerald-900/20", "border-emerald-600/40", "text-emerald-300");
+      }
 
       // ✅ Active Ladders pill
       const elBox = document.getElementById("overall-pnl-ladders");
@@ -2780,28 +4166,27 @@
 
     /* ================= LADDER STATE (HIDE DONE + CLEAR ON SQUAREOFF ALL) ================= */
     function ladderEmptyUI() {
-      const tbody = $("ladderRows");
-      tbody.innerHTML = `
-              <tr>
-              <td colspan="13" class="p-12 text-center text-slate-500 italic text-sm">
-                No active ladder strategies
-              </td>
-    </tr>`;
+      // Clear ladder meta and reset top PNL
+      LADDER_META = {};
       setOverallPnl(0);
       setLadderCount(0);
+      // Clear ladder columns in Chartink rows
+      const nodes = document.querySelectorAll("[data-lfield]");
+      nodes.forEach(n => setTextIfChanged(n, "--"));
+      // Clear symbol highlight
+      document.querySelectorAll('[data-field="symbol"]').forEach(n => n.classList.remove("symbol-active"));
     }
 
     function loadLadderState() {
       fetch("/api/ladder/state")
         .then(r => r.json())
         .then(rows => {
-          const tbody = $("ladderRows");
           if (!rows || rows.length === 0) {
             ladderEmptyUI();
             return;
           }
 
-          // ✅ filter: Hide DONE/COMPLETE positions automatically
+          // ✅ filter: Keep completed for the day
           const filtered = rows.filter(s => {
             const ls = s.leg_state || {};
             const status = String(ls.status || "");
@@ -2812,8 +4197,8 @@
             // Show errors/rejections for debugging
             if (st === "REJECTED" || st === "ERROR") return true;
 
-            // ✅ HIDE COMPLETE/DONE - auto-clear from Active Ladders
-            if (st === "COMPLETE" || st === "DONE") return false;
+            // ✅ KEEP COMPLETE/DONE for current day
+            if (st === "COMPLETE" || st === "DONE") return true;
 
             // Show RUNNING positions even if qty=0 (order pending)
             if (st === "RUNNING" || st === "EXITING") return true;
@@ -2842,14 +4227,13 @@
           setLadderCount(realCount);
 
 
-          // rebuild ladder table (less frequent) but NO LTP blink now (WS updates LTP by data-lsym)
-          tbody.innerHTML = "";
-
           let overall = 0;
 
+          const activeSyms = new Set();
           filtered.forEach(s => {
             const ls = s.leg_state || {};
             const SYM = String(s.symbol || "").toUpperCase();
+            activeSyms.add(SYM);
             const avgv = ls.avg_price ? Number(ls.avg_price) : 0;
             const qtyv = Number(ls.qty || 0);
             const sidev = String(ls.side || "").toUpperCase();
@@ -2862,9 +4246,9 @@
               ltp: LADDER_META[SYM]?.ltp || (s.ltp ? Number(s.ltp) : 0),
             };
 
-            const hiLo = (ls.side === "BUY")
-              ? (ls.highest ? Number(ls.highest).toFixed(2) : "-")
-              : (ls.lowest ? Number(ls.lowest).toFixed(2) : "-");
+            const intEntry = ls.entry_price_internal ? Number(ls.entry_price_internal).toFixed(2) : "-";
+            const execEntry = ls.entry_price_exec ? Number(ls.entry_price_exec).toFixed(2) : (ls.avg_price ? Number(ls.avg_price).toFixed(2) : "-");
+            const exitExec = ls.exit_price_exec ? Number(ls.exit_price_exec).toFixed(2) : "-";
 
             // LTP shown from WS ticks if available; fallback to API ltp
             const ltp = s.ltp ? Number(s.ltp).toFixed(2) : "-";
@@ -2873,10 +4257,20 @@
             overall += pnlNum;
 
             const pnl = pnlNum.toFixed(2);
+            const pnlStyle = pnlNum > 0
+              ? "color:#15803d !important; background:transparent !important;"
+              : (pnlNum < 0
+                ? "color:#dc2626 !important; background:transparent !important;"
+                : "color:#475569 !important; background:transparent !important;");
 
             let nextAdd = "-";
             let sl = "-";
             let tsl = "-";
+            const entryCount = Math.max(1, Number(ls.entries || 1));
+            const maxAdds = Math.max(1, Number(s.settings?.max_adds_per_leg || 1));
+            const stepIndex = Math.min(entryCount, maxAdds);
+            const sideLabel = String(ls.side || s.leg || "BUY").toUpperCase() === "BUY" ? "B" : "S";
+            const legLabel = `${sideLabel}${stepIndex}`;
 
             if (ls.avg_price && s.settings) {
               const avg = Number(ls.avg_price);
@@ -2886,18 +4280,18 @@
               const tslp = Number(s.settings.trailing_sl_pct);
 
               if (ls.side === "BUY") {
-                nextAdd = (last * (1 + th / 100)).toFixed(2);
+                nextAdd = `${legLabel} ${(last * (1 + th / 100)).toFixed(2)}`;
                 sl = (avg * (1 - slp / 100)).toFixed(2);
                 if (ls.highest) tsl = (Number(ls.highest) * (1 - tslp / 100)).toFixed(2);
               } else {
-                nextAdd = (last * (1 - th / 100)).toFixed(2);
+                nextAdd = `${legLabel} ${(last * (1 - th / 100)).toFixed(2)}`;
                 sl = (avg * (1 + slp / 100)).toFixed(2);
                 if (ls.lowest) tsl = (Number(ls.lowest) * (1 + tslp / 100)).toFixed(2);
               }
             }
 
             let st = ls.status || "UNKNOWN";
-            if (ls.reason) {
+            if (ls.reason && !st.startsWith("REJECT") && !st.startsWith("ERROR")) {
               let r = String(ls.reason);
               // ✅ Shorten long Zerodha error messages
               if (r.indexOf("MARKET ORDERS ARE BLOCKED FOR ILLIQUID ETFS") !== -1) {
@@ -2915,37 +4309,100 @@
             else if (st.startsWith("ERROR") || st.startsWith("REJECTED")) stColor = "text-red-500";
             else if (st.startsWith("EXIT")) stColor = "text-orange-400";
 
-            tbody.innerHTML += `
-              <tr class="hover:bg-slate-800/40 transition-all duration-300 border-b-2 border-slate-700/60 group">
-            <td class="p-3 pl-4 text-left font-extrabold text-white text-sm tracking-wide">${s.symbol}</td>
-            <td class="p-3 text-center text-slate-500 text-xs font-medium">${(s.cycle_index + 1)} / ${s.cycle_total}</td>
-            <td class="p-3 text-center text-slate-300 font-medium">${s.leg}</td>
-            <td class="p-3 text-center tabular-nums text-slate-100 font-semibold">${ls.qty || 0}</td>
+            if (st.startsWith("RUNNING")) st = "RUN";
+            if (st.startsWith("REJECT")) st = "REJECT";
+            if (st.startsWith("ERROR")) st = "ERROR";
 
-            <td class="p-3 text-center tabular-nums text-sky-400 font-bold"
-                data-lsym="${String(s.symbol).toUpperCase()}"
-                data-lfield="ltp">${ltp}</td>
+            const symKey = String(s.symbol).toUpperCase();
+            const setL = (field, val) => {
+              document.querySelectorAll(`[data-sym="${symKey}"][data-lfield="${field}"]`)
+                .forEach(n => setTextIfChanged(n, val));
+            };
 
-            <td class="p-3 text-center tabular-nums text-slate-400 text-xs">${ls.avg_price ? Number(ls.avg_price).toFixed(2) : "-"}</td>
-            <td class="p-3 text-center tabular-nums text-slate-500 text-xs"
-                data-lsym="${String(s.symbol).toUpperCase()}"
-                data-lfield="extreme">${hiLo}</td>
-            <td class="p-3 text-center text-emerald-400 tabular-nums font-bold">${nextAdd}</td>
-            <td class="p-3 text-center text-rose-500 tabular-nums font-medium">${sl}</td>
-            <td class="p-3 text-center text-amber-500 tabular-nums font-medium">${tsl}</td>
-            <td class="p-3 text-center font-black tabular-nums text-base"
-                data-lsym="${String(s.symbol).toUpperCase()}" data-lfield="pnl">${pnl}</td>
-            <td class="p-3 text-center font-bold text-[10px] tracking-widest uppercase ${stColor}">${st}</td>
-            <td class="p-2 text-center">
-              <button onclick="squareoffLadder('${s.symbol}')"
-                class="squareoff-btn uppercase">
-                SQUAREOFF
-              </button>
-            </td>
-          </tr>`;
+
+            const hist = s.cycle_hist || {};
+            const fmt = (v) => (v != null && v !== "" && !isNaN(Number(v))) ? Number(v).toFixed(2) : "--";
+            const fmtTsl = (obj) => {
+              if (!obj) return "--";
+              const b = obj.B != null ? Number(obj.B) : null;
+              const sVal = obj.S != null ? Number(obj.S) : null;
+              if (b != null && sVal != null) return `B${b.toFixed(2)}|S${sVal.toFixed(2)}`;
+              if (b != null) return `B${b.toFixed(2)}`;
+              if (sVal != null) return `S${sVal.toFixed(2)}`;
+              return "--";
+            };
+
+            for (let c = 1; c <= MAX_CYCLES_UI; c += 1) {
+              const ch = hist[String(c)] || {};
+              const bEst = ch.B?.est || [];
+              const bExec = ch.B?.exec || [];
+              const sEst = ch.S?.est || [];
+              const sExec = ch.S?.exec || [];
+
+              for (let i = 1; i <= MAX_ADDS_UI; i += 1) {
+                setL(`c${c}_b${i}`, fmt(bEst[i - 1]));
+                setL(`c${c}_eb${i}`, fmt(bExec[i - 1]));
+                setL(`c${c}_s${i}`, fmt(sEst[i - 1]));
+                setL(`c${c}_es${i}`, fmt(sExec[i - 1]));
+              }
+
+              setL(`c${c}_tsl`, fmtTsl(ch.tsl_est));
+              setL(`c${c}_etsl`, fmtTsl(ch.tsl_exec));
+            }
+
+            setL("cycle", `${(s.cycle_index + 1)}/${s.cycle_total}`);
+            setL("avg", ls.avg_price ? Number(ls.avg_price).toFixed(2) : "--");
+            setL("int_entry", intEntry);
+            setL("exec_entry", execEntry);
+            setL("next_add", nextAdd);
+            setL("sl", sl);
+            setL("tsl", tsl);
+            setL("exit_tsl", exitExec);
+            setL("pnl", pnl);
+            setL("status", st);
+
+            // ✅ Cycle complete toast (per symbol)
+            const cycleIdx = Number(s.cycle_index ?? 0);
+            const cycleTotal = Number(s.cycle_total ?? 0);
+            const prevCycle = LAST_CYCLE_INDEX[symKey];
+            if (CYCLE_TRACKING_READY && Number.isFinite(prevCycle) && cycleIdx > prevCycle) {
+              const completed = Math.min(cycleIdx, cycleTotal || cycleIdx);
+              const totalLabel = cycleTotal > 0 ? `/${cycleTotal}` : "";
+              showMsg(`✅ Cycle complete: ${symKey} (C${completed}${totalLabel})`, false);
+            }
+            LAST_CYCLE_INDEX[symKey] = cycleIdx;
+
+            const stUpper = String(ls.status || "").toUpperCase();
+            const prevStatus = LAST_CYCLE_STATUS[symKey];
+            if (CYCLE_TRACKING_READY && prevStatus && prevStatus !== stUpper) {
+              if (stUpper.startsWith("COMPLETE") || stUpper.startsWith("DONE")) {
+                showMsg(`✅ Cycle complete: ${symKey}`, false);
+              }
+            }
+            LAST_CYCLE_STATUS[symKey] = stUpper;
+
+            // ✅ Symbol highlight only when trade actually placed
+            const placed = stUpper.startsWith("RUNNING") || stUpper.startsWith("COMPLETE") || stUpper.startsWith("DONE");
+            document.querySelectorAll(`[data-sym="${symKey}"][data-field="symbol"]`)
+              .forEach(n => n.classList.toggle("symbol-active", placed));
+          });
+
+          Object.keys(LADDER_META).forEach(sym => {
+            if (!activeSyms.has(sym)) delete LADDER_META[sym];
+          });
+
+          // Clear ladder columns and symbol highlight for symbols not active
+          document.querySelectorAll("[data-lfield][data-sym]").forEach(n => {
+            const sym = (n.getAttribute("data-sym") || "").toUpperCase();
+            if (!activeSyms.has(sym)) setTextIfChanged(n, "--");
+          });
+          document.querySelectorAll('[data-field="symbol"][data-sym]').forEach(n => {
+            const sym = (n.getAttribute("data-sym") || "").toUpperCase();
+            if (!activeSyms.has(sym)) n.classList.remove("symbol-active");
           });
 
           setOverallPnl(overall);
+          CYCLE_TRACKING_READY = true;
         })
         .catch(() => { });
     }
@@ -3140,7 +4597,18 @@
 
     /* ================= INIT ================= */
     document.addEventListener("DOMContentLoaded", async () => {
-      initParticles();
+      try { initParticles(); } catch (e) { console.error("initParticles failed:", e); }
+      try { initAlertsColumnDrag(); } catch (e) { console.error("initAlertsColumnDrag failed:", e); }
+      try { initAlertsWheelHorizontalScroll(); } catch (e) { console.error("initAlertsWheelHorizontalScroll failed:", e); }
+      try { initAlertsStickyHeader(); } catch (e) { console.error("initAlertsStickyHeader failed:", e); }
+      try { initFastVerticalScroll(); } catch (e) { console.error("initFastVerticalScroll failed:", e); }
+      try { initAlertsRowDrag(); } catch (e) { console.error("initAlertsRowDrag failed:", e); }
+      try {
+        const ltpHead = document.querySelector('#alerts-fit-table thead th[data-col="ltp"]');
+        if (ltpHead) ltpHead.style.color = "#f59e0b";
+        const openHead = document.querySelector('#alerts-fit-table thead th[data-col="open"]');
+        if (openHead) openHead.style.color = "#2563eb";
+      } catch (e) { console.error("ltp/open header color set failed:", e); }
       // ✅ Handle BUY/SELL click for dynamically injected rows
       document.addEventListener("click", (ev) => {
         const btn = ev.target.closest(".trade-buy, .trade-sell");
@@ -3153,22 +4621,30 @@
         openTradeModal(sym, side);
       });
 
-      if (!(await checkSession())) return;
+      try {
+        if (!(await checkSession())) return;
+      } catch (e) {
+        console.error("checkSession failed:", e);
+        return;
+      }
 
-      refreshStatus();
-      checkMarketStatus();   // also manages alert gate
+      try { await refreshStatus(); } catch (e) { console.error("refreshStatus failed:", e); }
+      try { checkMarketStatus(); } catch (e) { console.error("checkMarketStatus failed:", e); }
 
-      await loadAutomationMode();   // load saved automation mode
-      updateAutomationUI();        // ✅ force sync toggle UI
+      try { await loadAutomationMode(); } catch (e) { console.error("loadAutomationMode failed:", e); }
+      try { updateAutomationUI(); } catch (e) { console.error("updateAutomationUI failed:", e); }
 
+      try { startTickWS(); } catch (e) { console.error("startTickWS failed:", e); }
+      try { await refreshLadderUIConfig(); } catch (e) { console.error("refreshLadderUIConfig failed:", e); }
+      window.addEventListener("resize", () => requestAnimationFrame(fitAlertsTableToWidth));
 
-      startTickWS();         // ✅ ONLY ONE WS
+      setInterval(() => { try { refreshStatus(); } catch { } }, 5000);
+      setInterval(() => { try { checkMarketStatus(); } catch { } }, 60000);
+      setInterval(() => { try { checkAutoSquareoffEvent(); } catch { } }, 10000);
 
-      setInterval(refreshStatus, 5000);
-      setInterval(checkMarketStatus, 60000);
-
-      loadLadderState();
-      setInterval(loadLadderState, 30000);
+      try { loadLadderState(); } catch (e) { console.error("loadLadderState failed:", e); }
+      setInterval(() => { try { loadLadderState(); } catch { } }, 30000);
+      try { checkAutoSquareoffEvent(); } catch (e) { console.error("checkAutoSquareoffEvent failed:", e); }
 
       // extra: at exact 09:00 IST window, gate will open automatically on next checkMarketStatus tick
     });

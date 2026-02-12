@@ -10,6 +10,9 @@ from kiteconnect import KiteTicker
 import asyncio
 import websockets
 import requests
+from dotenv import load_dotenv
+import os
+
 
 
 # -------------------------------------------------
@@ -50,17 +53,24 @@ for h in root.handlers:
 log = logging.LoggerAdapter(logging.getLogger("KITE_WS"), {"user": USER_ID})
 
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-# -------------------------------------------------
-# REDIS (DB0 ONLY)
-# -------------------------------------------------
-r = redis.Redis(
-    host="127.0.0.1",
-    port=6379,
-    db=0,
+REDIS_URL = os.getenv("REDIS_URL")
+if not REDIS_URL:
+    raise RuntimeError("❌ REDIS_URL missing in .env")
+
+r = redis.from_url(
+    REDIS_URL,
     decode_responses=True
 )
 
+try:
+    r.ping()
+    print("✅ Redis connected (worker)")
+except Exception as e:
+    print("❌ Redis auth failed (worker):", e)
+    sys.exit(1)
 
 # -------------------------------------------------
 # LOAD TOKEN (FASTAPI STYLE)
@@ -232,7 +242,7 @@ def on_ticks(ws, ticks):
             low = float(ohlc.get("low") or ltp)
 
             # Your dashboard logic expects "prev" baseline
-            prev = float(ohlc.get("open") or ohlc.get("close") or ltp)
+            prev = float(ohlc.get("close") or ltp)
             if prev <= 0:
                 prev = ltp
 
@@ -242,6 +252,14 @@ def on_ticks(ws, ticks):
             # ✅ prefer fast TBQ/TSQ fields (MODE_FULL)
             tbq = int(t.get("buy_quantity") or 0)
             tsq = int(t.get("sell_quantity") or 0)
+
+            # ✅ volume traded (MODE_FULL)
+            volume = int(
+                t.get("volume_traded")
+                or t.get("volume")
+                or t.get("volume_traded_today")
+                or 0
+            )
 
             # fallback to depth sum if needed
             if tbq == 0 or tsq == 0:
@@ -260,6 +278,7 @@ def on_ticks(ws, ticks):
                 "prev": prev,
                 "tbq": tbq,
                 "tsq": tsq,
+                "volume": volume,
                 "ts": now_ts
             }
             push_tick(payload)
@@ -277,6 +296,11 @@ def sync_tokens():
     """
     last_seen = set()
 
+    # Create a persistent session to reuse TCP connections (Avoid WinError 10048)
+    sess = requests.Session()
+    adapter = requests.adapters.HTTPAdapter(max_retries=3)
+    sess.mount("http://", adapter)
+
     while True:
         try:
             if r.get(f"kill:{USER_ID}"):
@@ -288,16 +312,18 @@ def sync_tokens():
                 return
 
             if not WS_CONNECTED:
-                time.sleep(0.2)
+                time.sleep(1.0)
                 continue
 
-            resp = requests.get(
+            # Re-use session
+            resp = sess.get(
                 FASTAPI_HTTP_TOKENS,
                 params={"user_id": int(USER_ID)},
-                timeout=1.5
+                timeout=5.0 
             )
+            
             if resp.status_code != 200:
-                time.sleep(0.3)
+                time.sleep(1.0)
                 continue
 
             data = resp.json()
@@ -313,11 +339,12 @@ def sync_tokens():
 
                 log.info(f"⚡ Instant subscribe: {list(new)}")
 
-            time.sleep(0.2)
+            # Reduce polling frequency to save CPU/Sockets
+            time.sleep(1.0)
 
         except Exception as e:
-            log.error(f"Token sync error: {e}", exc_info=True)
-            time.sleep(1)
+            log.error(f"Token sync error: {e}")
+            time.sleep(5.0) # Backoff on error
 
 
 
@@ -347,5 +374,3 @@ if __name__ == "__main__":
             log.warning("🛑 Kill switch active. Exiting ws worker main loop.")
             break
         time.sleep(2)
-
-

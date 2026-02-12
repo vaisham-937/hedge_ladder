@@ -32,7 +32,7 @@ import math
 import os
 import sys
 import time, datetime
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from datetime import datetime
 from typing import Any, Dict, Optional, Literal, List, Tuple
 from kiteconnect import KiteConnect
@@ -196,6 +196,7 @@ class LadderSettings:
         s.trailing_sl_pct = float(max(0.01, float(s.trailing_sl_pct)))
         s.ladder_cycles = int(max(1, int(s.ladder_cycles)))
         s.max_adds_per_leg = int(max(1, int(s.max_adds_per_leg)))
+        s.max_trades_per_symbol = int(max(1, int(s.max_trades_per_symbol)))
         s.entry_threshold_enabled = bool(s.entry_threshold_enabled)
         s.entry_threshold_pct = float(s.entry_threshold_pct)
         return s
@@ -218,6 +219,9 @@ class LegState:
     lowest: float = 0.0   # for SELL
     unrealized_pnl: float = 0.0
     reason: str = ""
+    entry_price_internal: float = 0.0
+    entry_price_exec: float = 0.0
+    exit_price_exec: float = 0.0
 
 @dataclass
 class LadderSession:
@@ -236,6 +240,8 @@ class LadderSession:
     active: bool = True
     created_ts: float = 0.0
     updated_ts: float = 0.0
+    session_day: str = ""
+    cycle_hist: Dict[str, Any] = field(default_factory=dict)
 
     def to_public_dict(self) -> Dict[str, Any]:
         d = {
@@ -250,9 +256,11 @@ class LadderSession:
             "active": self.active,
             "created_ts": self.created_ts,
             "updated_ts": self.updated_ts,
+            "session_day": self.session_day,
             "ltp": None,  
             "leg_state": asdict(self.leg_state) if self.leg_state else None,
             "settings": asdict(self.settings),
+            "cycle_hist": self.cycle_hist,
         }
         return d
 
@@ -567,6 +575,31 @@ class LadderEngine:
         if existing:
             # If active, ladder is still running
             if existing.active:
+                # Recovery path: stale WAIT state with old/missing token.
+                try:
+                    if existing.leg_state and existing.leg_state.status == "IDLE":
+                        if existing.leg_state.reason in ("WAIT_LTP", "WAIT_FEED"):
+                            latest_token = self.SYMBOL_TOKEN_RAM.get(self.user_id, {}).get(symbol) if self.SYMBOL_TOKEN_RAM else None
+                            if latest_token:
+                                latest_token = int(latest_token)
+                                if latest_token != int(existing.token or 0):
+                                    logger.info(
+                                        "RECOVER_SESSION_TOKEN user=%s symbol=%s old=%s new=%s",
+                                        self.user_id, symbol, existing.token, latest_token
+                                    )
+                                    existing.token = latest_token
+                            ltp_now = float(self.ticks.get(int(existing.token or 0), 0.0) or 0.0)
+                            if ltp_now > 0:
+                                logger.info(
+                                    "RECOVER_SESSION_ENTER user=%s symbol=%s token=%s ltp=%.2f",
+                                    self.user_id, symbol, existing.token, ltp_now
+                                )
+                                await self._enter_leg(existing)
+                                await self._snapshot(existing)
+                                return {"status": "started", "session": existing.to_public_dict()}
+                except Exception:
+                    logger.exception("RECOVER_SESSION failed user=%s symbol=%s", self.user_id, symbol)
+
                 logger.info("START_LADDER already_running user=%s symbol=%s", self.user_id, symbol)
                 return {"status": "already_running", "session": existing.to_public_dict()}
             
@@ -708,6 +741,7 @@ class LadderEngine:
                 active=True,
                 created_ts=time.time(),
                 updated_ts=time.time(),
+                session_day=datetime.now().strftime("%Y-%m-%d"),
             )
             self.sessions[symbol] = sess
             await self._snapshot(sess)
@@ -740,6 +774,7 @@ class LadderEngine:
             active=True,
             created_ts=time.time(),
             updated_ts=time.time(),
+            session_day=datetime.now().strftime("%Y-%m-%d"),
         )
         self.sessions[symbol] = sess
         await self._snapshot(sess)
@@ -821,6 +856,17 @@ class LadderEngine:
 
         return out
 
+    def _get_cycle_hist(self, sess: LadderSession) -> Dict[str, Any]:
+        key = str(sess.cycle_index + 1)
+        if key not in sess.cycle_hist:
+            sess.cycle_hist[key] = {
+                "B": {"est": [], "exec": []},
+                "S": {"est": [], "exec": []},
+                "tsl_est": {"B": None, "S": None},
+                "tsl_exec": {"B": None, "S": None},
+            }
+        return sess.cycle_hist[key]
+
 
     # ------------ internal: leg entry/exit ------------
     def _calc_step_qty(self, settings: LadderSettings, ltp: float) -> int:
@@ -898,6 +944,13 @@ class LadderEngine:
         sess.leg_state.last_add_price = float(base_price)    # ✅ threshold base
         sess.leg_state.highest = float(base_price)
         sess.leg_state.lowest = float(base_price)
+        sess.leg_state.entry_price_internal = float(ltp)
+        sess.leg_state.entry_price_exec = float(base_price)
+
+        hist = self._get_cycle_hist(sess)
+        side_key = "B" if side == "BUY" else "S"
+        hist[side_key]["est"].append(float(ltp))
+        hist[side_key]["exec"].append(float(base_price))
 
         sess.leg_state.reason = ""
 
@@ -958,7 +1011,7 @@ class LadderEngine:
     #     logger.info("LEG_DONE user=%s symbol=%s reason=%s", self.user_id, symbol, reason)
     #     await push_event(self.redis, self.user_id, symbol, "LEG_DONE", {"reason": reason})
 
-    async def _exit_leg(self, sess: LadderSession, reason: str) -> None:
+    async def _exit_leg(self, sess: LadderSession, reason: str, tsl_est: Optional[float] = None) -> None:
         symbol = sess.symbol
         st = sess.leg_state
 
@@ -1000,12 +1053,29 @@ class LadderEngine:
         exit_side: Side = "SELL" if st.side == "BUY" else "BUY"
         qty = int(st.qty)
 
-        oid = await self._place_mis_market(symbol=symbol, side=exit_side, qty=qty)
+        oid = await self._place_mis_market(symbol=symbol, side=exit_side, qty=qty, enforce_price_band=False)
 
         logger.info("EXIT_PLACED user=%s symbol=%s exit_side=%s qty=%s oid=%s",
                     self.user_id, symbol, exit_side, qty, oid)
         await push_event(self.redis, self.user_id, symbol, "EXIT_PLACED",
                         {"exit_side": exit_side, "qty": qty, "order_id": oid, "reason": reason})
+
+        # capture executed exit price for UI (best-effort)
+        try:
+            exec_avg = await self._get_executed_avg_price(str(oid))
+            if exec_avg and exec_avg > 0:
+                st.exit_price_exec = float(exec_avg)
+            else:
+                st.exit_price_exec = float(self.ticks.get(sess.token, 0.0) or 0.0)
+        except Exception:
+            st.exit_price_exec = float(self.ticks.get(sess.token, 0.0) or 0.0)
+
+        if reason == "TRAILING_SL":
+            hist = self._get_cycle_hist(sess)
+            side_key = "B" if st.side == "BUY" else "S"
+            if tsl_est is not None:
+                hist["tsl_est"][side_key] = float(tsl_est)
+            hist["tsl_exec"][side_key] = float(st.exit_price_exec or 0.0)
 
         # ✅ mark done
         st.status = "DONE"
@@ -1017,18 +1087,28 @@ class LadderEngine:
 
 
     
-    async def _place_mis_market(self, symbol: str, side: Side, qty: int, ltp: float = 0.0) -> str:
+    async def _place_mis_market(self, symbol: str, side: Side, qty: int, ltp: float = 0.0, enforce_price_band: bool = False) -> str:
         """Place MIS market order via Kite in the order worker. Verified Capital check if ltp > 0."""
-        def _place(api_key: str, access_token: str, sym: str, s: Side, q: int, ref_ltp: float) -> str:
+        def _place(api_key: str, access_token: str, sym: str, s: Side, q: int, ref_ltp: float, enforce_band: bool) -> str:
             kite = KiteConnect(api_key=api_key)
             kite.set_access_token(access_token)
             
+            # ✅ Price band check (user request) — only for entry/add, not exits
+            if enforce_band and ref_ltp > 0:
+                if ref_ltp < 100 or ref_ltp > 4000:
+                    raise Exception(f"Price outside allowed range (100-4000): {ref_ltp:.2f}")
+
             # ✅ Capital Check (User Request)
             if ref_ltp > 0:
                 try:
                     # Fetch equity margins
+                    # NOTE: kite.margins(segment="equity") returns the equity object DIRECTLY (flattened),
+                    # whereas kite.margins() returns {"equity": {...}, "commodity": {...}}
                     m = kite.margins(segment="equity")
-                    avail = float(m.get("equity", {}).get("available", {}).get("live_balance") or 0)
+                    
+                    # Robust extraction:
+                    eq_data = m.get("equity") or m
+                    avail = float(eq_data.get("available", {}).get("live_balance") or 0)
                     
                     # Approx MIS margin (assuming 5x starts -> 20%). 
                     # We use a conservative 25% to be safe, or just 20%.
@@ -1069,7 +1149,8 @@ class LadderEngine:
                 sym=symbol,
                 s=side,
                 q=qty,
-                ref_ltp=ltp
+                ref_ltp=ltp,
+                enforce_band=enforce_price_band,
             )
             latency = (time.perf_counter() - t0) * 1000
             logger.info(
@@ -1325,7 +1406,7 @@ class LadderEngine:
                 f"\033[91m🛑 TRAILING STOP LOSS HIT ▲  [{sym}]  "
                 f"LTP={ltp:.2f}  TSL={tsl_price:.2f}  HIGH={st.highest:.2f}\033[0m"
             )
-                await self._exit_leg(sess, reason="TRAILING_SL")
+                await self._exit_leg(sess, reason="TRAILING_SL", tsl_est=tsl_price)
                 await self._start_next_leg_or_finish(sess)
                 return
 
@@ -1336,7 +1417,7 @@ class LadderEngine:
                 f"\033[91m🛑 TRAILING STOP LOSS HIT ▼  [{sym}]  "
                 f"LTP={ltp:.2f}  TSL={tsl_price:.2f}  LOW={st.lowest:.2f}\033[0m"
             )
-                await self._exit_leg(sess, reason="TRAILING_SL")
+                await self._exit_leg(sess, reason="TRAILING_SL", tsl_est=tsl_price)
                 await self._start_next_leg_or_finish(sess)
                 return
             
@@ -1360,7 +1441,7 @@ class LadderEngine:
                 + f"\033[1m[{sym}]\033[0m  "
                 + f"LTP={ltp:.2f}  ➜  NEXT={next_add:.2f}\033[0m"
             )
-                    await self._add_position(sess, ltp)
+                    await self._add_position(sess, ltp, target_price=next_add)
                     return
             else:
                 next_add = st.last_add_price * (1.0 - s.threshold_pct / 100.0) if st.last_add_price else 0.0
@@ -1378,10 +1459,10 @@ class LadderEngine:
                     f"\033[91m🚀 ADD EXECUTED ▼  [{sym}]  "
                     f"LTP={ltp:.2f}  ➜  NEXT={next_add:.2f}\033[0m"
                 )
-                    await self._add_position(sess, ltp)
+                    await self._add_position(sess, ltp, target_price=next_add)
                     return
 
-    async def _add_position(self, sess: LadderSession, ltp: float) -> None:
+    async def _add_position(self, sess: LadderSession, ltp: float, target_price: Optional[float] = None) -> None:
         st = sess.leg_state
         if not st or st.status != "RUNNING":
             return
@@ -1424,6 +1505,14 @@ class LadderEngine:
             st.highest = max(st.highest, ltp)
         else:
             st.lowest = min(st.lowest, ltp)
+
+        hist = self._get_cycle_hist(sess)
+        side_key = "B" if st.side == "BUY" else "S"
+        if target_price is not None:
+            hist[side_key]["est"].append(float(target_price))
+        else:
+            hist[side_key]["est"].append(float(ltp))
+        hist[side_key]["exec"].append(float(fill_price))
 
         sess.updated_ts = time.time()
         await self._snapshot(sess)

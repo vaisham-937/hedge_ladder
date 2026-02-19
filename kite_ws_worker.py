@@ -50,7 +50,27 @@ root = logging.getLogger()
 for h in root.handlers:
     h.addFilter(EnsureUserFilter())
 
+# Suppress repeated noisy WS 1006 logs (log once per 60s)
+LAST_NOISY_WS_TS = 0.0
+
+class NoisyWsFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        global LAST_NOISY_WS_TS
+        msg = record.getMessage()
+        if "Connection error: 1006" in msg or "connection was closed uncleanly" in msg:
+            now = time.time()
+            if now - LAST_NOISY_WS_TS < 30:
+                return False
+            LAST_NOISY_WS_TS = now
+        return True
+
+for h in root.handlers:
+    h.addFilter(NoisyWsFilter())
+
 log = logging.LoggerAdapter(logging.getLogger("KITE_WS"), {"user": USER_ID})
+
+# Reduce noisy 1006 reconnect logs (log once per 60s)
+LAST_WS_ERR_TS = 0.0
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -73,14 +93,29 @@ except Exception as e:
     sys.exit(1)
 
 # -------------------------------------------------
-# LOAD TOKEN (FASTAPI STYLE)
+# LOAD TOKEN (FASTAPI STYLE) - with wait
 # -------------------------------------------------
-API_KEY = r.get(f"api_key:{USER_ID}")
-ACCESS_TOKEN = r.get(f"access_token:{USER_ID}")
+API_KEY = None
+ACCESS_TOKEN = None
 
-if not API_KEY or not ACCESS_TOKEN:
+def wait_for_tokens(max_wait_sec: int = 60, poll_sec: int = 3):
+    """
+    Wait until api_key/access_token appear in Redis.
+    """
+    waited = 0
+    global API_KEY, ACCESS_TOKEN
+    while waited <= max_wait_sec:
+        API_KEY = r.get(f"api_key:{USER_ID}")
+        ACCESS_TOKEN = r.get(f"access_token:{USER_ID}")
+        if API_KEY and ACCESS_TOKEN:
+            return True
+        time.sleep(poll_sec)
+        waited += poll_sec
+    return False
+
+if not wait_for_tokens():
     raise RuntimeError(
-        f"❌ Redis missing token. Expected keys:\n"
+        f"❌ Redis missing token after waiting. Expected keys:\n"
         f"api_key:{USER_ID}\n"
         f"access_token:{USER_ID}"
     )
@@ -137,8 +172,8 @@ async def ws_sender_loop():
         try:
             async with websockets.connect(
                 FASTAPI_WS_INGEST,
-                ping_interval=20,
-                ping_timeout=20,
+                ping_interval=30,
+                ping_timeout=60,
                 open_timeout=10,
                 close_timeout=3,
                 max_size=5_000_000
@@ -196,12 +231,26 @@ def on_connect(ws, response):
 def on_close(ws, code, reason):
     global WS_CONNECTED
     WS_CONNECTED = False
-    log.warning(f"❌ Kite WS closed | {code} | {reason}")
+    global LAST_WS_ERR_TS
+    now = time.time()
+    if code == 1006:
+        if now - LAST_WS_ERR_TS >= 60:
+            log.warning(f"❌ Kite WS closed | {code} | {reason}")
+            LAST_WS_ERR_TS = now
+    else:
+        log.warning(f"❌ Kite WS closed | {code} | {reason}")
     time.sleep(1.0)
 
 
 def on_error(ws, code, reason):
-    log.error(f"❌ Kite WS error | {code} | {reason}")
+    global LAST_WS_ERR_TS
+    now = time.time()
+    if code == 1006:
+        if now - LAST_WS_ERR_TS >= 60:
+            log.error(f"❌ Kite WS error | {code} | {reason}")
+            LAST_WS_ERR_TS = now
+    else:
+        log.error(f"❌ Kite WS error | {code} | {reason}")
 
 def on_order_update(ws, data):
     """
@@ -240,6 +289,7 @@ def on_ticks(ws, ticks):
             ohlc = t.get("ohlc") or {}
             high = float(ohlc.get("high") or ltp)
             low = float(ohlc.get("low") or ltp)
+            opn = float(ohlc.get("open") or 0.0)
 
             # Your dashboard logic expects "prev" baseline
             prev = float(ohlc.get("close") or ltp)
@@ -273,6 +323,7 @@ def on_ticks(ws, ticks):
                 "token": int(token),
                 "symbol": symbol,   # ✅ VERY IMPORTANT
                 "ltp": ltp,
+                "open": opn,
                 "high": high,
                 "low": low,
                 "prev": prev,
@@ -295,6 +346,8 @@ def sync_tokens():
     Reads tokens from FastAPI (RAM) instead of Redis.
     """
     last_seen = set()
+    poll_interval = 1.0
+    max_idle_interval = 5.0
 
     # Create a persistent session to reuse TCP connections (Avoid WinError 10048)
     sess = requests.Session()
@@ -319,7 +372,7 @@ def sync_tokens():
             resp = sess.get(
                 FASTAPI_HTTP_TOKENS,
                 params={"user_id": int(USER_ID)},
-                timeout=5.0 
+                timeout=3.0 
             )
             
             if resp.status_code != 200:
@@ -338,12 +391,16 @@ def sync_tokens():
                     last_seen = tokens.copy()
 
                 log.info(f"⚡ Instant subscribe: {list(new)}")
+                poll_interval = 1.0
+            else:
+                poll_interval = min(max_idle_interval, poll_interval + 1.0)
 
-            # Reduce polling frequency to save CPU/Sockets
-            time.sleep(1.0)
+            # Adaptive polling frequency to reduce load/timeouts
+            time.sleep(poll_interval)
 
         except Exception as e:
             log.error(f"Token sync error: {e}")
+            poll_interval = max_idle_interval
             time.sleep(5.0) # Backoff on error
 
 

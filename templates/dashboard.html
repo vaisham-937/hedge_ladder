@@ -599,7 +599,7 @@
     }
 
     .bell-shake {
-      animation: bell-shake 0.6s ease-in-out;
+      animation: none;
       transform-origin: top center;
     }
 
@@ -1203,28 +1203,116 @@
       color: #9ca3af !important;
     }
 
-    /* Zerodha credentials modal (dark premium) */
-    #credModal .cred-card {
-      background: linear-gradient(180deg, #0b1220 0%, #0c1527 100%);
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      box-shadow:
-        0 24px 60px rgba(2, 6, 23, 0.65),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    }
+    /* ================= CONNECT BROKER MODAL ================= */
 
-    #credModal input {
-      background: rgba(30, 41, 59, 0.7) !important;
-      color: #e2e8f0 !important;
-      border: 1px solid rgba(148, 163, 184, 0.25) !important;
-    }
+.cred-card {
+  position: relative;
+  background: linear-gradient(135deg, #0b1220 0%, #0a1a3a 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(56,189,248,0.15);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  isolation: isolate;   /* ⭐ MOST IMPORTANT FIX */
+}
 
-    #credModal input::placeholder {
-      color: #94a3b8 !important;
-    }
+/* cyan glow layer */
+.cred-card::before {
+  content: "";
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  top: -40px;
+  left: -40px;
+  background: radial-gradient(
+    circle,
+    rgba(34,211,238,0.35),
+    transparent 75%
+  );
+  filter: blur(45px);
+  z-index: 0;
+  pointer-events: none;
+}
 
-    #credModal .cred-subtle {
-      color: #7dd3fc;
-    }
+
+/* content above glow */
+.cred-card > * {
+  position: relative;
+  z-index: 5;
+}
+
+/* subtle text */
+.cred-subtle {
+  color: #22c55e;
+}
+.input-disabled {
+  background: #e5e7eb;
+  color: #64748b;
+  border: 1px solid rgba(148,163,184,0.4);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.btn-outline-dark {
+  border: 1px solid rgba(148,163,184,0.25);
+  background: rgba(15,23,42,0.35);
+  color: rgba(255,255,255,0.8);
+  transition: all 0.25s ease;
+  backdrop-filter: blur(6px);
+}
+
+/* 🔥 HOVER EFFECT */
+.btn-outline-dark:hover {
+  border: 1px solid #22d3ee;
+  color: #ffffff;
+  background: rgba(15,23,42,0.55);
+  box-shadow:
+    0 0 12px rgba(34,211,238,0.35),
+    inset 0 0 8px rgba(34,211,238,0.25);
+}
+.btn-outline-dark:active {
+  transform: scale(0.98);
+  box-shadow: 0 0 6px rgba(34,211,238,0.25);
+}
+
+
+
+/* ================= INPUT STYLE ================= */
+
+.input-dark {
+  background: linear-gradient(180deg,#1e293b,#273549);
+  border: 1px solid rgba(148,163,184,0.25);
+  border-radius: 16px;
+  padding: 14px 16px;
+  color: white;
+  transition: 0.25s;
+}
+
+.input-dark:focus {
+  outline: none;
+  border: 1px solid #22d3ee;
+  box-shadow:
+    0 0 0 1px #22d3ee,
+    0 0 20px rgba(34,211,238,0.25);
+}
+
+/* save button glow */
+.btn-glow {
+  background: linear-gradient(90deg,#06b6d4,#2563eb);
+  box-shadow: 0 0 25px rgba(34,211,238,0.45);
+  transition: 0.25s;
+}
+
+.btn-glow:hover {
+  box-shadow: 0 0 35px rgba(34,211,238,0.65);
+}
+
+/* outline login button */
+.btn-outline-dark {
+  border: 1px solid rgba(148,163,184,0.2);
+  background: rgba(15,23,42,0.4);
+}
+
 
     .status-pill {
       background: #ffffff !important;
@@ -1420,8 +1508,11 @@
       color: #111827 !important;
     }
     /* Keep per-field colors visible in live alerts table */
-    #alerts-fit-table td[data-field="pct"]  { color: #1d4ed8 !important; font-weight: 800 !important; }
-    #alerts-fit-table td[data-field="fo"]   { color: #0c8076e4 !important; font-weight: 800 !important; }
+    #alerts-fit-table td[data-field="pct"]  { font-weight: 800 !important; }
+    #alerts-fit-table td[data-field="fo"]   { font-weight: 800 !important; font-size: 11px !important; }
+    #alerts-fit-table td[data-field="fo"].fo-pos { color: #0cb514f1 !important; }
+    #alerts-fit-table td[data-field="fo"].fo-neg { color: #ce0d0df6 !important; }
+    #alerts-fit-table td[data-field="fo"].fo-zero { color: #94a3b8 !important; }
     #alerts-fit-table td[data-field="fo"],
     #alerts-fit-table td[data-field="fh"],
     #alerts-fit-table td[data-field="fl"]   { font-size: 10px !important; }
@@ -1434,6 +1525,12 @@
       text-align: left !important;
     }
 
+    /* Status column color + compact look */
+    #alerts-fit-table td.status-cell {
+      color: #010238 !important;
+      font-weight: 700 !important;
+    }
+
 
     /* Execution columns (EB/ES) — make text black for clarity */
     #alerts-fit-table th[data-add-col*="EB"],
@@ -1442,6 +1539,15 @@
     #alerts-fit-table td[data-lfield*="_es"] {
       color: #000000 !important;
       font-weight: 800 !important;
+    }
+    /* EBTSL should be white (override execution column rule above) */
+    #alerts-fit-table th[data-add-col$="EBTSL"],
+    #alerts-fit-table td[data-lfield*="_ebtsl"] {
+      color: #ffffff !important;
+    }
+    #alerts-fit-table th[data-add-col$="ESTSL"],
+    #alerts-fit-table td[data-lfield*="_estsl"] {
+      color: #ffffff !important;
     }
 
     /* Alerts table hover arrows for horizontal scroll */
@@ -1454,15 +1560,20 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(15, 23, 42, 0.7);
+      background: rgba(15, 23, 42, 0.45);
       border: 1px solid rgba(148, 163, 184, 0.4);
       color: #e2e8f0;
       border-radius: 10px;
       opacity: 0;
-      pointer-events: auto;
+      pointer-events: none;
       transition: opacity 0.12s ease, background 0.2s ease, border-color 0.2s ease;
       z-index: 30;
       backdrop-filter: blur(8px);
+    }
+
+    #active-alerts-table.has-hscroll .alerts-scroll-arrow {
+      opacity: 0.8;
+      pointer-events: auto;
     }
 
     .alerts-scroll-arrow:hover,
@@ -1817,7 +1928,7 @@
       height: 9px;
       border-radius: 999px;
       display: inline-block;
-      animation: blink-pulse 1.4s infinite ease-in-out;
+      animation: none;
     }
 
     .blink-amber {
@@ -1850,7 +1961,6 @@
   max-width: 26rem !important;
   padding: 0.6rem !important;
 }
-
 
     #universalSettingsModal h2,
     #universalSettingsModal p,
@@ -1961,6 +2071,10 @@
           <span class="text-[8px] uppercase tracking-wider text-green-400 font-medium">NET PNL</span>
           <span id="overall-pnl-top" class="text-xs font-bold font-mono tabular-nums">0.00</span>
         </div>
+      <div class="flex items-center gap-1 px-1.5 py-[1px] rounded-md bg-slate-100 border border-slate-200">
+      <span class="text-[8px] uppercase tracking-wide text-slate-400 font-medium leading-none"> Ladder</span> 
+      <span id="ladder-count"  class="text-[10px] font-semibold text-indigo-600 font-mono tabular-nums leading-none">0 </span> 
+      </div>
 
         </div>
         <!-- Status + Action group pushed to far right -->
@@ -2036,9 +2150,6 @@
         <div
           class="absolute -top-20 -right-20 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl group-hover:bg-cyan-500/10 transition-all duration-700">
         </div>
-        <div id="alerts-sticky-head">
-          <div class="alerts-sticky-inner"></div>
-        </div>
         <button type="button" class="alerts-scroll-arrow alerts-scroll-left" onclick="scrollAlertsTable(-1)" aria-label="Scroll left">
           <i class="fa-solid fa-chevron-left text-xs"></i>
         </button>
@@ -2048,14 +2159,14 @@
         <div id="alerts-fit-wrap" class="overflow-x-auto custom-scrollbar relative z-10 bg-slate-900/30">
           <table id="alerts-fit-table" class="min-w-[2000px] w-full text-[10px] text-left border-collapse">
             <thead
-              class="text-[10px] uppercase bg-slate-900/80 text-slate-400 sticky top-0 z-20 backdrop-blur-md shadow-lg border-b border-slate-700/50">
+              class="text-[10px] uppercase bg-slate-900/80 text-slate-400 border-b border-slate-700/50">
               <tr>
                 <th scope="col" data-col="symbol" class="w-14 px-0.5 py-2 font-extrabold text-slate-200 text-[11px] font-mono tracking-wide whitespace-nowrap text-left">Symbol</th>
               <th scope="col" data-col="ltp" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">LTP</th>
                 <th scope="col" data-col="open" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">Open</th>
                 <th scope="col" data-col="pclose" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">PCl</th>
                 <th scope="col"
-                  data-col="pct" class="w-[48px] px-0 py-2 font-extrabold text-center text-[10px] font-mono text-blue-400 tracking-tight">
+                  data-col="pct" class="w-[48px] px-0 py-2 font-extrabold text-center text-[10px] font-mono tracking-tight">
                   %Chg</th>
                 <th scope="col" data-col="fo" class="w-[46px] px-1 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CO</th>
                 <th scope="col" data-col="fh" class="w-[50px] px-1.5 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CH</th>
@@ -2068,9 +2179,9 @@
                 <th scope="col" data-col="action"
                   class="w-10 px-0 py-2 text-center font-extrabold text-[10px] font-mono text-slate-200 bg-slate-900 tracking-tight">
                   Action</th>
-                <th scope="col" data-col="cycle" class="w-8 px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight">Cycle</th>
+                <th scope="col" data-col="cycle" class="w-8 px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight text-emerald-400">Cycle</th>
                 <th scope="col" data-col="pnl" class="w-[50px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight">PnL</th>
-                <th scope="col" data-col="status" class="w-[54px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight">Status</th>
+                <th scope="col" data-col="status" class="w-[54px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight text-sky-400">Status</th>
               </tr>
             </thead>
             <tbody id="alerts-body" class="divide-y divide-slate-800/50 text-slate-300 whitespace-nowrap">
@@ -2246,95 +2357,80 @@
 
   <!-- Toast / Message -->
   <div id="msg-box"
-    class="fixed bottom-8 left-1/2 -translate-x-1/2 hidden px-6 py-3 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-base font-medium shadow-2xl z-50 border w-[90%] sm:w-auto text-center">
+    class="fixed top-20 left-1/2 -translate-x-1/2 hidden px-6 py-3 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-base font-medium shadow-2xl z-50 border w-[90%] sm:w-auto text-center">
   </div>
 
   <!-- ================= CREDENTIALS MODAL - Professional Style ================= -->
-  <div id="credModal"
-    class="fixed inset-0 hidden bg-slate-950/70 backdrop-blur-md flex items-center justify-center z-50 px-4">
-    <div
-      class="cred-card rounded-3xl p-6 sm:p-7 w-full max-w-sm">
-
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-4 sm:mb-5">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center shadow-[0_0_20px_rgba(34,211,238,0.35)]">
-            <i class="fa-solid fa-shield-halved text-cyan-300"></i>
-          </div>
-          <div>
-            <h2 class="text-base sm:text-lg font-semibold text-slate-100">Connect Broker</h2>
-            <div class="flex items-center gap-2 text-[11px] cred-subtle">
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-              Encrypted & Secure
-            </div>
+ <div id="credModal"
+class="fixed inset-0 hidden bg-[#020617]/80 backdrop-blur-lg flex items-center justify-center z-50 px-4">
+  <div class="cred-card p-7 w-full max-w-md">
+    <!-- HEADER -->
+    <div class="flex items-start justify-between mb-5">
+      <div class="flex gap-4">
+        <div
+        class="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_35px_rgba(34,211,238,0.5)]">
+          <i class="fa-solid fa-shield-halved text-white text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-2xl font-bold text-white">Connect Broker</h3>
+          <div class="flex items-center gap-2 mt-1 text-sm cred-subtle">
+            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+            Encrypted & Secure
           </div>
         </div>
-        <button onclick="closeCred()" class="text-slate-400 hover:text-slate-200 transition-colors text-xl"
-          title="Close">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
       </div>
-
-      <!-- Description -->
-      <p class="text-xs sm:text-sm text-slate-300/80 mb-4 sm:mb-5 leading-relaxed">
-        Enter your Zerodha Kite API credentials. These are stored locally for trading execution.
-      </p>
-
-      <!-- Form -->
-      <form class="space-y-3 sm:space-y-4">
-
-        <!-- API Key -->
-        <div>
-          <label class="block text-[11px] font-semibold text-slate-300 mb-2 tracking-widest">
-            API KEY
-          </label>
-          <div class="relative">
-            <input id="api_key" type="text" placeholder="Already saved" autocomplete="off" spellcheck="false" class="w-full bg-white border border-slate-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-slate-900 text-sm
-                   placeholder:text-slate-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 
-                   transition-all duration-200 outline-none" />
-            <button type="button" onclick="toggleVisibility('api_key', this)"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-300 transition-colors"
-              title="Show/Hide">
-              <i class="fa-solid fa-key"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- API Secret -->
-        <div>
-          <label class="block text-[11px] font-semibold text-slate-300 mb-2 tracking-widest">
-            API SECRET
-          </label>
-          <div class="relative">
-            <input id="api_secret" type="text" placeholder="Already saved" autocomplete="off" spellcheck="false" class="w-full bg-white border border-slate-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-slate-900 text-sm
-                   placeholder:text-slate-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 
-                   transition-all duration-200 outline-none" />
-            <button type="button" onclick="toggleVisibility('api_secret', this)"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-300 transition-colors"
-              title="Show/Hide">
-              <i class="fa-solid fa-eye"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Buttons -->
-        <div class="flex flex-col gap-3 mt-5">
-          <button type="button" onclick="saveCred()"
-            class="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold py-2.5 rounded-xl 
-                 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-700/30 text-sm">
-            <i class="fa-solid fa-floppy-disk"></i>
-            Save Secure Credentials
-          </button>
-
-          <button type="button" onclick="connectZerodha()" class="flex-1 bg-slate-900/40 hover:bg-slate-800 border border-slate-700/60 text-slate-200 font-medium py-2.5 sm:py-3 rounded-xl 
-                 transition-all duration-200 flex items-center justify-center gap-2 text-sm">
-            <i class="fa-solid fa-right-to-bracket"></i>
-            Log in to Kite
-          </button>
-        </div>
-      </form>
+      <button onclick="closeCred()" class="text-white/80 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
     </div>
+
+    <!-- TEXT -->
+    <p class="text-sm text-slate-200/90 mb-6 leading-relaxed">
+      Enter your <span class="text-cyan-300 font-semibold">Zerodha Kite API</span>
+      credentials. These are stored locally on your machine for trading execution.
+    </p>
+
+    <!-- API KEY -->
+    <label class="text-[13px] text-white/80 font-semibold tracking-wide block mb-2">API KEY</label>
+    <div class="relative mb-5">
+      <input id="api_key" type="password"
+      placeholder="Enter API Key ••••••••••••"
+      class="input-disabled w-full pr-8 py-2 text-sm rounded-lg">
+<button type="button"
+onclick="toggleVisibility('api_key', this)"
+class="absolute right-3 top-2.5 text-slate-500 text-sm">
+  <i class="fa-solid fa-eye"></i>
+</button>
+    </div>
+
+    <!-- API SECRET -->
+    <label class="text-[13] text-white/80 font-semibold tracking-wide block mb-2">API SECRET</label>
+    <div class="relative mb-7">
+      <input id="api_secret" type="password"
+      placeholder="Enter API Secret ••••••••••••"
+      class="input-disabled w-full pr-8 py-2 text-sm rounded-lg">
+<button type="button"
+onclick="toggleVisibility('api_secret', this)"
+class="absolute right-3 top-2.5 text-slate-400 text-sm">
+  <i class="fa-solid fa-eye"></i>
+</button>
+    </div>
+
+    <!-- BUTTONS -->
+    <button onclick="saveCred()"
+    class="btn-glow w-full text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 mb-4">
+      <i class="fa-solid fa-floppy-disk"></i>
+      Save Secure Credentials
+    </button>
+
+    <button onclick="connectZerodha()"
+class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center gap-2 text-white/80 font-extrabold relative z-10">
+      <i class="fa-solid fa-right-to-bracket"></i>
+      Log in to Kite
+    </button>
   </div>
+</div>
+
 
   <!-- ================= UNIVERSAL SETTINGS MODAL ================= -->
   <div id="universalSettingsModal"
@@ -2453,7 +2549,7 @@
               <span class="block text-[11px] text-slate-700 font-semibold mt-1">Max additional orders per cycle</span>
             </div>
             <div class="col-span-1 sm:col-span-1">
-              <label class="block text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2">Trade Limit /
+              <label class="block text-xs font-bold text-cyan-300 uppercase tracking-wider mb-2">Trade Limit /
                 day</label>
               <input id="us-maxtrades" type="number" value="10" 
                 class="w-full bg-slate-800/80 border border-cyan-500/50 rounded-xl px-3.5 py-2.5 text-white font-bold tracking-wide focus:border-blue-400 focus:bg-slate-900 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all shadow-[0_0_15px_rgba(59,130,246,0.25)]"
@@ -2499,6 +2595,9 @@
     let pendingAutoModeSwitch = false; // ✅ Flag to auto-enable AUTO after settings save
     let automationEnabledSymbols = new Set(); // ✅ Snapshot of symbols when automation was enabled
     let processedAutoTradeSymbols = new Map(); // ✅ Track symbols trade count (Symbol -> Count)
+    let processedAutoTradeScans = new Map(); // ✅ Track scanner trade count (Scan -> Count)
+    let AUTO_TRADE_RUNNING = new Set(); // scanKey -> running
+    let AUTO_TRADE_PENDING = new Map(); // scanKey -> Set(symbol)
     let manuallySquaredOffSymbols = new Set(); // ✅ Blacklist for manually killed symbols
     let LAST_AUTO_SQ_TS = 0; // show auto square-off popup only once per event
 
@@ -2533,6 +2632,59 @@
       return Math.min(max, Math.max(min, n));
     }
 
+    function autoTradeStorageKey() {
+      return `autoTradeCounts:${USER_ID}`;
+    }
+
+    function autoTradeTodayKey() {
+      try {
+        return new Date().toISOString().slice(0, 10);
+      } catch {
+        return "unknown";
+      }
+    }
+
+    function loadAutoTradeCounters() {
+      try {
+        const raw = localStorage.getItem(autoTradeStorageKey());
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        const today = autoTradeTodayKey();
+        if (!data || data.day !== today) {
+          return;
+        }
+        const bySymbol = data.bySymbol || {};
+        const byScanner = data.byScanner || {};
+        processedAutoTradeSymbols = new Map(Object.entries(bySymbol).map(([k, v]) => [k, Number(v) || 0]));
+        processedAutoTradeScans = new Map(Object.entries(byScanner).map(([k, v]) => [k, Number(v) || 0]));
+      } catch { }
+    }
+
+    function saveAutoTradeCounters() {
+      try {
+        const bySymbol = {};
+        for (const [k, v] of processedAutoTradeSymbols.entries()) {
+          bySymbol[k] = Number(v) || 0;
+        }
+        const byScanner = {};
+        for (const [k, v] of processedAutoTradeScans.entries()) {
+          byScanner[k] = Number(v) || 0;
+        }
+        const payload = {
+          day: autoTradeTodayKey(),
+          bySymbol: bySymbol,
+          byScanner: byScanner
+        };
+        localStorage.setItem(autoTradeStorageKey(), JSON.stringify(payload));
+      } catch { }
+    }
+
+    function resetAutoTradeCounters() {
+      processedAutoTradeSymbols.clear();
+      processedAutoTradeScans.clear();
+      saveAutoTradeCounters();
+    }
+
     // WS status
     function setWs(ok, txt) {
       const badge = $("ws-badge");
@@ -2546,14 +2698,14 @@
       if (ok) {
         badge.classList.add("badge-green", "connected");
         ring.classList.add("connected");
-        label.textContent = "WS LIVE";
+        label.textContent = "WSLIVE";
       } else if (txt && (txt.toLowerCase().includes("connect") || txt.toLowerCase().includes("retry"))) {
         badge.classList.add("badge-amber", "connecting");
         ring.classList.add("connecting");
-        label.textContent = "WS CONNECTING";
+        label.textContent = "WSCONNECTING";
       } else {
         badge.classList.add("badge-red");
-        label.textContent = "WS OFFLINE";
+        label.textContent = "WSOFFLINE";
       }
     }
 
@@ -2562,19 +2714,21 @@
       return `${p}://${location.host}/ws/ticks?user_id=${USER_ID}`;
     }
 
-    function toggleVisibility(inputId, button) {
-      const input = document.getElementById(inputId);
-      const icon = button.querySelector('i');
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-      } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-      }
-    }
+  function toggleVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const icon = btn.querySelector('i');
+  if (input.type === "password") {
+    input.type = "text";
+    icon.classList.remove("fa-eye");
+    icon.classList.add("fa-eye-slash");
+  } else {
+    input.type = "password";
+    icon.classList.remove("fa-eye-slash");
+    icon.classList.add("fa-eye");
+  }
+
+}
+
 
     // IST time parts
     function istHM() {
@@ -2774,6 +2928,12 @@
         try { d = JSON.parse(ev.data); } catch { return; }
         LAST_TICK_AT = Date.now();
 
+        if (d.type === "alert" && d.alert) {
+          // Real-time Chartink alert push -> render row + auto-trade immediately
+          try { handleAlertPush(d.alert); } catch { }
+          return;
+        }
+
         // snapshot support
         if (d.type === "snapshot" && Array.isArray(d.ticks)) {
           for (const t of d.ticks) {
@@ -2809,15 +2969,18 @@
       el.classList.remove("text-emerald-700", "text-rose-700", "text-slate-500", "text-emerald-400", "text-red-400", "text-slate-300");
       if (pnl > 0) {
         el.classList.add("font-bold");
-        el.style.setProperty("color", "#15803d", "important");
+        el.style.setProperty("font-weight", "800", "important");
+        el.style.setProperty("color", "#166534", "important");
         el.style.setProperty("background-color", "#ffffff", "important");
         el.style.textShadow = "none";
       } else if (pnl < 0) {
         el.classList.add("font-bold");
-        el.style.setProperty("color", "#dc2626", "important");
+        el.style.setProperty("font-weight", "800", "important");
+        el.style.setProperty("color", "#991b1b", "important");
         el.style.setProperty("background-color", "#ffffff", "important");
         el.style.textShadow = "none";
       } else {
+        el.style.setProperty("font-weight", "700", "important");
         el.style.setProperty("color", "#475569", "important");
         el.style.setProperty("background-color", "#ffffff", "important");
         el.style.textShadow = "none";
@@ -2910,7 +3073,18 @@
             setTextIfChanged(node, pctVal != null ? pctVal.toFixed(2) : "--");
             if (pctVal != null) paintPctCell(node, pctVal);
           }
-          if (field === "fo") setTextIfChanged(node, open > 0 ? (((ltp - open) / open) * 100).toFixed(2)  : "--");
+          if (field === "fo") {
+            node.classList.remove("fo-pos", "fo-neg", "fo-zero");
+            if (open > 0 && ltp > 0) {
+              const foVal = ((ltp - open) / open) * 100;
+              setTextIfChanged(node, foVal.toFixed(2));
+              if (foVal > 0) node.classList.add("fo-pos");
+              else if (foVal < 0) node.classList.add("fo-neg");
+              else node.classList.add("fo-zero");
+            } else {
+              setTextIfChanged(node, "--");
+            }
+          }
           if (field === "fh") setTextIfChanged(node, high > 0 ? (((ltp - high) / high) * 100).toFixed(2)  : "--");
           if (field === "fl") setTextIfChanged(node, low > 0 ? (((ltp - low) / low) * 100).toFixed(2)  : "--");
 
@@ -2961,19 +3135,8 @@
     }
 
     function initAlertsWheelHorizontalScroll() {
-      const wrap = document.getElementById("alerts-fit-wrap");
-      if (!wrap) return;
-      if (wrap.dataset.wheelBound === "1") return;
-      wrap.dataset.wheelBound = "1";
-      wrap.addEventListener("wheel", (e) => {
-        const rect = wrap.getBoundingClientRect();
-        const edgeZone = 64;
-        const onEdge = (e.clientX - rect.left) < edgeZone || (rect.right - e.clientX) < edgeZone;
-        const wantsHorizontal = e.shiftKey || onEdge;
-        if (!wantsHorizontal) return;
-        wrap.scrollLeft += e.deltaY * 1.6;
-        e.preventDefault();
-      }, { passive: false });
+      // Disable wheel-based horizontal scrolling; keep vertical wheel only.
+      return;
     }
 
     function scrollAlertsTable(dir) {
@@ -2983,53 +3146,15 @@
       wrap.scrollBy({ left: dir * amount, behavior: "auto" });
     }
 
-    function initAlertsStickyHeader() {
+    function updateAlertsScrollArrows() {
       const wrap = document.getElementById("alerts-fit-wrap");
-      const table = document.getElementById("alerts-fit-table");
-      const sticky = document.getElementById("alerts-sticky-head");
-      const stickyInner = sticky ? sticky.querySelector(".alerts-sticky-inner") : null;
-      if (!wrap || !table || !sticky || !stickyInner) return;
-
-      const rebuild = () => {
-        stickyInner.innerHTML = "";
-        const head = table.querySelector("thead");
-        if (!head) return;
-        const cloneTable = document.createElement("table");
-        cloneTable.className = table.className;
-        const cloneHead = head.cloneNode(true);
-        cloneTable.appendChild(cloneHead);
-        cloneTable.style.width = `${table.scrollWidth}px`;
-        stickyInner.appendChild(cloneTable);
-        stickyInner.style.width = `${wrap.clientWidth}px`;
-        stickyInner.scrollLeft = wrap.scrollLeft;
-      };
-
-      const update = () => {
-        const rect = table.getBoundingClientRect();
-        const topOffset = 44;
-        const headerHeight = table.querySelector("thead")?.getBoundingClientRect().height || 0;
-        const shouldShow = rect.top < topOffset && rect.bottom > topOffset + headerHeight;
-        sticky.style.display = shouldShow ? "block" : "none";
-        if (shouldShow) {
-          const left = rect.left;
-          stickyInner.style.marginLeft = `${left}px`;
-          stickyInner.style.width = `${rect.width}px`;
-          stickyInner.scrollLeft = wrap.scrollLeft;
-        }
-      };
-
-      wrap.addEventListener("scroll", () => {
-        stickyInner.scrollLeft = wrap.scrollLeft;
-      });
-      window.addEventListener("scroll", update);
-      window.addEventListener("resize", () => {
-        rebuild();
-        update();
-      });
-
-      rebuild();
-      update();
+      const host = document.getElementById("active-alerts-table");
+      if (!wrap || !host) return;
+      const hasScroll = wrap.scrollWidth > wrap.clientWidth + 2;
+      host.classList.toggle("has-hscroll", hasScroll);
     }
+
+    function initAlertsStickyHeader() { }
 
     function initFastVerticalScroll() {
       const speed = 1.45;
@@ -3061,15 +3186,29 @@
           th.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
           th.textContent = `C${c}B${i}`;
           headRow.insertBefore(th, cycleTh);
+
+          const thEB = document.createElement("th");
+          thEB.setAttribute("data-add-col", `C${c}EB${i}`);
+          thEB.setAttribute("draggable", "true");
+          thEB.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
+          thEB.textContent = `C${c}EB${i}`;
+          headRow.insertBefore(thEB, cycleTh);
         }
-        for (let i = 1; i <= maxAdds; i += 1) {
-          const th = document.createElement("th");
-          th.setAttribute("data-add-col", `C${c}EB${i}`);
-          th.setAttribute("draggable", "true");
-          th.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
-          th.textContent = `C${c}EB${i}`;
-          headRow.insertBefore(th, cycleTh);
-        }
+
+        const thBTsl = document.createElement("th");
+        thBTsl.setAttribute("data-add-col", `C${c}BTSL`);
+        thBTsl.setAttribute("draggable", "true");
+        thBTsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thBTsl.textContent = `C${c}BTSL`;
+        headRow.insertBefore(thBTsl, cycleTh);
+
+        const thEBTsl = document.createElement("th");
+        thEBTsl.setAttribute("data-add-col", `C${c}EBTSL`);
+        thEBTsl.setAttribute("draggable", "true");
+        thEBTsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thEBTsl.textContent = `C${c}EBTSL`;
+        headRow.insertBefore(thEBTsl, cycleTh);
+
         for (let i = 1; i <= maxAdds; i += 1) {
           const th = document.createElement("th");
           th.setAttribute("data-add-col", `C${c}S${i}`);
@@ -3077,32 +3216,33 @@
           th.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
           th.textContent = `C${c}S${i}`;
           headRow.insertBefore(th, cycleTh);
-        }
-        for (let i = 1; i <= maxAdds; i += 1) {
-          const th = document.createElement("th");
-          th.setAttribute("data-add-col", `C${c}ES${i}`);
-          th.setAttribute("draggable", "true");
-          th.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
-          th.textContent = `C${c}ES${i}`;
-          headRow.insertBefore(th, cycleTh);
-        }
-        const thTsl = document.createElement("th");
-        thTsl.setAttribute("data-add-col", `C${c}TSL`);
-        thTsl.setAttribute("draggable", "true");
-        thTsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
-        thTsl.textContent = `C${c}TSL`;
-        headRow.insertBefore(thTsl, cycleTh);
 
-        const thETsl = document.createElement("th");
-        thETsl.setAttribute("data-add-col", `C${c}ETSL`);
-        thETsl.setAttribute("draggable", "true");
-        thETsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
-        thETsl.textContent = `C${c}ETSL`;
-        headRow.insertBefore(thETsl, cycleTh);
+          const thES = document.createElement("th");
+          thES.setAttribute("data-add-col", `C${c}ES${i}`);
+          thES.setAttribute("draggable", "true");
+          thES.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
+          thES.textContent = `C${c}ES${i}`;
+          headRow.insertBefore(thES, cycleTh);
+        }
+
+        const thSTsl = document.createElement("th");
+        thSTsl.setAttribute("data-add-col", `C${c}STSL`);
+        thSTsl.setAttribute("draggable", "true");
+        thSTsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thSTsl.textContent = `C${c}STSL`;
+        headRow.insertBefore(thSTsl, cycleTh);
+
+        const thESTsl = document.createElement("th");
+        thESTsl.setAttribute("data-add-col", `C${c}ESTSL`);
+        thESTsl.setAttribute("draggable", "true");
+        thESTsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thESTsl.textContent = `C${c}ESTSL`;
+        headRow.insertBefore(thESTsl, cycleTh);
       }
 
       ensureAlertsHeaderDraggable();
       applyAlertsColumnOrder();
+      updateAlertsScrollArrows();
       try { initAlertsWheelHorizontalScroll(); } catch { }
     }
 
@@ -3121,8 +3261,10 @@
         } else {
           renderCycleHeaders(MAX_CYCLES_UI, MAX_ADDS_UI);
         }
+        updateAlertsScrollArrows();
       } catch (e) {
         renderCycleHeaders(MAX_CYCLES_UI, MAX_ADDS_UI);
+        updateAlertsScrollArrows();
       }
     }
 
@@ -3145,6 +3287,241 @@
       bell.classList.remove("bell-shake"); // reset
       void bell.offsetWidth;               // reflow
       bell.classList.add("bell-shake");
+    }
+
+    function buildCycleColsHtmlForRow(sym) {
+      return Array.from({ length: MAX_CYCLES_UI }, (_, cIdx) => {
+        const c = cIdx + 1;
+        const bCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
+          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col" data-sym="${sym}" data-lfield="c${c}_b${idx + 1}">--</td>`
+        ).join("");
+        const ebCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
+          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col" data-sym="${sym}" data-lfield="c${c}_eb${idx + 1}">--</td>`
+        ).join("");
+        const sCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
+          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${sym}" data-lfield="c${c}_s${idx + 1}">--</td>`
+        ).join("");
+        const esCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
+          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${sym}" data-lfield="c${c}_es${idx + 1}">--</td>`
+        ).join("");
+        const tslCols =
+          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_btsl">--</td>` +
+          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_ebtsl">--</td>` +
+          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_stsl">--</td>` +
+          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_estsl">--</td>`;
+        return bCols + ebCols + sCols + esCols + tslCols;
+      }).join("");
+    }
+
+    function buildAlertRowHtml(sym, key) {
+      const cycleColsHtml = buildCycleColsHtmlForRow(sym);
+      return `
+<tr class="hover:bg-slate-800/40 transition-colors duration-200 border-b border-slate-800/50 group row-entrance" draggable="true" data-row-key="${key}">
+  <td class="w-14 px-0.5 py-0.5 font-bold text-slate-200 text-xs font-mono tracking-wide whitespace-nowrap"
+      data-sym="${sym}" data-field="symbol">${sym}</td>
+
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${sym}" data-field="ltp">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-mono" data-sym="${sym}" data-field="open">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-mono" data-sym="${sym}" data-field="pclose">--</td>
+  <td class="w-[48px] px-1 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${sym}" data-field="pct">--</td>
+  
+  <td class="w-[46px] px-1 py-0.5 text-right tabular-nums text-slate-300 text-[10px] font-extrabold font-mono tracking-tight" data-sym="${sym}" data-field="fo">--</td>
+  <td class="w-[60px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${sym}" data-field="fh">--</td>
+  <td class="w-[60px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${sym}" data-field="fl">--</td>
+
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${sym}" data-field="lc">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${sym}" data-field="uc">--</td>
+  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${sym}" data-field="tbq">--</td>
+  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${sym}" data-field="tsq">--</td>
+  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-extrabold font-mono" data-sym="${sym}" data-field="tcr">--</td>
+
+  <td class="w-12 px-1 py-0.5 text-center" data-col="action">
+  <div class="flex items-center justify-center gap-1">
+    <!-- BUY -->
+    <button
+      class="w-4 h-4 text-[8px] font-bold
+             text-emerald-600 border border-emerald-600
+             rounded-sm hover:text-emerald-700 hover:border-emerald-700
+             active:scale-95 trade-buy"
+      data-symbol="${sym}" data-side="BUY">
+      B
+    </button>
+
+    <!-- SELL -->
+    <button
+      class="w-4 h-4 text-[8px] font-bold
+             text-red-600 border border-red-600
+             rounded-sm hover:text-red-700 hover:border-red-700
+             active:scale-95 trade-sell"
+      data-symbol="${sym}" data-side="SELL">
+      S
+    </button>
+
+    <!-- SQUARE OFF -->
+    <button
+      class="w-5 h-4 text-[8px] font-bold
+             text-slate-600 border border-slate-500
+             rounded-sm hover:text-slate-700 hover:border-slate-700
+             active:scale-95 squareoff-btn"
+      onclick="squareoffLadder('${sym}')">
+      SQ
+    </button>
+  </div>
+</td>
+  ${cycleColsHtml}
+  <td class="w-[56px] px-1 py-0.5 text-right text-slate-400 text-[11px] font-semibold font-mono" data-sym="${sym}" data-lfield="cycle">--</td>
+  <td class="w-[50px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono" data-sym="${sym}" data-lfield="pnl">--</td>
+  <td class="w-[40px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono status-cell" data-sym="${sym}" data-lfield="status">--</td>
+</tr>`;
+    }
+
+    function normalizeScanKey(scan) {
+      const s = String(scan || "GLOBAL").trim().toUpperCase();
+      return s || "GLOBAL";
+    }
+
+    function enqueueAutoTrade(scanKey, symbolsSet) {
+      if (!scanKey || !symbolsSet || symbolsSet.size === 0) return;
+      const key = normalizeScanKey(scanKey);
+      if (!AUTO_TRADE_PENDING.has(key)) AUTO_TRADE_PENDING.set(key, new Set());
+      const pending = AUTO_TRADE_PENDING.get(key);
+      symbolsSet.forEach(s => pending.add(s));
+      if (AUTO_TRADE_RUNNING.has(key)) return;
+      AUTO_TRADE_RUNNING.add(key);
+      runAutoTradeQueue(key).finally(() => AUTO_TRADE_RUNNING.delete(key));
+    }
+
+    async function runAutoTradeQueue(scanKey) {
+      while (true) {
+        const pending = AUTO_TRADE_PENDING.get(scanKey);
+        if (!pending || pending.size === 0) break;
+        const batchSymbols = new Set(pending);
+        pending.clear();
+        await handleAutoTradeForScan(scanKey, batchSymbols);
+      }
+    }
+
+    async function handleAutoTradeForScan(scanKeyRaw, symbolsSet) {
+      if (!(automationMode === "AUTO" && MARKET_OPEN && symbolsSet && symbolsSet.size > 0)) return;
+      const scanKey = normalizeScanKey(scanKeyRaw);
+
+      try {
+        const settingsRes = await fetch("/api/universal-settings");
+        const settingsData = await settingsRes.json();
+        const settings = settingsData.settings;
+
+        if (!settings || !settings.per_trade_capital) {
+          console.warn("⚠️ AUTO-TRADE: Universal settings not configured");
+          return;
+        }
+        // Speed-first: place trades immediately without waiting for live LTP
+        settings.fast_entry_no_ltp = true;
+
+        const symbols = Array.from(symbolsSet);
+        const batchSize = 10;
+
+        const globalLimit = settings.max_trades_per_symbol || 20;
+
+        const tryStart = async (symbol) => {
+          if (manuallySquaredOffSymbols.has(symbol)) return;
+
+          const scanCount = processedAutoTradeScans.get(scanKey) || 0;
+          if (scanCount >= globalLimit) return;
+
+          const currentCount = processedAutoTradeSymbols.get(symbol) || 0;
+          if (currentCount >= 1) return;
+
+          try {
+            const response = await fetch("/api/ladder/start", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                symbol: symbol,
+                side: "BUY",
+                settings_mode: "UNIVERSAL",
+                settings: settings
+              })
+            });
+
+            const result = await response.json();
+
+            if (!result.error && result.status !== "already_running") {
+              showMsg(`🤖 Auto - started: ${symbol} `, false);
+              processedAutoTradeSymbols.set(symbol, currentCount + 1);
+              processedAutoTradeScans.set(scanKey, scanCount + 1);
+              saveAutoTradeCounters();
+            }
+          } catch (err) {
+            console.error("❌ AUTO-TRADE error for", symbol, ":", err);
+          }
+        };
+
+        for (let i = 0; i < symbols.length; i += batchSize) {
+          const batch = symbols.slice(i, i + batchSize);
+          for (const sym of batch) {
+            await tryStart(sym);
+            const scanCountNow = processedAutoTradeScans.get(scanKey) || 0;
+            if (scanCountNow >= globalLimit) break;
+          }
+          const scanCountNow = processedAutoTradeScans.get(scanKey) || 0;
+          if (scanCountNow >= globalLimit) break;
+        }
+
+        setTimeout(() => loadLadderState(), 500);
+      } catch (err) {
+        console.error("❌ AUTO-TRADE: Failed to get settings:", err);
+      }
+    }
+
+    async function handleAlertPush(packet) {
+      if (!packet) return;
+      renderCycleHeaders(MAX_CYCLES_UI, MAX_ADDS_UI);
+
+      const tbody = $("alerts-body");
+      if (!tbody) return;
+
+      const oldSyms = new Set(subscribed);
+      const newSymbols = new Set();
+      let addedCount = 0;
+
+      const newKeysAdded = [];
+      (packet.stocks || []).forEach(s => {
+        const sym = String(s || "").toUpperCase();
+        if (!sym) return;
+
+        subscribed.add(sym);
+        const key = `${packet.scan}|${packet.time}|${sym}`;
+        if (ALERT_ROW_KEYS.has(key)) return;
+        ALERT_ROW_KEYS.add(key);
+        newKeysAdded.push(key);
+        addedCount += 1;
+
+        if (!oldSyms.has(sym)) newSymbols.add(sym);
+
+        const rowHtml = buildAlertRowHtml(sym, key);
+        tbody.insertAdjacentHTML("afterbegin", rowHtml);
+      });
+
+      if (addedCount > 0) {
+        if (newKeysAdded.length) {
+          loadAlertsRowOrder();
+          const prev = Array.isArray(ALERTS_ROW_ORDER) ? ALERTS_ROW_ORDER : [];
+          const merged = [...newKeysAdded, ...prev.filter(k => !newKeysAdded.includes(k))];
+          ALERTS_ROW_ORDER = merged;
+          saveAlertsRowOrder();
+          applyAlertsRowOrder(tbody);
+        }
+        setAlertCount((Number($("alerts-count")?.textContent || 0) || 0) + addedCount);
+        try { initAlertsRowDrag(); } catch { }
+        requestAnimationFrame(fitAlertsTableToWidth);
+      }
+
+      const trulyNewSymbols = new Set(
+        Array.from(newSymbols).filter(s => !automationEnabledSymbols.has(s))
+      );
+      if (trulyNewSymbols.size > 0) {
+        enqueueAutoTrade(packet.scan, trulyNewSymbols);
+      }
     }
 
 
@@ -3189,9 +3566,11 @@
         // unique rows by (scan|time|symbol)
         ALERT_ROW_KEYS.clear();
         let liveCount = 0;
+        const keysInRender = [];
 
         // ✅ Track NEW symbols for auto-trading
         const newSymbols = new Set();
+        const newSymbolsByScan = new Map();
 
         data.forEach(a => {
           (a.stocks || []).forEach(s => {
@@ -3202,11 +3581,15 @@
             const key = `${a.scan}|${a.time}|${s}`;
             if (ALERT_ROW_KEYS.has(key)) return;
             ALERT_ROW_KEYS.add(key);
+            keysInRender.push(key);
             liveCount += 1;   // ✅ count each unique alert row
 
             // ✅ Check if this is a NEW symbol (not in old set)
             if (!oldSyms.has(s)) {
               newSymbols.add(s);
+              const scanKey = normalizeScanKey(a.scan);
+              if (!newSymbolsByScan.has(scanKey)) newSymbolsByScan.set(scanKey, new Set());
+              newSymbolsByScan.get(scanKey).add(s);
             }
 
             // Helper for formatted numbers or placeholder
@@ -3228,8 +3611,10 @@
                 `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${s}" data-lfield="c${c}_es${idx + 1}">--</td>`
               ).join("");
               const tslCols =
-                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_tsl">--</td>` +
-                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_etsl">--</td>`;
+                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_btsl">--</td>` +
+                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_ebtsl">--</td>` +
+                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_stsl">--</td>` +
+                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_estsl">--</td>`;
               return bCols + ebCols + sCols + esCols + tslCols;
             }).join("");
 
@@ -3239,16 +3624,16 @@
       data-sym="${s}" data-field="symbol">${s}</td>
 
   <td class="w-[52px] px-1 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${s}" data-field="ltp">--</td>
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-mono" data-sym="${s}" data-field="open">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-400 font-bold text-[10px] font-mono" data-sym="${s}" data-field="open">--</td>
   <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-300 text-[10px] font-mono" data-sym="${s}" data-field="pclose">--</td>
-  <td class="w-[48px] px-1 py-0.5 text-right tabular-nums text-blue-400 font-extrabold text-[11px] font-mono" data-sym="${s}" data-field="pct">--</td>
+  <td class="w-[48px] px-1 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${s}" data-field="pct">--</td>
   
-  <td class="w-[46px] px-1 py-0.5 text-right tabular-nums text-slate-300 text-[10px] font-extrabold font-mono tracking-tight" data-sym="${s}" data-field="fo">--</td>
+  <td class="w-[46px] px-1 py-0.5 text-right tabular-nums text-slate-300 text-[11px] font-extrabold font-mono tracking-tight" data-sym="${s}" data-field="fo">--</td>
   <td class="w-[60px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${s}" data-field="fh">--</td>
   <td class="w-[60px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${s}" data-field="fl">--</td>
 
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${s}" data-field="lc">--</td>
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${s}" data-field="uc">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-extrabold text-[10px] font-mono" data-sym="${s}" data-field="lc">--</td>
+  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-extrabold text-[10px] font-mono" data-sym="${s}" data-field="uc">--</td>
   <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${s}" data-field="tbq">--</td>
   <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${s}" data-field="tsq">--</td>
   <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-extrabold font-mono" data-sym="${s}" data-field="tcr">--</td>
@@ -3257,7 +3642,7 @@
   <div class="flex items-center justify-center gap-1">
     <!-- BUY -->
     <button
-      class="w-4 h-4 text-[8px] font-bold
+      class="w-4 h-4 text-[7px] font-bold
              text-emerald-600 border border-emerald-600
              rounded-sm hover:text-emerald-700 hover:border-emerald-700
              active:scale-95 trade-buy"
@@ -3267,7 +3652,7 @@
 
     <!-- SELL -->
     <button
-      class="w-4 h-4 text-[8px] font-bold
+      class="w-4 h-4 text-[7px] font-bold
              text-red-600 border border-red-600
              rounded-sm hover:text-red-700 hover:border-red-700
              active:scale-95 trade-sell"
@@ -3277,23 +3662,30 @@
 
     <!-- SQUARE OFF -->
     <button
-      class="w-5 h-4 text-[8px] font-bold
-             text-slate-600 border border-slate-500
-             rounded-sm hover:text-slate-700 hover:border-slate-700
-             active:scale-95 squareoff-btn"
-      onclick="squareoffLadder('${s}')">
-      SQ
-    </button>
+class="w-5 h-4 text-[7px] font-semibold
+flex items-center justify-center
+leading-none
+text-slate-600 border border-slate-400
+rounded-[3px]
+hover:text-slate-800 hover:border-slate-600
+active:scale-95 transition-all duration-150
+squareoff-btn"
+onclick="squareoffLadder('${s}')">
+SQ
+</button>
+
   </div>
 </td>
   ${cycleColsHtml}
   <td class="w-[56px] px-1 py-0.5 text-right text-slate-400 text-[10px] font-mono" data-sym="${s}" data-lfield="cycle">--</td>
   <td class="w-[50px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono" data-sym="${s}" data-lfield="pnl">--</td>
-  <td class="w-[54px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono" data-sym="${s}" data-lfield="status">--</td>
+  <td class="w-[40px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono status-cell" data-sym="${s}" data-lfield="status">--</td>
 </tr>`;
           });
         });
         tbody.innerHTML = html;
+        updateAlertsRowOrderWith(keysInRender, true);
+        applyAlertsRowOrder(tbody);
         ensureAlertsHeaderDraggable();
         applyAlertsColumnOrder();
         try { initAlertsWheelHorizontalScroll(); } catch { }
@@ -3301,101 +3693,15 @@
         requestAnimationFrame(fitAlertsTableToWidth);
         setAlertCount(liveCount);
 
-        // ✅ AUTO-TRADE: If automation is ON and market is OPEN, auto-start trades
-        // Only trade symbols that were NOT present when automation was enabled
-        if (automationMode === "AUTO" && MARKET_OPEN && newSymbols.size > 0) {
-          // Filter out symbols that existed when automation was enabled
-          // Note: We do NOT filter by processedAutoTradeSymbols here anymore, 
-          // because we want to allow re-entry up to the configured limit.
-          const trulyNewSymbols = new Set(
-            Array.from(newSymbols).filter(s => !automationEnabledSymbols.has(s))
-          );
-
-          if (trulyNewSymbols.size > 0) {
-            console.log("🤖 AUTO-TRADE: Detected", trulyNewSymbols.size, "truly new symbols:", Array.from(trulyNewSymbols));
-            console.log("   (Ignoring", newSymbols.size - trulyNewSymbols.size, "pre-existing symbols)");
-
-            // Get universal settings
-            try {
-              const settingsRes = await fetch("/api/universal-settings");
-              const settingsData = await settingsRes.json();
-              const settings = settingsData.settings;
-
-              if (!settings || !settings.per_trade_capital) {
-                console.warn("⚠️ AUTO-TRADE: Universal settings not configured");
-                return;
-              }
-
-              // Auto-start ladder for each TRULY NEW symbol
-              for (const symbol of trulyNewSymbols) {
-                // 🛑 CHECK BLACKLIST (Manual Square Off)
-                if (manuallySquaredOffSymbols.has(symbol)) {
-                  // console.log(`🛑 Skipped blacklisted symbol: ${ symbol } `);
-                  continue;
-                }
-
-                // 🛑 CHECK GLOBAL LIMIT (Req: "Only 20 stocks must be processed")
-                // We treat 'max_trades_per_symbol' as GLOBAL MAX processed symbols
-                const globalLimit = settings.max_trades_per_symbol || 20;
-                const totalProcessedCount = processedAutoTradeSymbols.size;
-
-                if (totalProcessedCount >= globalLimit) {
-                  // console.log(`🛑 Global limit reached(${ totalProcessedCount } / ${ globalLimit }).`);
-                  continue;
-                }
-
-                // 🛑 CHECK PER-SYMBOL LIMIT (Req: "Do not try to buy again")
-                // Strict 1 Attempt Per Symbol
-                const currentCount = processedAutoTradeSymbols.get(symbol) || 0;
-                if (currentCount >= 1) {
-                  continue;
-                }
-
-                try {
-                  console.log("🚀 AUTO-TRADE: Starting ladder for", symbol);
-
-                  // ✅ Minimal delay (100ms) for WebSocket to process
-                  await new Promise(resolve => setTimeout(resolve, 100));
-
-                  const response = await fetch("/api/ladder/start", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      symbol: symbol,
-                      side: "BUY",  // Default to BUY, you can make this configurable
-                      settings_mode: "UNIVERSAL",
-                      settings: settings
-                    })
-                  });
-
-                  const result = await response.json();
-
-                  if (result.error) {
-                    console.error("❌ AUTO-TRADE failed for", symbol, ":", result.error);
-                  } else if (result.status === "already_running") {
-                    // Do not increment count if it's just the same session running
-                    // console.log("⚠️ AUTO-TRADE: Already running", symbol);
-                  } else {
-                    // ✅ SUCCESS: New session started
-                    console.log("✅ AUTO-TRADE: Ladder started for", symbol);
-                    showMsg(`🤖 Auto - started: ${symbol} `, false);
-
-                    // Increment count ONLY on success
-                    processedAutoTradeSymbols.set(symbol, currentCount + 1);
-                  }
-                } catch (err) {
-                  console.error("❌ AUTO-TRADE error for", symbol, ":", err);
-                }
-              }
-
-              // Refresh ladder state after auto-trades
-              setTimeout(() => loadLadderState(), 500);
-
-            } catch (err) {
-              console.error("❌ AUTO-TRADE: Failed to get settings:", err);
+        const trulyNewSymbols = new Set(
+          Array.from(newSymbols).filter(s => !automationEnabledSymbols.has(s))
+        );
+        if (trulyNewSymbols.size > 0) {
+          for (const [scanKey, setRef] of newSymbolsByScan.entries()) {
+            const filtered = new Set(Array.from(setRef).filter(s => !automationEnabledSymbols.has(s)));
+            if (filtered.size > 0) {
+              enqueueAutoTrade(scanKey, filtered);
             }
-          } else {
-            console.log("ℹ️ AUTO-TRADE: All new symbols were pre-existing. No auto-trade.");
           }
         }
 
@@ -3424,6 +3730,71 @@
     let ALERTS_ROW_MOUSE_DOWN = null;
     let ALERTS_ROW_START_Y = 0;
     let ALERTS_ROW_LAST_TARGET = null;
+    let ALERTS_ROW_ORDER = null;
+
+    function loadAlertsRowOrder() {
+      if (ALERTS_ROW_ORDER && Array.isArray(ALERTS_ROW_ORDER)) return;
+      try {
+        const saved = localStorage.getItem("alertsRowOrder");
+        if (saved) ALERTS_ROW_ORDER = JSON.parse(saved);
+      } catch { }
+    }
+
+    function saveAlertsRowOrder() {
+      try {
+        if (ALERTS_ROW_ORDER && Array.isArray(ALERTS_ROW_ORDER)) {
+          localStorage.setItem("alertsRowOrder", JSON.stringify(ALERTS_ROW_ORDER));
+        }
+      } catch { }
+    }
+
+    function updateAlertsRowOrderWith(keysInRender, newOnTop = true) {
+      if (!Array.isArray(keysInRender) || keysInRender.length === 0) return;
+      loadAlertsRowOrder();
+      const prev = Array.isArray(ALERTS_ROW_ORDER) ? ALERTS_ROW_ORDER : [];
+      const prevSet = new Set(prev);
+      const newKeys = keysInRender.filter(k => k && !prevSet.has(k));
+      const filteredPrev = prev.filter(k => keysInRender.includes(k));
+      ALERTS_ROW_ORDER = newOnTop ? [...newKeys, ...filteredPrev] : [...filteredPrev, ...newKeys];
+      saveAlertsRowOrder();
+    }
+
+    function applyAlertsRowOrder(tbody) {
+      if (!tbody) return;
+      loadAlertsRowOrder();
+      if (!ALERTS_ROW_ORDER || ALERTS_ROW_ORDER.length === 0) return;
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      if (!rows.length) return;
+      const byKey = new Map();
+      rows.forEach(r => {
+        const k = r.dataset.rowKey;
+        if (k) byKey.set(k, r);
+      });
+      const frag = document.createDocumentFragment();
+      const used = new Set();
+      ALERTS_ROW_ORDER.forEach(k => {
+        const r = byKey.get(k);
+        if (r) {
+          used.add(k);
+          frag.appendChild(r);
+        }
+      });
+      rows.forEach(r => {
+        const k = r.dataset.rowKey;
+        if (!k || !used.has(k)) frag.appendChild(r);
+      });
+      tbody.appendChild(frag);
+    }
+
+    function captureAlertsRowOrderFromDom(tbody) {
+      if (!tbody) return;
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const keys = rows.map(r => r.dataset.rowKey).filter(Boolean);
+      if (keys.length) {
+        ALERTS_ROW_ORDER = keys;
+        saveAlertsRowOrder();
+      }
+    }
 
     function ensureAlertsHeaderDraggable() {
       const headRow = document.querySelector("#alerts-fit-table thead tr");
@@ -3458,12 +3829,12 @@
           const i = m1[3];
           return `add:C${c}${type}${i}`;
         }
-        const m2 = lf.match(/^c(\d+)_(tsl|etsl)$/i);
-        if (m2) {
-          const c = m2[1];
-          const type = m2[2].toUpperCase();
-          return `add:C${c}${type}`;
-        }
+      const m2 = lf.match(/^c(\d+)_(btsl|ebtsl|stsl|estsl)$/i);
+      if (m2) {
+        const c = m2[1];
+        const type = m2[2].toUpperCase();
+        return `add:C${c}${type}`;
+      }
         return `lfield:${lf}`;
       }
       return `txt:${(td.textContent || "").trim().toUpperCase()}`;
@@ -3591,6 +3962,7 @@
         if (ALERTS_ROW_DRAGGED) ALERTS_ROW_DRAGGED.classList.remove("opacity-70");
         ALERTS_ROW_DRAGGED = null;
         tbody.classList.remove("row-dnd-active");
+        captureAlertsRowOrderFromDom(tbody);
       });
 
       tbody.addEventListener("dragover", (e) => {
@@ -3606,6 +3978,7 @@
       tbody.addEventListener("drop", (e) => {
         if (!ALERTS_ROW_DRAGGED) return;
         e.preventDefault();
+        captureAlertsRowOrderFromDom(tbody);
       });
 
       // Fast fallback drag (mouse move reorder)
@@ -3620,13 +3993,15 @@
 
       document.addEventListener("mousemove", (e) => {
         if (!ALERTS_ROW_ARMED && !ALERTS_ROW_DRAGGING) return;
+        if ((e.buttons & 1) !== 1) return; // only while mouse button is held
         if (!ALERTS_ROW_DRAGGING) {
-          if (Math.abs(e.clientY - ALERTS_ROW_START_Y) < 3) return;
+          if (Math.abs(e.clientY - ALERTS_ROW_START_Y) < 2) return;
           ALERTS_ROW_DRAGGING = true;
           ALERTS_ROW_ARMED = false;
           if (ALERTS_ROW_MOUSE_DOWN) tbody.classList.add("row-dnd-active");
         }
-        const row = e.target.closest("tr");
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const row = el ? el.closest("tr") : null;
         if (!row || row === ALERTS_ROW_MOUSE_DOWN) return;
         if (ALERTS_ROW_LAST_TARGET === row) return;
         ALERTS_ROW_LAST_TARGET = row;
@@ -3642,6 +4017,7 @@
         ALERTS_ROW_MOUSE_DOWN = null;
         ALERTS_ROW_LAST_TARGET = null;
         tbody.classList.remove("row-dnd-active");
+        captureAlertsRowOrderFromDom(tbody);
       });
     }
 
@@ -3735,7 +4111,7 @@
         // ✅ When enabling AUTO, capture current symbols as baseline
         if (mode === "AUTO") {
           automationEnabledSymbols = new Set(subscribed);
-          processedAutoTradeSymbols.clear(); // ✅ Reset processed list when starting new session
+          resetAutoTradeCounters(); // ✅ Start fresh auto-trade session
           manuallySquaredOffSymbols.clear(); // ✅ Clear blacklist on fresh start
           console.log("🔄 Automation ENABLED. Baseline symbols:", Array.from(automationEnabledSymbols));
         } else {
@@ -3816,6 +4192,9 @@
         const res = await fetch("/api/automation-mode");
         const data = await res.json();
         automationMode = data.mode || "MANUAL";
+        if (automationMode === "AUTO") {
+          loadAutoTradeCounters();
+        }
         updateAutomationUI();
       } catch (e) {
         console.error("Failed to load automation mode:", e);
@@ -4117,6 +4496,12 @@
       // top bar mini pnl
       const elTopMini = document.getElementById("overall-pnl-top");
       if (elTopMini) elTopMini.textContent = pnl.toFixed(2);
+      if (elTopMini) {
+        elTopMini.classList.remove("text-emerald-300", "text-red-300", "text-cyan-300");
+        if (pnl > 0) elTopMini.classList.add("text-emerald-300");
+        else if (pnl < 0) elTopMini.classList.add("text-red-300");
+        else elTopMini.classList.add("text-cyan-300");
+      }
       const topPill = elTopMini ? elTopMini.closest(".pill-net-pnl") : null;
       if (topPill) {
         topPill.classList.remove(
@@ -4124,8 +4509,13 @@
           "bg-red-900/20", "border-red-600/40", "text-red-300",
           "bg-cyan-900/20", "border-cyan-600/40", "text-cyan-300"
         );
-        // Always green per request
-        topPill.classList.add("bg-emerald-900/20", "border-emerald-600/40", "text-emerald-300");
+        if (pnl > 0) {
+          topPill.classList.add("bg-emerald-900/20", "border-emerald-600/40", "text-emerald-300");
+        } else if (pnl < 0) {
+          topPill.classList.add("bg-red-900/20", "border-red-600/40", "text-red-300");
+        } else {
+          topPill.classList.add("bg-cyan-900/20", "border-cyan-600/40", "text-cyan-300");
+        }
       }
 
       // ✅ Active Ladders pill
@@ -4256,12 +4646,9 @@
             const pnlNum = (ls.unrealized_pnl != null) ? Number(ls.unrealized_pnl) : 0;
             overall += pnlNum;
 
-            const pnl = pnlNum.toFixed(2);
-            const pnlStyle = pnlNum > 0
-              ? "color:#15803d !important; background:transparent !important;"
-              : (pnlNum < 0
-                ? "color:#dc2626 !important; background:transparent !important;"
-                : "color:#475569 !important; background:transparent !important;");
+            const pnl = (pnlNum < 0)
+              ? `-${Math.abs(pnlNum).toFixed(2)}`
+              : Number(pnlNum).toFixed(2);
 
             let nextAdd = "-";
             let sl = "-";
@@ -4310,8 +4697,9 @@
             else if (st.startsWith("EXIT")) stColor = "text-orange-400";
 
             if (st.startsWith("RUNNING")) st = "RUN";
-            if (st.startsWith("REJECT")) st = "REJECT";
-            if (st.startsWith("ERROR")) st = "ERROR";
+            if (st.startsWith("REJECT")) st = "REJT";
+            if (st.startsWith("ERROR")) st = "ERR";
+            if (st.startsWith("COMPLETE") || st.startsWith("DONE")) st = "✅";
 
             const symKey = String(s.symbol).toUpperCase();
             const setL = (field, val) => {
@@ -4322,15 +4710,14 @@
 
             const hist = s.cycle_hist || {};
             const fmt = (v) => (v != null && v !== "" && !isNaN(Number(v))) ? Number(v).toFixed(2) : "--";
-            const fmtTsl = (obj) => {
+            const fmtTsl = (obj, side) => {
               if (!obj) return "--";
-              const b = obj.B != null ? Number(obj.B) : null;
-              const sVal = obj.S != null ? Number(obj.S) : null;
-              if (b != null && sVal != null) return `B${b.toFixed(2)}|S${sVal.toFixed(2)}`;
-              if (b != null) return `B${b.toFixed(2)}`;
-              if (sVal != null) return `S${sVal.toFixed(2)}`;
-              return "--";
+              const v = obj[side];
+              return (v != null && v !== "" && !isNaN(Number(v))) ? Number(v).toFixed(2) : "--";
             };
+
+            const totalCycles = Math.max(1, Number(s.cycle_total || 1));
+            const curCycle = Math.min(totalCycles, Math.max(1, Number(s.cycle_index || 0) + 1));
 
             for (let c = 1; c <= MAX_CYCLES_UI; c += 1) {
               const ch = hist[String(c)] || {};
@@ -4340,17 +4727,34 @@
               const sExec = ch.S?.exec || [];
 
               for (let i = 1; i <= MAX_ADDS_UI; i += 1) {
-                setL(`c${c}_b${i}`, fmt(bEst[i - 1]));
-                setL(`c${c}_eb${i}`, fmt(bExec[i - 1]));
-                setL(`c${c}_s${i}`, fmt(sEst[i - 1]));
-                setL(`c${c}_es${i}`, fmt(sExec[i - 1]));
+                let bEstVal = fmt(bEst[i - 1]);
+                let bExecVal = fmt(bExec[i - 1]);
+                let sEstVal = fmt(sEst[i - 1]);
+                let sExecVal = fmt(sExec[i - 1]);
+
+                // ✅ Enforce "show add columns only when add actually happened"
+                if (c === curCycle && String(ls.side || "").toUpperCase() === "BUY" && i > entryCount) {
+                  bEstVal = "--";
+                  bExecVal = "--";
+                }
+                if (c === curCycle && String(ls.side || "").toUpperCase() === "SELL" && i > entryCount) {
+                  sEstVal = "--";
+                  sExecVal = "--";
+                }
+
+                setL(`c${c}_b${i}`, bEstVal);
+                setL(`c${c}_eb${i}`, bExecVal);
+                setL(`c${c}_s${i}`, sEstVal);
+                setL(`c${c}_es${i}`, sExecVal);
               }
 
-              setL(`c${c}_tsl`, fmtTsl(ch.tsl_est));
-              setL(`c${c}_etsl`, fmtTsl(ch.tsl_exec));
+              setL(`c${c}_btsl`, fmtTsl(ch.tsl_est, "B"));
+              setL(`c${c}_ebtsl`, fmtTsl(ch.tsl_exec, "B"));
+              setL(`c${c}_stsl`, fmtTsl(ch.tsl_est, "S"));
+              setL(`c${c}_estsl`, fmtTsl(ch.tsl_exec, "S"));
             }
 
-            setL("cycle", `${(s.cycle_index + 1)}/${s.cycle_total}`);
+            setL("cycle", `${curCycle}/${totalCycles}`);
             setL("avg", ls.avg_price ? Number(ls.avg_price).toFixed(2) : "--");
             setL("int_entry", intEntry);
             setL("exec_entry", execEntry);
@@ -4359,6 +4763,8 @@
             setL("tsl", tsl);
             setL("exit_tsl", exitExec);
             setL("pnl", pnl);
+            document.querySelectorAll(`[data-sym="${symKey}"][data-lfield="pnl"]`)
+              .forEach(n => paintPnlCell(n, pnlNum));
             setL("status", st);
 
             // ✅ Cycle complete toast (per symbol)
@@ -4368,7 +4774,8 @@
             if (CYCLE_TRACKING_READY && Number.isFinite(prevCycle) && cycleIdx > prevCycle) {
               const completed = Math.min(cycleIdx, cycleTotal || cycleIdx);
               const totalLabel = cycleTotal > 0 ? `/${cycleTotal}` : "";
-              showMsg(`✅ Cycle complete: ${symKey} (C${completed}${totalLabel})`, false);
+              const exitLabel = (ls.exit_price_exec ? ` @${Number(ls.exit_price_exec).toFixed(2)}` : "");
+              showMsg(`✅ Cycle complete: ${symKey} (C${completed}${totalLabel})${exitLabel}`, false);
             }
             LAST_CYCLE_INDEX[symKey] = cycleIdx;
 
@@ -4376,7 +4783,8 @@
             const prevStatus = LAST_CYCLE_STATUS[symKey];
             if (CYCLE_TRACKING_READY && prevStatus && prevStatus !== stUpper) {
               if (stUpper.startsWith("COMPLETE") || stUpper.startsWith("DONE")) {
-                showMsg(`✅ Cycle complete: ${symKey}`, false);
+                const exitLabel = (ls.exit_price_exec ? ` @${Number(ls.exit_price_exec).toFixed(2)}` : "");
+                showMsg(`✅ Cycle complete: ${symKey}${exitLabel}`, false);
               }
             }
             LAST_CYCLE_STATUS[symKey] = stUpper;
@@ -4476,7 +4884,7 @@
     function showMsg(txt, isErr = false) {
       const box = $("msg-box");
       box.textContent = txt;
-      box.className = `fixed bottom - 10 left - 1 / 2 - translate - x - 1 / 2 px - 6 py - 3 rounded - xl text - sm font - medium shadow - 2xl z - 50 transition - all duration - 300 ${isErr
+      box.className = `fixed top-20 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl text-sm font-medium shadow-2xl z-50 transition-all duration-300 ${isErr
         ? 'bg-red-900/80 text-red-100 border border-red-700/50'
         : 'bg-emerald-900/80 text-emerald-100 border border-emerald-700/50'
         } `;
@@ -4637,6 +5045,7 @@
       try { startTickWS(); } catch (e) { console.error("startTickWS failed:", e); }
       try { await refreshLadderUIConfig(); } catch (e) { console.error("refreshLadderUIConfig failed:", e); }
       window.addEventListener("resize", () => requestAnimationFrame(fitAlertsTableToWidth));
+      window.addEventListener("resize", () => requestAnimationFrame(updateAlertsScrollArrows));
 
       setInterval(() => { try { refreshStatus(); } catch { } }, 5000);
       setInterval(() => { try { checkMarketStatus(); } catch { } }, 60000);
@@ -4653,3 +5062,4 @@
 </body>
 
 </html>
+

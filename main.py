@@ -9,6 +9,7 @@ from typing import Dict, Optional, Any, List
 from ladder_engine import LadderEngine, LadderSettings
 import redis.asyncio as aioredis
 import json, time, datetime, pytz, os, re
+import subprocess
 import sys
 
 import logging
@@ -38,6 +39,39 @@ tick_log = logging.getLogger("TICKS")
 ws_log   = logging.getLogger("WS")
 lad_log  = logging.getLogger("LADDER")
 
+async def _run_fetch_circuit_job(user_id: int) -> None:
+    try:
+        logging.info("🗓️ FETCH_CIRCUIT START | user=%s | ts=%s", user_id, _now_ist().strftime("%H:%M:%S"))
+        cmd = [sys.executable, "fetch_nse_cash_instruments.py", "--user-id", str(user_id), "--fetch-circuit"]
+        res = await asyncio.to_thread(
+            subprocess.run,
+            cmd,
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True
+        )
+        logging.info("✅ FETCH_CIRCUIT DONE  | user=%s | rc=%s | ts=%s", user_id, res.returncode, _now_ist().strftime("%H:%M:%S"))
+        if res.stdout:
+            logging.info("FETCH_CIRCUIT OUT   | %s", res.stdout.strip()[:500])
+        if res.stderr:
+            logging.warning("FETCH_CIRCUIT ERR   | %s", res.stderr.strip()[:500])
+    except Exception as e:
+        logging.error("❌ FETCH_CIRCUIT FAIL | %s", e, exc_info=True)
+
+
+async def daily_fetch_circuit_loop():
+    """
+    Background task: runs fetch_nse_cash_instruments.py at 09:00 IST daily.
+    Same style as daily_reset_loop.
+    """
+    triggered_today = None
+    while True:
+        now = _now_ist()
+        today_date = now.date()
+        if now.hour == 9 and now.minute == 0 and triggered_today != today_date:
+            triggered_today = today_date
+            await _run_fetch_circuit_job(user_id=1)
+        await asyncio.sleep(1)
 def _supports_ansi() -> bool:
     return False
 
@@ -65,6 +99,8 @@ def _log_universal_settings(user_id: int, settings: Dict[str, Any]) -> None:
 # ✅ SILENCE NOISY LOGS
 # ------------------------------------------------
 WS_TOKENS_LOG_TS = 0.0
+AUTO_RETRY_LIMIT_LOG_TS: Dict[str, float] = {}
+AUTO_RETRY_LIMIT_STATE: Dict[int, Dict[str, Any]] = {}
 
 class EndpointFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
@@ -79,6 +115,9 @@ class EndpointFilter(logging.Filter):
                 return False
             WS_TOKENS_LOG_TS = now
             return True
+        # Suppress noisy WS open/close spam
+        if "connection closed" in msg or "connection open" in msg:
+            return False
         return True
 
 # Filter uvicorn access logs
@@ -106,9 +145,7 @@ import asyncio
 # ============================================================
 
 # per user: symbol->token (from ingest ticks OR fallback map)
-SYMBOL_TOKEN_RAM: Dict[int, Dict[str, int]] = defaultdict(dict)
-# per user: token->symbol
-TOKEN_SYMBOL_RAM: Dict[int, Dict[int, str]] = defaultdict(dict)
+# (already defined above)
 
 # ===== Instruments file (NO REDIS mapping) =====
 INSTR_FILE = os.path.join(BASE_DIR, "nse_eq_instruments.json")
@@ -117,6 +154,7 @@ INSTR_FILE = os.path.join(BASE_DIR, "nse_eq_instruments.json")
 # Create it using fetch_nse_instruments.py => nse_eq_instruments.json
 GLOBAL_SYMBOL_TOKEN: Dict[str, int] = {}
 GLOBAL_TOKEN_SYMBOL: Dict[int, str] = {}
+GLOBAL_SYMBOL_LIST: List[str] = []
 
 def load_instruments_file():
     global GLOBAL_SYMBOL_TOKEN, GLOBAL_TOKEN_SYMBOL
@@ -128,6 +166,8 @@ def load_instruments_file():
         data = json.load(open(path, "r", encoding="utf-8"))
         GLOBAL_SYMBOL_TOKEN = {k.upper(): int(v) for k, v in (data.get("symbol_to_token") or {}).items()}
         GLOBAL_TOKEN_SYMBOL = {int(k): v.upper() for k, v in (data.get("token_to_symbol") or {}).items()}
+        global GLOBAL_SYMBOL_LIST
+        GLOBAL_SYMBOL_LIST = sorted(GLOBAL_SYMBOL_TOKEN.keys())
         ws_log.info("✅ Instruments loaded: %d symbols", len(GLOBAL_SYMBOL_TOKEN))
     except Exception as e:
         ws_log.exception("❌ Failed to load instruments json: %s", e)
@@ -143,6 +183,7 @@ load_instruments_file()
 # ============================================================
 
 WS_TOKENS_RAM: Dict[int, set] = defaultdict(set)
+TIMING_TICK_SEEN: Dict[int, set] = defaultdict(set)
 
 def add_ws_token(user_id: int, token: int):
     if token and token > 0:
@@ -240,129 +281,6 @@ class TickHub:
 
 TICK_HUB = TickHub()
 
-# async def circuit_prefetch_loop():
-#     """
-#     Background loop: fetch circuit for active symbols in WS tokens set.
-#     Uses get_kite_for_user(user_id) so per-user auth works.
-#     """
-#     while True:
-#         try:
-#             # every 60 sec check
-#             await asyncio.sleep(60)
-
-#             # Only run during morning window (09:00–09:15 IST)
-#             now = _now_ist()
-#             open_dt = now.replace(hour=9, minute=0, second=0, microsecond=0)
-#             close_dt = now.replace(hour=9, minute=15, second=0, microsecond=0)
-#             if now < open_dt or now >= close_dt:
-#                 continue
-
-#             if not _is_market_time_for_circuit():
-#                 continue
-#             ws_log.info("=" * 60)
-#             ws_log.info("🔎 CIRCUIT_PREFETCH window active: starting fetch scan")
-#             ws_log.info("=" * 60)
-
-#             # Resolve user IDs from RAM and Redis token sets.
-#             user_ids = set(TOKEN_SYMBOL_RAM.keys()) | set(WS_TOKENS_RAM.keys())
-#             try:
-#                 cursor = 0
-#                 while True:
-#                     cursor, keys = await r.scan(cursor=cursor, match="ws:*:tokens", count=200)
-#                     for k in keys:
-#                         try:
-#                             uid = int(str(k).split(":")[1])
-#                             user_ids.add(uid)
-#                         except Exception:
-#                             pass
-#                     if cursor == 0:
-#                         break
-#             except Exception:
-#                 pass
-
-#             total_fetched = 0
-#             for uid in user_ids:
-#                 # 1) symbols from token->symbol RAM map
-#                 tokmap = TOKEN_SYMBOL_RAM.get(uid, {})
-#                 syms = set([s for s in tokmap.values() if s])
-
-#                 # 2) symbols from WS tokens (RAM + Redis)
-#                 tokens = set(WS_TOKENS_RAM.get(uid, set()))
-#                 try:
-#                     rtokens = await r.smembers(f"ws:{uid}:tokens")
-#                     tokens.update(int(t) for t in rtokens if str(t).isdigit())
-#                 except Exception:
-#                     pass
-#                 for t in tokens:
-#                     sym = GLOBAL_TOKEN_SYMBOL.get(int(t))
-#                     if sym:
-#                         syms.add(sym)
-
-#                 if not syms:
-#                     continue
-
-#                 # fetch circuits in small batches (avoid heavy calls)
-#                 kite = None
-#                 try:
-#                     kite = await get_kite_for_user(int(uid))
-#                     if not kite:
-#                         continue
-#                 except Exception:
-#                     continue
-
-#                 # Kite quote supports multiple instruments  We fetch only those missing/expired
-#                 to_fetch = []
-#                 for sym in list(syms)[:200]:
-#                     c = await get_cached_circuit(sym)
-#                     if not c or (time.time() - float(c.get("ts", 0) or 0)) > CIRCUIT_TTL_SEC:
-#                         to_fetch.append(f"NSE:{sym}")
-
-#                 if not to_fetch:
-#                     continue
-
-#                 # chunk to avoid huge payload
-#                 CHUNK = 50
-#                 for i in range(0, len(to_fetch), CHUNK):
-#                     batch = to_fetch[i:i + CHUNK]
-#                     try:
-#                         q = kite.quote(batch)  # dict keyed by "NSE:SYMBOL"
-#                         for k, v in (q or {}).items():
-#                             sym = str(k).split(":")[-1].upper()
-#                             upper = v.get("upper_circuit_limit")
-#                             lower = v.get("lower_circuit_limit")
-#                             ohlc = v.get("ohlc") or {}
-#                             prev_close = ohlc.get("close")
-#                             payload = {
-#                                 "upper": float(upper) if upper is not None else None,
-#                                 "lower": float(lower) if lower is not None else None,
-#                                 "ts": time.time()
-#                             }
-#                             CIRCUIT_RAM[sym] = payload
-#                             await r.setex(f"circuit:{sym}", CIRCUIT_TTL_SEC, json.dumps(payload))
-#                             total_fetched += 1
-#                             if prev_close not in (None, ""):
-#                                 try:
-#                                     day = _now_ist().strftime("%Y%m%d")
-#                                     prev_key = f"prev:{day}:{sym}"
-#                                     prev_val = float(prev_close)
-#                                     PREV_RAM[sym] = {"close": prev_val, "ts": time.time()}
-#                                     await r.set(prev_key, str(prev_val), ex=PREV_TTL_SEC)
-#                                 except Exception:
-#                                     pass
-#                     except Exception:
-#                         continue
-
-#                     # light throttle within morning window
-#                     await asyncio.sleep(0.3)
-
-#             if total_fetched > 0:
-#                 ws_log.info("=" * 60)
-#                 ws_log.info("✅ CIRCUIT_PREFETCH done: fetched=%s", total_fetched)
-#                 ws_log.info("=" * 60)
-#         except Exception:
-#             continue
-
-
 async def auto_retry_loop():
     """
     Retry auto-trades that were skipped due to missing open/LTP data.
@@ -370,7 +288,7 @@ async def auto_retry_loop():
     """
     while True:
         try:
-            await asyncio.sleep(5)
+            await asyncio.sleep(1)
 
             ist = pytz.timezone("Asia/Kolkata")
             now_local = datetime.datetime.now(ist)
@@ -409,6 +327,25 @@ async def auto_retry_loop():
                 if not pending_syms:
                     continue
 
+                # Respect automation mode: do not auto-dispatch in MANUAL
+                try:
+                    mode = await r.get(f"automation:mode:{int(user_id)}")
+                    if str(mode or "MANUAL").upper() != "AUTO":
+                        continue
+                except Exception:
+                    pass
+
+                # Block auto-retry after auto square-off (day-level halt)
+                try:
+                    if await r.exists(_post_squareoff_halt_key(int(user_id))):
+                        try:
+                            await r.delete(key)
+                        except Exception:
+                            pass
+                        continue
+                except Exception:
+                    pass
+
                 # Load universal settings payload (same as webhook)
                 settings_payload = {}
                 raw_settings = await r.get(f"universal:settings:{user_id}")
@@ -425,10 +362,14 @@ async def auto_retry_loop():
                     entry_thresh = 0.0
 
                 eligible = []
+                side_by_sym = {}
                 keep_pending = []
                 ltp_open_cache = {}
                 for sym in list(pending_syms):
                     try:
+                        # Skip symbols that already completed today
+                        if await _is_ladder_completed_today(int(user_id), sym):
+                            continue
                         snap = TICK_HUB.get_snapshot_for_user(int(user_id), only_symbols={sym})
                         t = snap.get(sym, {}) if isinstance(snap, dict) else {}
                         ltp = float(t.get("ltp") or 0.0)
@@ -441,37 +382,70 @@ async def auto_retry_loop():
                                 if diff_pct >= entry_thresh:
                                     eligible.append(sym)
                                     ltp_open_cache[sym] = (ltp, opn)
+                                    side_by_sym[sym] = "BUY"
+                                elif diff_pct <= -entry_thresh:
+                                    eligible.append(sym)
+                                    ltp_open_cache[sym] = (ltp, opn)
+                                    side_by_sym[sym] = "SELL"
                                 else:
                                     keep_pending.append(sym)
                             else:
                                 eligible.append(sym)
                                 ltp_open_cache[sym] = (ltp, opn)
+                                side_by_sym[sym] = "BUY"
                         else:
                             keep_pending.append(sym)
                     except Exception:
                         keep_pending.append(sym)
 
-                # Respect per-scanner limit
-                count_key = f"ladder:global_count:{user_id}:{scan_bucket}"
-                try:
-                    current_count = int(await r.get(count_key) or 0)
-                except Exception:
-                    current_count = 0
-                try:
-                    max_limit = int(settings_payload.get("max_trades_per_symbol") or 0)
-                except Exception:
-                    max_limit = 0
-                if max_limit > 0 and current_count >= max_limit:
-                    continue
-                if max_limit > 0:
-                    remaining = max(0, max_limit - current_count)
-                    if remaining <= 0:
-                        continue
-                    eligible = eligible[:remaining]
-
                 if eligible:
                     eng = await get_engine_for_user(int(user_id))
                     if eng:
+                        # Daily total trades cap (stop all new dispatch)
+                        try:
+                            daily_cap = await _get_daily_trade_cap(int(user_id), 0)
+                            if daily_cap > 0:
+                                cur_total = await _daily_trade_count(int(user_id))
+                                if cur_total >= daily_cap:
+                                    # Clear pending queue for this key to avoid future dispatch
+                                    try:
+                                        await r.delete(key)
+                                    except Exception:
+                                        pass
+                                    continue
+                        except Exception:
+                            pass
+                        # Respect active positions limit (per user)
+                        try:
+                            max_limit = int(settings_payload.get("max_trades_per_symbol") or 0)
+                        except Exception:
+                            max_limit = 0
+                        if max_limit > 0:
+                            current_active = _count_active_sessions(eng)
+                            remaining = max(0, max_limit - current_active)
+                            # Track latest limit state for UI (show when remaining=0)
+                            AUTO_RETRY_LIMIT_STATE[int(user_id)] = {
+                                "scan": scan_bucket,
+                                "active": int(current_active),
+                                "limit": int(max_limit),
+                                "remaining": int(remaining),
+                                "ts": float(time.time()),
+                            }
+
+                            # Throttle repetitive limit logs per user+scan (downgrade to DEBUG)
+                            key = f"{user_id}:{scan_bucket}"
+                            now_ts = time.time()
+                            last_ts = AUTO_RETRY_LIMIT_LOG_TS.get(key, 0.0)
+                            if now_ts - last_ts >= 30:
+                                # log suppressed (kept for optional debug in future)
+                                # ws_log.debug("AUTO_RETRY limit check | user=%s scan=%s active=%s limit=%s remaining=%s",
+                                #              user_id, scan_bucket, current_active, max_limit, remaining)
+                                AUTO_RETRY_LIMIT_LOG_TS[key] = now_ts
+                            if current_active >= max_limit:
+                                continue
+                            if remaining <= 0:
+                                continue
+                            eligible = eligible[:remaining]
                         filtered = []
                         for sym in eligible:
                             existing = eng.sessions.get(sym)
@@ -482,9 +456,10 @@ async def auto_retry_loop():
                         for sym in filtered:
                             ws_log.info("AUTO_RETRY dispatch | user=%s scan=%s symbol=%s", user_id, scan_bucket, sym)
                             ltp_hint, open_hint = ltp_open_cache.get(sym, (None, None))
+                            side_hint = side_by_sym.get(sym, "BUY")
                             tasks.append(eng.start_ladder(
                                 symbol=sym,
-                                started_side="BUY",
+                                started_side=side_hint,
                                 settings_mode="UNIVERSAL",
                                 settings_payload=settings_payload,
                                 scan_name=scan_bucket,
@@ -494,7 +469,16 @@ async def auto_retry_loop():
                                 dispatch_ts=time.time(),
                             ))
                         if tasks:
-                            await asyncio.gather(*tasks, return_exceptions=True)
+                            results = await asyncio.gather(*tasks, return_exceptions=True)
+                            # Increment daily trade count for successful starts
+                            try:
+                                for res in results:
+                                    if isinstance(res, dict) and res.get("error"):
+                                        continue
+                                    if isinstance(res, dict) and res.get("status") in ("waiting_for_feed", "waiting_for_ltp", "started"):
+                                        await _incr_daily_trade(int(user_id))
+                            except Exception:
+                                pass
                     else:
                         keep_pending.extend(eligible)
 
@@ -509,12 +493,63 @@ async def auto_retry_loop():
         except Exception:
             continue
 
+
+async def ladder_stats_loop():
+    """
+    Periodic ladder stats log (every 60s).
+    Shows active vs exit/complete counts per user.
+    """
+    while True:
+        try:
+            await asyncio.sleep(60)
+            if not ENGINE_HUB:
+                continue
+            for uid, eng in list(ENGINE_HUB.items()):
+                try:
+                    sessions = list(getattr(eng, "sessions", {}).values())
+                    active_cnt = 0
+                    exit_cnt = 0
+                    total_cnt = 0
+                    for s in sessions:
+                        st = getattr(s, "leg_state", None)
+                        status = str(getattr(st, "status", "") or "").upper() if st else ""
+                        if status not in ("REJECTED", "ERROR", "CANCELLED", "FAILURE"):
+                            total_cnt += 1
+                        # Count only real live positions (qty>0) to match demat
+                        if getattr(s, "active", False) and status in ("RUNNING", "EXITING"):
+                            qty = int(getattr(st, "qty", 0) or 0) if st else 0
+                            if qty > 0:
+                                active_cnt += 1
+                        if status in ("DONE", "COMPLETE"):
+                            exit_cnt += 1
+                    msg = f"📊 LADDER STATS user={uid} active={active_cnt} exit={exit_cnt} total={total_cnt}"
+                    lad_log.info("\033[1m%s\033[0m", msg)
+                except Exception:
+                    continue
+        except Exception:
+            continue
+
+def _count_active_sessions(eng) -> int:
+    try:
+        sessions = list(getattr(eng, "sessions", {}).values())
+    except Exception:
+        return 0
+    active_cnt = 0
+    for s in sessions:
+        st = getattr(s, "leg_state", None)
+        status = str(getattr(st, "status", "") or "").upper() if st else ""
+        if getattr(s, "active", False) and status in ("RUNNING", "IDLE", "EXITING"):
+            active_cnt += 1
+    return active_cnt
+
 @app.on_event("startup")
 async def _startup_tasks():
     _load_circuit_file_to_ram()
     asyncio.create_task(auto_retry_loop(), name="auto_retry_loop")
     asyncio.create_task(auto_squareoff_loop(), name="auto_squareoff_loop")
     asyncio.create_task(daily_reset_loop(), name="daily_reset_loop")
+    asyncio.create_task(ladder_stats_loop(), name="ladder_stats_loop")
+    asyncio.create_task(daily_fetch_circuit_loop(), name="daily_fetch_circuit_loop")
 
 
 # ------------------------------------------------- 
@@ -601,13 +636,25 @@ async def _tick_worker(uid: int) -> None:
 async def _dash_worker(uid: int) -> None:
     q = _get_queue(DASH_QUEUES, uid)
     while True:
-        payload = await q.get()
         try:
-            await TICK_HUB.broadcast(uid, payload)
+            # Batch small bursts to reduce WS chatter
+            payload = await q.get()
+            batch: List[Dict[str, Any]] = []
+            batch.append(payload)
+            t0 = time.perf_counter()
+            # up to 50 ticks or 15ms window
+            while len(batch) < 50 and (time.perf_counter() - t0) < 0.015:
+                try:
+                    nxt = q.get_nowait()
+                    batch.append(nxt)
+                except asyncio.QueueEmpty:
+                    break
+            await TICK_HUB.broadcast(uid, {"type": "ticks", "ticks": batch})
         except Exception:
             ws_log.exception("Dashboard broadcast failed user=%s", uid)
         finally:
-            q.task_done()
+            for _ in range(len(batch) if "batch" in locals() else 1):
+                q.task_done()
 
 
 async def _order_worker(uid: int) -> None:
@@ -670,7 +717,7 @@ async def _process_tick(uid: int, t: Dict[str, Any]) -> None:
     lo = float(lo or ltp)
     prev = float(prev or ltp)
 
-    # Keep/fetch real open if tick payload doesn't carry it.
+    # Keep/fetch real open if tick payload doesn't carry it. (Fast path only)
     if op <= 0 and sym:
         try:
             old_tick = TICK_HUB.ticks.get(uid, {}).get(token, {})
@@ -678,7 +725,12 @@ async def _process_tick(uid: int, t: Dict[str, Any]) -> None:
             if old_open > 0:
                 op = old_open
             else:
-                op = await get_cached_open_price(uid, sym)
+                cached = OPEN_RAM.get(sym) or {}
+                cached_open = float(cached.get("open") or 0)
+                if cached_open > 0:
+                    op = cached_open
+                else:
+                    asyncio.create_task(_prefetch_open_price(uid, sym))
         except Exception:
             op = 0.0
 
@@ -691,6 +743,20 @@ async def _process_tick(uid: int, t: Dict[str, Any]) -> None:
             if getattr(eng, "SYMBOL_TOKEN_RAM", None) is None:
                 eng.SYMBOL_TOKEN_RAM = {}
             eng.SYMBOL_TOKEN_RAM.setdefault(uid, {})[sym] = token
+
+    # ---------- Timing: subscribe -> first tick ----------
+    if sym:
+        try:
+            if sym not in TIMING_TICK_SEEN[uid]:
+                tkey = f"timing:{uid}:{sym}"
+                sub_ts = await r.hget(tkey, "subscribe_ts")
+                tick_ts = await r.hget(tkey, "tick_ts")
+                if sub_ts and not tick_ts:
+                    await r.hset(tkey, mapping={"tick_ts": time.time()})
+                    await r.expire(tkey, 60 * 60)
+                TIMING_TICK_SEEN[uid].add(sym)
+        except Exception:
+            pass
 
     # ---------- TickHub RAM ----------
     TICK_HUB.update_tick(uid, token, {
@@ -710,10 +776,10 @@ async def _process_tick(uid: int, t: Dict[str, Any]) -> None:
 
     # ---------- DASHBOARD BROADCAST ----------
     if sym:
-        c = await get_cached_circuit(sym)
+        # Fast path: use RAM cache only (no Redis await in hot path)
+        c = CIRCUIT_RAM.get(sym) or {}
         if not c:
             asyncio.create_task(_fetch_circuit_for_symbol(uid, sym), name=f"circuit_fetch:{uid}:{sym}")
-            c = await get_cached_circuit(sym)
         upper = c.get("upper")
         lower = c.get("lower")
         payload = {
@@ -765,9 +831,8 @@ async def ws_ingest(ws: WebSocket):
                     continue
                 
                 ws_log.debug("📦 Received %d ticks user=%s", len(ticks), uid)
-                
+                tq = _get_queue(TICK_QUEUES, uid)
                 for t in ticks:
-                    tq = _get_queue(TICK_QUEUES, uid)
                     try:
                         tq.put_nowait(t)
                     except asyncio.QueueFull:
@@ -858,6 +923,7 @@ CIRCUIT_RAM: Dict[str, Dict[str, Any]] = {}   # symbol -> {"upper":..,"lower":..
 CIRCUIT_TTL_SEC = 24 * 60 * 60                # keep for a full trading day
 _CIRCUIT_FILE = "circuit_cache.json"
 OPEN_RAM: Dict[str, Dict[str, Any]] = {}      # symbol -> {"open":..,"ts":..}
+_OPEN_FETCH_INFLIGHT: Dict[int, set] = defaultdict(set)
 OPEN_TTL_SEC = 12 * 60 * 60                   # cache open price for trading day window
 _CIRCUIT_FETCH_INFLIGHT: Dict[int, set] = defaultdict(set)
 PREV_RAM: Dict[str, Dict[str, Any]] = {}      # symbol -> {"close":..,"ts":..}
@@ -866,6 +932,98 @@ PREV_TTL_SEC = 36 * 60 * 60                   # keep previous close for a day+ b
 def _now_ist():
     ist = pytz.timezone("Asia/Kolkata")
     return datetime.datetime.now(ist)
+
+def _post_squareoff_halt_key(user_id: int) -> str:
+    day = _now_ist().strftime("%Y%m%d")
+    return f"halt:post_squareoff:{int(user_id)}:{day}"
+
+def _daily_trade_key(user_id: int) -> str:
+    day = _now_ist().strftime("%Y%m%d")
+    return f"ladder:daily_total:{int(user_id)}:{day}"
+
+def _seconds_until_midnight_ist() -> int:
+    now = _now_ist()
+    tomorrow = (now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    return max(60, int((tomorrow - now).total_seconds()))
+
+async def _get_daily_trade_cap(user_id: int, fallback: int = 0) -> int:
+    try:
+        raw = await r.get(f"universal:settings:{int(user_id)}")
+        if raw:
+            s = json.loads(raw) or {}
+            cap = int(s.get("max_trades_per_day") or 0)
+            if cap > 0:
+                return cap
+            # fallback to existing field if not set
+            cap2 = int(s.get("max_trades_per_symbol") or 0)
+            if cap2 > 0:
+                return cap2
+    except Exception:
+        return fallback
+    return fallback
+
+async def _daily_trade_count(user_id: int) -> int:
+    try:
+        raw = await r.get(_daily_trade_key(user_id))
+        if raw not in (None, ""):
+            return int(raw or 0)
+    except Exception:
+        return 0
+    # Fallback: derive count from today's ladder states
+    try:
+        today = _now_ist().strftime("%Y-%m-%d")
+        keys = await r.keys(f"ladder:state:{int(user_id)}:*")
+        total = 0
+        for k in keys:
+            data = await r.get(k)
+            if not data:
+                continue
+            try:
+                s = json.loads(data)
+            except Exception:
+                continue
+            if s.get("session_day") != today:
+                continue
+            st = (s.get("leg_state") or {}).get("status") or ""
+            st = str(st).upper()
+            if st in ("REJECTED", "ERROR", "CANCELLED", "FAILURE"):
+                continue
+            total += 1
+        if total > 0:
+            await r.set(_daily_trade_key(user_id), str(total), ex=_seconds_until_midnight_ist())
+        return total
+    except Exception:
+        return 0
+
+async def _incr_daily_trade(user_id: int) -> int:
+    try:
+        key = _daily_trade_key(user_id)
+        val = await r.incr(key)
+        if val == 1:
+            await r.expire(key, _seconds_until_midnight_ist())
+        return int(val)
+    except Exception:
+        return 0
+
+async def _is_ladder_completed_today(user_id: int, symbol: str) -> bool:
+    try:
+        key = f"ladder:state:{int(user_id)}:{symbol}"
+        raw = await r.get(key)
+        if not raw:
+            return False
+        data = json.loads(raw)
+        day = data.get("session_day")
+        today = _now_ist().strftime("%Y-%m-%d")
+        if day and day != today:
+            return False
+        active = bool(data.get("active", True))
+        st = (data.get("leg_state") or {}).get("status") or ""
+        st = str(st).upper()
+        if not active or st in ("COMPLETE", "DONE"):
+            return True
+    except Exception:
+        return False
+    return False
 
 def _is_market_time_for_circuit():
     # circuit values once/day, but we keep it simple
@@ -996,6 +1154,24 @@ async def get_cached_open_price(user_id: int, sym: str) -> float:
         return 0.0
 
     return 0.0
+
+
+async def _prefetch_open_price(user_id: int, sym: str) -> None:
+    sym = (sym or "").upper().strip()
+    if not sym:
+        return
+    inflight = _OPEN_FETCH_INFLIGHT[int(user_id)]
+    if sym in inflight:
+        return
+    inflight.add(sym)
+    try:
+        op = await get_cached_open_price(int(user_id), sym)
+        if op and op > 0:
+            OPEN_RAM[sym] = {"open": float(op), "ts": time.time()}
+    except Exception:
+        pass
+    finally:
+        inflight.discard(sym)
 
 
 async def get_cached_prev_close(sym: str) -> float:
@@ -1324,7 +1500,7 @@ async def zerodha_callback(
     access_token = session["access_token"]
 
     # 5️⃣ SAVE TO REDIS (🔥 THIS IS THE FIX 🔥)
-    TTL = 60 * 60 * 6   # ~6 hours (same trading day)
+    TTL = 60 * 60 * 24   # 24 hours (persist for full day)
 
     await r.setex(f"access_token:{user_id}", TTL, access_token)
     await r.setex(f"api_key:{user_id}", TTL, keys["api_key"])
@@ -1423,6 +1599,22 @@ def market_status():
 async def get_circuit(symbol: str):
     raw = await r.get(f"circuit:{symbol.upper()}")
     return json.loads(raw) if raw else {}
+
+
+@app.get("/api/symbols")
+async def api_symbols(q: str = "", limit: int = 30):
+    q = (q or "").strip().upper()
+    if not GLOBAL_SYMBOL_LIST:
+        load_instruments_file()
+    if not q:
+        return {"symbols": GLOBAL_SYMBOL_LIST[:limit]}
+    out = []
+    for s in GLOBAL_SYMBOL_LIST:
+        if s.startswith(q):
+            out.append(s)
+            if len(out) >= limit:
+                break
+    return {"symbols": out}
 
 
 
@@ -1530,6 +1722,12 @@ async def chartink_webhook(request: Request):
         tok = SYMBOL_TOKEN_RAM.get(user_id, {}).get(symbol) or GLOBAL_SYMBOL_TOKEN.get(symbol)
         if tok:
             add_ws_token(user_id, int(tok))
+            try:
+                tkey = f"timing:{user_id}:{symbol}"
+                await r.hset(tkey, mapping={"webhook_ts": recv_ts, "subscribe_ts": time.time()})
+                await r.expire(tkey, 60 * 60)
+            except Exception:
+                pass
         else:
             ws_log.debug("Chartink token missing | user=%s | symbol=%s", user_id, symbol)
 
@@ -1586,6 +1784,7 @@ async def chartink_webhook(request: Request):
 
             # Pre-filter symbols by threshold if enabled
             ltp_open_cache = {}
+            side_by_sym = {}
             if entry_enabled and entry_thresh > 0:
                 async def _resolve_ltp_open(sym: str, max_wait: float = 1.0, interval: float = 0.1):
                     deadline = time.time() + max_wait
@@ -1621,6 +1820,11 @@ async def chartink_webhook(request: Request):
                             if diff_pct >= entry_thresh:
                                 eligible.append(sym)
                                 ltp_open_cache[sym] = (ltp, opn)
+                                side_by_sym[sym] = "BUY"
+                            elif diff_pct <= -entry_thresh:
+                                eligible.append(sym)
+                                ltp_open_cache[sym] = (ltp, opn)
+                                side_by_sym[sym] = "SELL"
                             else:
                                 skip_notmet += 1
                                 ws_log.debug("AUTO_SKIP threshold not met | user=%s scan=%s symbol=%s diff=%.2f thresh=%.2f",
@@ -1647,30 +1851,41 @@ async def chartink_webhook(request: Request):
             if not symbols:
                 return
 
-            # Per-scanner trade limit check before dispatch
-            scan_bucket = re.sub(r"[^A-Z0-9_-]+", "", str(scan_name or "GLOBAL").upper()) or "GLOBAL"
-            count_key = f"ladder:global_count:{user_id}:{scan_bucket}"
+            eng = await get_engine_for_user(int(user_id))
+            if not eng:
+                return
+            # Daily total trades cap (strict)
             try:
-                current_count = int(await r.get(count_key) or 0)
+                daily_cap = await _get_daily_trade_cap(int(user_id), 0)
+                if daily_cap > 0:
+                    cur_total = await _daily_trade_count(int(user_id))
+                    remaining_daily = max(0, daily_cap - cur_total)
+                    if remaining_daily <= 0:
+                        ws_log.info("AUTO_DAILY_CAP_REACHED user=%s cap=%s total=%s",
+                                    user_id, daily_cap, cur_total)
+                        return
+                    if len(symbols) > remaining_daily:
+                        symbols = symbols[:remaining_daily]
             except Exception:
-                current_count = 0
+                pass
+            # Active positions limit check before dispatch
+            scan_bucket = re.sub(r"[^A-Z0-9_-]+", "", str(scan_name or "GLOBAL").upper()) or "GLOBAL"
             try:
                 max_limit = int(settings_payload.get("max_trades_per_symbol") or 0)
             except Exception:
                 max_limit = 0
-            if max_limit > 0 and current_count >= max_limit:
-                ws_log.info("AUTO_SKIP limit reached | user=%s scan=%s count=%s limit=%s",
-                            user_id, scan_bucket, current_count, max_limit)
-                return
             if max_limit > 0:
-                remaining = max(0, max_limit - current_count)
+                current_active = _count_active_sessions(eng)
+                remaining = max(0, max_limit - current_active)
+                ws_log.info("AUTO_LIMIT_CHECK | user=%s scan=%s active=%s limit=%s remaining=%s",
+                            user_id, scan_bucket, current_active, max_limit, remaining)
+                if current_active >= max_limit:
+                    ws_log.info("AUTO_SKIP limit reached | user=%s scan=%s active=%s limit=%s",
+                                user_id, scan_bucket, current_active, max_limit)
+                    return
                 if remaining <= 0:
                     return
                 symbols = symbols[:remaining]
-
-            eng = await get_engine_for_user(int(user_id))
-            if not eng:
-                return
 
             batch_size = 10
             for i in range(0, len(symbols), batch_size):
@@ -1688,9 +1903,10 @@ async def chartink_webhook(request: Request):
                         int((time.time() - recv_ts) * 1000)
                     )
                     ltp_hint, open_hint = ltp_open_cache.get(sym, (None, None))
+                    side_hint = side_by_sym.get(sym, "BUY")
                     tasks.append(eng.start_ladder(
                         symbol=sym,
-                        started_side="BUY",
+                        started_side=side_hint,
                         settings_mode="UNIVERSAL",
                         settings_payload=settings_payload,
                         scan_name=scan_name,
@@ -1700,22 +1916,32 @@ async def chartink_webhook(request: Request):
                         dispatch_ts=time.time(),
                     ))
                 if tasks:
-                    await asyncio.gather(*tasks, return_exceptions=True)
+                    results = await asyncio.gather(*tasks, return_exceptions=True)
+                    # Increment daily trade count for successful starts
+                    try:
+                        for res in results:
+                            if isinstance(res, dict) and res.get("error"):
+                                continue
+                            if isinstance(res, dict) and res.get("status") in ("waiting_for_feed", "waiting_for_ltp", "started"):
+                                await _incr_daily_trade(int(user_id))
+                    except Exception:
+                        pass
         except Exception:
             ws_log.exception("Webhook auto-trade immediate failed | user=%s", user_id)
 
-    asyncio.create_task(_start_auto_trades_immediate())
-    
-    # 🔴 Await Redis calls
-    await r.lpush(redis_key, json.dumps(packet))
-    await r.ltrim(redis_key, 0, 200)
-    ws_log.info("Chartink stored | key=%s | list_len=%s", redis_key, await r.llen(redis_key))
-
-    # ✅ REAL-TIME PUSH to dashboard (WS) for low latency auto-trade
+    # ✅ REAL-TIME PUSH to dashboard (WS) first (so UI updates before dispatch)
     try:
         await TICK_HUB.broadcast(user_id, {"type": "alert", "alert": packet})
     except Exception:
         ws_log.exception("Chartink WS push failed | user=%s", user_id)
+
+    # Dispatch auto-trades right after WS push (no Redis wait)
+    asyncio.create_task(_start_auto_trades_immediate())
+    
+    # 🔴 Await Redis calls (store after dispatch)
+    await r.lpush(redis_key, json.dumps(packet))
+    await r.ltrim(redis_key, 0, 200)
+    ws_log.info("Chartink stored | key=%s | list_len=%s", redis_key, await r.llen(redis_key))
 
     return {"status": "success"}
 
@@ -1771,6 +1997,42 @@ async def get_alerts(request: Request):
     return alerts
 
 
+@app.post("/api/alerts/add")
+async def add_alert_symbol(request: Request):
+    """
+    Add a symbol to today's alerts list so it appears in the table immediately.
+    """
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, status_code=401)
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    symbol = str(data.get("symbol") or "").strip().upper()
+    scan = str(data.get("scan") or "MANUAL").strip()
+    if not symbol:
+        return JSONResponse({"error": "Symbol missing"}, status_code=400)
+
+    # Ensure WS token if available
+    tok = SYMBOL_TOKEN_RAM.get(int(user_id), {}).get(symbol) or GLOBAL_SYMBOL_TOKEN.get(symbol)
+    if tok:
+        add_ws_token(int(user_id), int(tok))
+
+    ist = pytz.timezone("Asia/Kolkata")
+    today = datetime.datetime.now(ist).strftime("%Y-%m-%d")
+    redis_key = f"chartink_alerts:{user_id}:{today}"
+    packet = {
+        "id": int(time.time() * 1000),
+        "scan": scan,
+        "stocks": [symbol],
+        "time": datetime.datetime.now(ist).strftime("%H:%M:%S"),
+    }
+    await r.lpush(redis_key, json.dumps(packet))
+    await r.ltrim(redis_key, 0, 200)
+    return {"status": "added", "symbol": symbol}
+
+
 
 # ------------------------------------------------
 # LADDER ENGINE API
@@ -1798,6 +2060,13 @@ async def api_ladder_start(request: Request, body: LadderStartReq):
     symbol = body.symbol.strip().upper()
 
     try:
+        # Block all new ladders after auto square-off for the day
+        try:
+            if await r.exists(_post_squareoff_halt_key(int(user_id))):
+                return JSONResponse({"error": "AUTO_SQUAREOFF_DONE: trades blocked for today"}, 403)
+        except Exception:
+            pass
+
         # ✅ token resolve (RAM first, then global instruments)
         token = SYMBOL_TOKEN_RAM.get(int(user_id), {}).get(symbol) or GLOBAL_SYMBOL_TOKEN.get(symbol)
 
@@ -1821,6 +2090,9 @@ async def api_ladder_start(request: Request, body: LadderStartReq):
                 "message": resp.get("message", "Waiting for feed..."),
                 "session": resp.get("session"),
             }
+
+        if isinstance(resp, dict) and resp.get("error"):
+            return resp
 
         return resp
     except Exception as e:
@@ -1912,7 +2184,9 @@ async def api_ladder_squareoff(request: Request, body: LadderSquareoffReq):
             await r.set(key, json.dumps(data))
         except Exception:
             pass
-    return {"status": "squareoff_placed", "symbol": symbol, "qty": qty, "order_id": oid}@app.get("/api/ladder/sessions")
+    return {"status": "squareoff_placed", "symbol": symbol, "qty": qty, "order_id": oid}
+
+@app.get("/api/ladder/sessions")
 async def ladder_sessions(request: Request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -1967,6 +2241,17 @@ async def api_ladder_state(request: Request):
             if day and day != today:
                 continue
             filtered.append(s)
+
+        # Attach auto-retry limit status (only when remaining=0)
+        limit_state = AUTO_RETRY_LIMIT_STATE.get(int(user_id)) or {}
+        if limit_state and int(limit_state.get("remaining", 1)) == 0:
+            for s in filtered:
+                if isinstance(s, dict):
+                    s["limit_block"] = True
+                    s["limit_scan"] = limit_state.get("scan")
+                    s["limit_active"] = limit_state.get("active")
+                    s["limit_max"] = limit_state.get("limit")
+                    s["limit_remaining"] = limit_state.get("remaining")
 
         return JSONResponse(filtered)
     except Exception as e:
@@ -2069,6 +2354,14 @@ async def execute_squareoff_all(user_id: int):
     logging.info(f"Starting Square-off all positions for user {user_id}")
 
     try:
+        # Prevent concurrent/double squareoff for same user
+        lock_key = f"squareoff_all:lock:{user_id}"
+        try:
+            locked = await r.set(lock_key, "1", nx=True, ex=60)
+            if not locked:
+                return {"error": "Squareoff already in progress"}
+        except Exception:
+            pass
         kite = await get_kite_for_user(user_id)
         if not kite:
              return {"error": "Kite not connected"}
@@ -2086,15 +2379,19 @@ async def execute_squareoff_all(user_id: int):
             for s in eng.sessions.keys():
                 symbols_to_cleanup.add(s)
 
-        # 1) Place squareoff orders for all open positions
+        # 1) Place squareoff orders for all open positions (dedupe by symbol)
+        pos_by_sym: Dict[str, int] = {}
         for p in pos:
             sym = str(p.get("tradingsymbol", "")).upper()
             q = int(p.get("quantity", 0) or 0)
             if not sym or q == 0:
                 continue
+            pos_by_sym[sym] = pos_by_sym.get(sym, 0) + q
 
+        for sym, q in pos_by_sym.items():
+            if q == 0:
+                continue
             side = kite.TRANSACTION_TYPE_SELL if q > 0 else kite.TRANSACTION_TYPE_BUY
-            
             try:
                 oid = kite.place_order(
                     variety=kite.VARIETY_REGULAR,
@@ -2108,7 +2405,6 @@ async def execute_squareoff_all(user_id: int):
                 placed.append({"symbol": sym, "qty": abs(q), "order_id": oid})
                 logging.info(f"Square-off order placed: {sym} | qty: {abs(q)} | oid: {oid}")
             except Exception as e:
-                # Log error but CONTINUE cleanup
                 logging.error(f"Square-off order failed for {sym} user {user_id}: {e}")
             symbols_to_cleanup.add(sym)
 
@@ -2171,6 +2467,11 @@ async def execute_squareoff_all(user_id: int):
         # Rethrow or return error dict so caller handles it
         logging.error(f"Square-off all execution failed: {e}")
         return {"error": str(e)}
+    finally:
+        try:
+            await r.delete(lock_key)
+        except Exception:
+            pass
 
 
 @app.post("/api/squareoff_all")  # Exit all
@@ -2234,42 +2535,91 @@ async def auto_squareoff_loop():
 
         # ✅ Trigger window: 15:20–15:29 IST (catch-up if server was busy)
         if now.hour == 15 and 20 <= now.minute < 30 and triggered_today != today_date:
+            # Hard guard: run only once per day (even if loop re-enters)
+            try:
+                guard_key = f"auto_squareoff:done:{now.strftime('%Y%m%d')}"
+                ok = await r.set(guard_key, "1", nx=True, ex=60 * 60 * 8)
+                if not ok:
+                    await asyncio.sleep(1)
+                    continue
+            except Exception:
+                pass
             logging.info("=" * 60)
             logging.info("⏰ AUTO SQUARE-OFF TRIGGERED window (15:20-15:29 IST)")
             logging.info("=" * 60)
 
             triggered_today = today_date  # Mark as triggered for today
 
+            # Build user list from access_token:* and fallback to zerodha:keys:*
+            user_ids: set[int] = set()
             cursor = 0
-            keys_found = 0
             while True:
-                cursor, keys = await r.scan(cursor=cursor, match="access_token:*", count=100)
+                cursor, keys = await r.scan(cursor=cursor, match="access_token:*", count=200)
                 for key in keys:
-                    keys_found += 1
                     try:
                         uid_str = key.decode().split(":")[-1] if isinstance(key, bytes) else key.split(":")[-1]
-                        if not uid_str.isdigit():
-                            continue
-                        user_id = int(uid_str)
-
-                        # Only process if token still exists
-                        if await r.exists(key):
-                            # ✅ FIXED: Call extracted function, NOT the route handler
-                            sq_res = await execute_squareoff_all(user_id)
-                            if "error" not in sq_res:
-                                evt_key = f"auto_squareoff:event:{user_id}"
-                                evt_payload = {
-                                    "ts": int(time.time()),
-                                    "time_ist": now.strftime("%H:%M:%S"),
-                                    "count": int(sq_res.get("count", 0)),
-                                    "status": "SUCCESS",
-                                }
-                                await r.set(evt_key, json.dumps(evt_payload), ex=60 * 60 * 12)
-                    except Exception as e:
-                        logging.error(f"Error processing auto square-off for key {key}: {e}")
-
+                        if uid_str.isdigit():
+                            user_ids.add(int(uid_str))
+                    except Exception:
+                        pass
                 if cursor == 0:
                     break
+
+            if not user_ids:
+                cursor = 0
+                while True:
+                    cursor, keys = await r.scan(cursor=cursor, match="zerodha:keys:*", count=200)
+                    for key in keys:
+                        try:
+                            uid_str = key.decode().split(":")[-1] if isinstance(key, bytes) else key.split(":")[-1]
+                            if uid_str.isdigit():
+                                user_ids.add(int(uid_str))
+                        except Exception:
+                            pass
+                    if cursor == 0:
+                        break
+
+            keys_found = 0
+            for user_id in user_ids:
+                try:
+                    if not await r.exists(f"access_token:{user_id}"):
+                        continue
+                    # Immediately block auto-retry and clear pending queues for this user
+                    try:
+                        await r.set(_post_squareoff_halt_key(user_id), "1", ex=60 * 60 * 12)
+                        logging.info("AUTO_HALTED user=%s reason=auto_squareoff", user_id)
+                    except Exception:
+                        pass
+                    try:
+                        cursor2 = 0
+                        while True:
+                            cursor2, pkeys = await r.scan(cursor=cursor2, match=f"auto:pending:{user_id}:*", count=200)
+                            if pkeys:
+                                await r.delete(*pkeys)
+                            if cursor2 == 0:
+                                break
+                        logging.info("AUTO_PENDING_CLEARED user=%s", user_id)
+                    except Exception:
+                        pass
+                    keys_found += 1
+                    # ✅ FIXED: Call extracted function, NOT the route handler
+                    sq_res = await execute_squareoff_all(user_id)
+                    if "error" not in sq_res:
+                        # Force automation to MANUAL after auto square-off
+                        try:
+                            await r.set(f"automation:mode:{user_id}", "MANUAL")
+                        except Exception:
+                            pass
+                        evt_key = f"auto_squareoff:event:{user_id}"
+                        evt_payload = {
+                            "ts": int(time.time()),
+                            "time_ist": now.strftime("%H:%M:%S"),
+                            "count": int(sq_res.get("count", 0)),
+                            "status": "SUCCESS",
+                        }
+                        await r.set(evt_key, json.dumps(evt_payload), ex=60 * 60 * 12)
+                except Exception as e:
+                    logging.error(f"Error processing auto square-off for user {user_id}: {e}")
             if keys_found == 0:
                 logging.warning("AUTO SQUARE-OFF: No access_token keys found in Redis")
             logging.info("=" * 60)
@@ -2305,9 +2655,9 @@ async def daily_reset_loop():
     triggered_today = None
     patterns = [
         "zerodha:keys:*",
-        "access_token:*",
         "automation:mode:*",
         "universal:settings:*",
+        "stock:settings:*",
         "ladder:settings:universal:*",
         "ladder:settings:stock:*",
         "ladder:state:*",
@@ -2315,6 +2665,7 @@ async def daily_reset_loop():
         "ladder:events:*",
         "ladder:count:*",
         "ladder:global_count:*",
+        "halt:insuff:*",
         "chartink_alerts:*",
     ]
 
@@ -2345,6 +2696,13 @@ async def place_trade(request: Request):
     if not symbol or qty <= 0 or side not in ("BUY", "SELL"):
         return JSONResponse({"error": "Invalid symbol/side/qty"}, 400)
     try:
+        # Block all new trades after auto square-off for the day
+        try:
+            if await r.exists(_post_squareoff_halt_key(int(user_id))):
+                return JSONResponse({"error": "AUTO_SQUAREOFF_DONE: trades blocked for today"}, 403)
+        except Exception:
+            pass
+
         kite = await get_kite_for_user(int(user_id))
         if not kite:
              return JSONResponse({"error": "Kite not connected"}, 401)

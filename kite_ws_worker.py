@@ -10,6 +10,7 @@ from kiteconnect import KiteTicker
 import asyncio
 import websockets
 import requests
+from requests.adapters import HTTPAdapter
 from dotenv import load_dotenv
 import os
 
@@ -132,6 +133,10 @@ LOCK = threading.Lock()
 
 WS_TOKENS_KEY = f"ws:{USER_ID}:tokens"
 WS_CONNECTED = False
+LAST_TICK_TS = 0.0
+LAST_RECONNECT_TS = 0.0
+STALE_TICK_SEC = 6.0
+RECONNECT_COOLDOWN_SEC = 30.0
 
 
 # -------------------------------------------------
@@ -172,10 +177,10 @@ async def ws_sender_loop():
         try:
             async with websockets.connect(
                 FASTAPI_WS_INGEST,
-                ping_interval=30,
-                ping_timeout=60,
+                ping_interval=15,
+                ping_timeout=30,
                 open_timeout=10,
-                close_timeout=3,
+                close_timeout=5,
                 max_size=5_000_000
             ) as ws:
                 log.info("✅ Connected to FastAPI ingest WS")
@@ -225,7 +230,25 @@ def start_sender_thread():
 def on_connect(ws, response):
     global WS_CONNECTED
     WS_CONNECTED = True
-    log.info("✅ Kite WS connected")
+    log.info("✅ Kite WS Connected")
+    # Re-subscribe and enforce FULL mode after reconnect
+    try:
+        resp = requests.get(
+            FASTAPI_HTTP_TOKENS,
+            params={"user_id": int(USER_ID)},
+            timeout=3.0,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            tokens = [int(x) for x in (data.get("tokens") or []) if str(x).isdigit()]
+            if tokens:
+                kws.subscribe(tokens)
+                kws.set_mode(kws.MODE_FULL, tokens)
+                with LOCK:
+                    SUBSCRIBED.update(tokens)
+                log.info(f"⚡⚡ Re-subscribed FULL mode :-> {tokens}")
+    except Exception as e:
+        log.error(f"WS reconnect subscribe failed: {e}")
 
 
 def on_close(ws, code, reason):
@@ -276,6 +299,9 @@ def on_ticks(ws, ticks):
     We convert to compact payload and push into buffer.
     """
     try:
+        global LAST_TICK_TS
+        if ticks:
+            LAST_TICK_TS = time.time()
         now_ts = int(time.time())
 
         for t in ticks:
@@ -342,16 +368,14 @@ def on_ticks(ws, ticks):
 # TOKEN SUBSCRIBE LOOP
 # -------------------------------------------------
 def sync_tokens():
-    """
-    Reads tokens from FastAPI (RAM) instead of Redis.
-    """
+    """Reads tokens from FastAPI (RAM) instead of Redis."""
     last_seen = set()
-    poll_interval = 1.0
-    max_idle_interval = 5.0
+    poll_interval = 0.2
+    max_idle_interval = 1.0
 
     # Create a persistent session to reuse TCP connections (Avoid WinError 10048)
     sess = requests.Session()
-    adapter = requests.adapters.HTTPAdapter(max_retries=3)
+    adapter = HTTPAdapter(max_retries=3)
     sess.mount("http://", adapter)
 
     while True:
@@ -390,7 +414,7 @@ def sync_tokens():
                     SUBSCRIBED.update(new)
                     last_seen = tokens.copy()
 
-                log.info(f"⚡ Instant subscribe: {list(new)}")
+                log.info(f"⚡⚡ Instant subscribe :-> {list(new)}")
                 poll_interval = 1.0
             else:
                 poll_interval = min(max_idle_interval, poll_interval + 1.0)
@@ -404,13 +428,39 @@ def sync_tokens():
             time.sleep(5.0) # Backoff on error
 
 
+def tick_watchdog():
+    """
+    If ticks stall while WS is connected, force a reconnect.
+    This prevents the dashboard from showing "connected" but no updates.
+    """
+    global LAST_RECONNECT_TS
+    while True:
+        if r.get(f"kill:{USER_ID}"):
+            return
+        if WS_CONNECTED and LAST_TICK_TS > 0:
+            age = time.time() - LAST_TICK_TS
+            if age > STALE_TICK_SEC and (time.time() - LAST_RECONNECT_TS) > RECONNECT_COOLDOWN_SEC:
+                LAST_RECONNECT_TS = time.time()
+                log.warning(f"⚠️ No ticks for {age:.1f}s → reconnecting Kite WS")
+                try:
+                    kws.close()
+                except Exception:
+                    pass
+                time.sleep(1.0)
+                try:
+                    kws.connect(threaded=True)
+                except Exception as e:
+                    log.error(f"Reconnect failed: {e}")
+        time.sleep(5.0)
+
+
 
 
 # -------------------------------------------------
 # START
 # -------------------------------------------------
 def start():
-    log.info("🚀 Starting Kite WS Worker")
+    log.info("🚀🚀 Starting Kite WS Worker")
     start_sender_thread()
 
     kws.on_ticks = on_ticks
@@ -420,6 +470,7 @@ def start():
     kws.on_order_update = on_order_update  # ✅ ADDED CALLBACK
 
     threading.Thread(target=sync_tokens, daemon=True, name=f"token_sync_user_{USER_ID}").start()
+    threading.Thread(target=tick_watchdog, daemon=True, name=f"tick_watchdog_user_{USER_ID}").start()
     kws.connect(threaded=True)
 
 

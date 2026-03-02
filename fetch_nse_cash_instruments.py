@@ -161,32 +161,12 @@ def fetch_circuit_prev(symbols):
     print(f"✅ Circuit/Prev cached for {fetched} symbols")
 
 if __name__ == "__main__":
-    watch = "--watch" in sys.argv
     fetch_circuit_flag = "--fetch-circuit" in sys.argv
-    watch_interval = _get_int_arg("--watch-interval", 60)
+    if "--watch" in sys.argv:
+        print("Watch mode removed. Use one-time fetch with --fetch-circuit.")
+        sys.exit(0)
 
-    if watch:
-        # In watch mode, avoid refetching instruments repeatedly.
-        if os.path.exists(OUT_FILE):
-            try:
-                with open(OUT_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-            except Exception:
-                data = fetch_nse_cash()
-        else:
-            data = fetch_nse_cash()
-
+    data = fetch_nse_cash()
+    if fetch_circuit_flag:
         symbols = sorted(list((data.get("symbol_to_token") or {}).keys()))
-        if not symbols:
-            print("No symbols found to watch. Exiting.")
-            sys.exit(1)
-
-        print(f"Watching circuit/prev every {watch_interval}s ...")
-        while True:
-            fetch_circuit_prev(symbols)
-            time.sleep(max(5, watch_interval))
-    else:
-        data = fetch_nse_cash()
-        if fetch_circuit_flag:
-            symbols = sorted(list((data.get("symbol_to_token") or {}).keys()))
-            fetch_circuit_prev(symbols)
+        fetch_circuit_prev(symbols)

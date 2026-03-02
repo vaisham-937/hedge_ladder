@@ -113,6 +113,7 @@
     header.glass {
       background: rgba(3, 7, 18, 0.85);
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      overflow: visible;
     }
 
     /* --- Card Container with Top Shine --- */
@@ -1141,6 +1142,7 @@
     header.glass {
       background: #ffffffee !important;
       border-bottom: 1px solid #d1d5db !important;
+      overflow: visible !important;
     }
 
     .magic-border-container {
@@ -1182,6 +1184,14 @@
     #alerts-body.row-dnd-active tr {
       transition: none !important;
     }
+    #alerts-body.row-dnd-active tr {
+      animation: none !important;
+      transform: none !important;
+      cursor: grabbing !important;
+    }
+    #alerts-body.row-dnd-active td {
+      background-color: #eef2f7 !important;
+    }
 
     #alerts-body tr:hover,
     #ladderRows tr:hover {
@@ -1196,6 +1206,12 @@
       background: #ffffff !important;
       color: #111827 !important;
       border: 1px solid #cbd5e1 !important;
+    }
+
+    /* Virtualize heavy rows (browser can skip offscreen rendering) */
+    .row-virtual {
+      content-visibility: auto;
+      contain-intrinsic-size: 26px 1200px;
     }
 
     input::placeholder,
@@ -1447,7 +1463,6 @@
       border-radius: 0 !important;
       box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12) !important;
       padding: 0 !important;
-      overflow: hidden !important;
     }
 
     #active-alerts-table > .overflow-x-auto,
@@ -1469,9 +1484,51 @@
     .magic-border-container .overflow-x-auto {
       background: #ffffff !important;
     }
-    #alerts-fit-wrap {
-      overflow-x: auto !important;
-    }
+
+#alerts-fit-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  max-height: none;
+  scrollbar-width: none; /* Firefox: hide native bar */
+  padding-bottom: 0;     /* no extra space for native bar */
+}
+#alerts-fit-wrap::-webkit-scrollbar {
+  height: 0; /* WebKit: hide native bar */
+}
+
+/* Sticky horizontal scrollbar at bottom (always visible) */
+.alerts-hscroll-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  z-index: 60;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: rgba(40, 58, 99, 0.741);
+  border-top: 1px solid rgba(148, 163, 184, 0.3);
+  backdrop-filter: blur(6px);
+}
+.alerts-hscroll-inner {
+  height: 1px;
+  width: 0;
+}
+.alerts-hscroll-bar::-webkit-scrollbar {
+  height: 6px;
+}
+.alerts-hscroll-bar::-webkit-scrollbar-thumb {
+  background: rgba(43, 171, 230, 0.5);
+  border-radius: 10px;
+}
+.alerts-hscroll-bar::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+}
+/* Required for sticky to work properly */
+#alerts-fit-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
 
     #alerts-fit-table th,
     #alerts-fit-table td {
@@ -1509,8 +1566,8 @@
     }
     /* Keep per-field colors visible in live alerts table */
     #alerts-fit-table td[data-field="pct"]  { font-weight: 800 !important; }
-    #alerts-fit-table td[data-field="fo"]   { font-weight: 800 !important; font-size: 11px !important; }
-    #alerts-fit-table td[data-field="fo"].fo-pos { color: #0cb514f1 !important; }
+    #alerts-fit-table td[data-field="fo"]   { font-weight: 800 !important; font-size: 12px !important; }
+    #alerts-fit-table td[data-field="fo"].fo-pos { color: #08aa10f1 !important; }
     #alerts-fit-table td[data-field="fo"].fo-neg { color: #ce0d0df6 !important; }
     #alerts-fit-table td[data-field="fo"].fo-zero { color: #94a3b8 !important; }
     #alerts-fit-table td[data-field="fo"],
@@ -1531,14 +1588,46 @@
       font-weight: 700 !important;
     }
 
+    :root {
+      --alerts-sticky-top: 64px;
+    }
+
+    /* Sticky header for alerts table (stays under top bar) */
+    #alerts-fit-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #0f172a;
+}
+    #alerts-fit-table {
+      border-collapse: collapse;
+    }
 
     /* Execution columns (EB/ES) — make text black for clarity */
     #alerts-fit-table th[data-add-col*="EB"],
     #alerts-fit-table th[data-add-col*="ES"],
     #alerts-fit-table td[data-lfield*="_eb"],
     #alerts-fit-table td[data-lfield*="_es"] {
-      color: #000000 !important;
+      color: #212020 !important;
       font-weight: 800 !important;
+    }
+    /* Compact execution + TSL columns */
+    #alerts-fit-table th[data-add-col*="EB"],
+    #alerts-fit-table th[data-add-col*="ES"],
+    #alerts-fit-table th[data-add-col$="BTSL"],
+    #alerts-fit-table th[data-add-col$="EBTSL"],
+    #alerts-fit-table th[data-add-col$="STSL"],
+    #alerts-fit-table th[data-add-col$="ESTSL"],
+    #alerts-fit-table td[data-lfield*="_eb"],
+    #alerts-fit-table td[data-lfield*="_es"],
+    #alerts-fit-table td[data-lfield*="_btsl"],
+    #alerts-fit-table td[data-lfield*="_ebtsl"],
+    #alerts-fit-table td[data-lfield*="_stsl"],
+    #alerts-fit-table td[data-lfield*="_estsl"] {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      letter-spacing: -0.2px;
+      font-size: 10px !important;
     }
     /* EBTSL should be white (override execution column rule above) */
     #alerts-fit-table th[data-add-col$="EBTSL"],
@@ -1550,46 +1639,28 @@
       color: #ffffff !important;
     }
 
-    /* Alerts table hover arrows for horizontal scroll */
-    .alerts-scroll-arrow {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 28px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(15, 23, 42, 0.45);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      color: #e2e8f0;
-      border-radius: 10px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.12s ease, background 0.2s ease, border-color 0.2s ease;
-      z-index: 30;
-      backdrop-filter: blur(8px);
+    /* Add Stock mini panel */
+    #add-stock-panel {
+      min-width: 220px;
+    }
+    #add-stock-panel select,
+    #add-stock-panel input {
+      border-color: #334155 !important;
+    }
+    /* Force readable select text (some browsers render white-on-white) */
+    #add-stock-panel select {
+      min-width: 96px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: #111827 !important;
+      background-color: #f8fafc !important;
+    }
+    #add-stock-panel option {
+      color: #111827 !important;
+      background-color: #ffffff !important;
     }
 
-    #active-alerts-table.has-hscroll .alerts-scroll-arrow {
-      opacity: 0.8;
-      pointer-events: auto;
-    }
-
-    .alerts-scroll-arrow:hover,
-    .alerts-scroll-arrow:focus-visible {
-      opacity: 1;
-      background: rgba(14, 165, 233, 0.25);
-      border-color: rgba(14, 165, 233, 0.6);
-    }
-
-    .alerts-scroll-left {
-      left: 6px;
-    }
-
-    .alerts-scroll-right {
-      right: 6px;
-    }
+    /* Horizontal scroll uses native scrollbar (no arrows) */
     #alerts-fit-table .b-col {
       background: #ecfeff !important;
       color: #0e7490 !important;
@@ -1849,7 +1920,7 @@
     .topbar-main {
       flex-wrap: nowrap !important;
       overflow-x: auto;
-      overflow-y: hidden;
+      overflow-y: visible;
       white-space: nowrap;
       align-items: center;
     }
@@ -1857,6 +1928,11 @@
     .topbar-main .topbar-right {
       flex-wrap: nowrap !important;
       align-items: center;
+      overflow: visible !important;
+    }
+
+    .topbar-actions {
+      overflow-y: visible !important;
     }
 
     header button {
@@ -2079,7 +2155,49 @@
         </div>
         <!-- Status + Action group pushed to far right -->
         <div class="flex items-center gap-0.5 sm:gap-1">
-          <div class="flex items-center gap-1 overflow-x-auto pb-0 max-w-[200px] sm:max-w-none no-scrollbar">
+<div class="topbar-actions flex items-center gap-1 overflow-visible pb-0 sm:max-w-none no-scrollbar">            
+  <!-- Add Stock (quick subscribe + ladder) -->
+            <div class="relative hidden sm:flex items-center overflow-visible">
+              <button id="add-stock-btn"
+                class="h-4 px-1.5 rounded-full text-[7px] font-semibold border border-slate-300 text-slate-600 bg-slate-100 hover:bg-white transition-all flex items-center gap-1 shadow-sm"
+                title="Add Stock">
+                <i class="fa-solid fa-magnifying-glass text-[7px]"></i>
+                <span class="uppercase tracking-wide text-[8px]">Add Stock</span>
+              </button>
+              <div id="add-stock-panel"
+              class="hidden fixed z-[99999] min-w-[280px] bg-slate-900 border border-slate-700 rounded-lg p-2 shadow-2xl">                
+              <div class="flex items-center justify-between mb-1">
+                  <span class="text-[9px] font-bold text-slate-300">ADD STOCK</span>
+                  <button id="add-stock-close" class="text-[9px] font-bold text-white-400 hover:text-slate-200">✕</button>
+                </div>
+                <div class="flex items-center gap-1">
+                  <input id="add-stock-symbol" list="add-stock-list"
+                    class="w-28 bg-slate-800/70 border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-white"
+                    placeholder="SYMBOL" />
+                  <datalist id="add-stock-list"></datalist>
+                  <select id="add-stock-side"
+                    class="bg-slate-800/70 border border-slate-700 rounded px-1 py-1 text-[10px] text-slate-100">
+                    <option value="BUY">BUY</option>
+                    <option value="SELL">SELL</option>
+                  </select>
+                </div>
+                <div class="flex items-center gap-1 mt-1">
+                  <select id="add-stock-mode"
+                    class="flex-1 bg-slate-800/70 border border-slate-700 rounded px-1 py-1 text-[10px] text-slate-100">
+                    <option value="UNIVERSAL">UNIVERSAL</option>
+                    <option value="STOCK">STOCK</option>
+                  </select>
+                  <button id="add-stock-settings"
+                class="px-2 py-1 rounded border border-cyan-500 text-cyan-300 hover:bg-cyan-500 hover:text-black transition-all text-[11px] font-semibold flex items-center gap-1"
+                title="Settings">
+                <i class="fa-solid fa-gear text-[11px]"></i>
+                <span>SET</span>
+                </button>
+                  <button id="add-stock-submit" class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold shadow"> ADD </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Zerodha -->
             <div id="status-badge" class="status-pill badge-gray shrink-0">
               <div class="pulse-ring">
@@ -2150,12 +2268,6 @@
         <div
           class="absolute -top-20 -right-20 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl group-hover:bg-cyan-500/10 transition-all duration-700">
         </div>
-        <button type="button" class="alerts-scroll-arrow alerts-scroll-left" onclick="scrollAlertsTable(-1)" aria-label="Scroll left">
-          <i class="fa-solid fa-chevron-left text-xs"></i>
-        </button>
-        <button type="button" class="alerts-scroll-arrow alerts-scroll-right" onclick="scrollAlertsTable(1)" aria-label="Scroll right">
-          <i class="fa-solid fa-chevron-right text-xs"></i>
-        </button>
         <div id="alerts-fit-wrap" class="overflow-x-auto custom-scrollbar relative z-10 bg-slate-900/30">
           <table id="alerts-fit-table" class="min-w-[2000px] w-full text-[10px] text-left border-collapse">
             <thead
@@ -2163,25 +2275,25 @@
               <tr>
                 <th scope="col" data-col="symbol" class="w-14 px-0.5 py-2 font-extrabold text-slate-200 text-[11px] font-mono tracking-wide whitespace-nowrap text-left">Symbol</th>
               <th scope="col" data-col="ltp" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">LTP</th>
-                <th scope="col" data-col="open" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">Open</th>
+                <th scope="col" data-col="open" class="w-[52px] px-0 py-2 font-semibold text-center text-[10px] font-mono tracking-tight">Open</th>
                 <th scope="col" data-col="pclose" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">PCl</th>
                 <th scope="col"
-                  data-col="pct" class="w-[48px] px-0 py-2 font-extrabold text-center text-[10px] font-mono tracking-tight">
+                  data-col="pct" class="w-[46px] px-0 py-2 font-extrabold text-center text-[10px] font-mono tracking-tight">
                   %Chg</th>
-                <th scope="col" data-col="fo" class="w-[46px] px-1 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CO</th>
-                <th scope="col" data-col="fh" class="w-[50px] px-1.5 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CH</th>
-                <th scope="col" data-col="fl" class="w-[50px] px-1.5 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CL</th>
+                <th scope="col" data-col="fo" class="w-[48px] px-1 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CO</th>
+                <th scope="col" data-col="fh" class="w-[48px] px-1 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CH</th>
+                <th scope="col" data-col="fl" class="w-[48px] px-1 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CL</th>
                 <th scope="col" data-col="lc" class="w-[52px] px-0 py-2 font-semibold text-center text-[10px] font-mono text-slate-300">LC</th>
                 <th scope="col" data-col="uc" class="w-[52px] px-0 py-2 font-semibold text-center text-[10px] font-mono text-slate-300">UC</th>
-                <th scope="col" data-col="tbq" class="w-[54px] px-0 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-emerald-500">TBQ</th>
-                <th scope="col" data-col="tsq" class="w-[54px] px-0 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-red-500">TSQ</th>
-                <th scope="col" data-col="tcr" class="w-[54px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">TURN</th>
+                <th scope="col" data-col="tbq" class="w-[44px] px-0 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-emerald-500">TBQ</th>
+                <th scope="col" data-col="tsq" class="w-[44px] px-0 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-red-500">TSQ</th>
+                <th scope="col" data-col="tcr" class="w-[44px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">TURN</th>
                 <th scope="col" data-col="action"
                   class="w-10 px-0 py-2 text-center font-extrabold text-[10px] font-mono text-slate-200 bg-slate-900 tracking-tight">
                   Action</th>
-                <th scope="col" data-col="cycle" class="w-8 px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight text-emerald-400">Cycle</th>
+                <th scope="col" data-col="cycle" class="w-[38px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight text-emerald-400">Cycle</th>
                 <th scope="col" data-col="pnl" class="w-[50px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight">PnL</th>
-                <th scope="col" data-col="status" class="w-[54px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight text-sky-400">Status</th>
+                <th scope="col" data-col="status" class="w-[40px] px-0.5 py-2 font-bold text-center text-[9px] font-mono tracking-tight text-sky-400">Status</th>
               </tr>
             </thead>
             <tbody id="alerts-body" class="divide-y divide-slate-800/50 text-slate-300 whitespace-nowrap">
@@ -2190,18 +2302,25 @@
           </table>
 
           <!-- Empty State -->
-          <div id="alerts-empty" class="hidden flex flex-col items-center justify-center py-20 text-slate-500">
-            <i class="fa-solid fa-radar text-4xl mb-4 animate-pulse text-slate-700"></i>
-            <p>Waiting for signals...</p>
-          </div>
+          <div id="alerts-empty"
+class="hidden flex flex-col items-center justify-center py-16 text-slate-400">
+  <div class="relative flex items-center justify-center w-14 h-14 mb-3 rounded-full bg-slate-800 border border-slate-600 shadow-inner">
+    <i class="fa-solid fa-radar text-xl text-cyan-400 animate-pulse"></i>
+    <span class="absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-20 animate-ping"></span>
+  </div>
+  <p class="text-[13px] font-medium tracking-wide text-slate-300">
+    Waiting for Live Signals...
+  </p>
+<span class="text-[11px] text-slate-500 mt-1"> Monitoring Chartink Webhooks </span>
+</div>
         </div>
       </div>
-
     </section>
-
-
   </main>
-
+  <!-- Sticky horizontal scrollbar for alerts table -->
+  <div id="alerts-hscroll-bar" class="alerts-hscroll-bar" aria-hidden="true">
+    <div id="alerts-hscroll-inner" class="alerts-hscroll-inner"></div>
+  </div>
   <!-- ================= TRADE MODAL ================= -->
   <div id="tradeModal"
     class="fixed inset-0 hidden bg-black/70 backdrop-blur-md flex items-center justify-center z-50 modal px-3">
@@ -2260,7 +2379,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Qty Mode</label>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Position Size</label>
             <select id="ls-qtymode"
               class="w-full bg-slate-800/50 border border-slate-700 rounded-md px-2.5 py-2 text-slate-100 font-semibold focus:border-cyan-500 focus:bg-slate-800 focus:ring-4 focus:ring-cyan-500/10 outline-none transition-all cursor-pointer text-xs">
               <option value="CAPITAL">Capital Based</option>
@@ -2729,7 +2848,6 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
 }
 
-
     // IST time parts
     function istHM() {
       const parts = new Intl.DateTimeFormat("en-IN", {
@@ -2745,7 +2863,6 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
       }
       return { h, m };
     }
-
     /**
      * Alerts should stay visible whenever backend sends data.
      * Keep this gate disabled.
@@ -2897,6 +3014,16 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
       WS_STALE_TIMER = null;
     }
 
+    const TICK_FLUSH_MIN_MS = 90; // ~11 FPS cap
+    let TICK_FLUSH_LAST = 0;
+    function scheduleTickFlush() {
+      if (TICK_FLUSH_TIMER) return;
+      const now = Date.now();
+      const since = now - TICK_FLUSH_LAST;
+      const delay = Math.max(TICK_FLUSH_MIN_MS - since, 0);
+      TICK_FLUSH_TIMER = setTimeout(flushTickUI, delay);
+    }
+
     function startTickWS() {
       if (TICK_WS && TICK_WS.readyState <= 1) return;
 
@@ -2940,17 +3067,23 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
             if (!t.symbol) continue;
             TICK_BUFFER[String(t.symbol).toUpperCase()] = t;
           }
-          if (!TICK_FLUSH_TIMER) {
-            TICK_FLUSH_TIMER = setTimeout(flushTickUI, 100);
+          scheduleTickFlush();
+          return;
+        }
+
+        // batched ticks support
+        if (d.type === "ticks" && Array.isArray(d.ticks)) {
+          for (const t of d.ticks) {
+            if (!t || !t.symbol) continue;
+            TICK_BUFFER[String(t.symbol).toUpperCase()] = t;
           }
+          scheduleTickFlush();
           return;
         }
 
         if (!d.symbol) return;
         TICK_BUFFER[String(d.symbol).toUpperCase()] = d;
-        if (!TICK_FLUSH_TIMER) {
-          TICK_FLUSH_TIMER = setTimeout(flushTickUI, 100);
-        }
+        scheduleTickFlush();
       };
     }
 
@@ -3028,6 +3161,16 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
     }
 
 
+    const SYM_NODE_CACHE = new Map();
+    function _getSymNodes(sym) {
+      let nodes = SYM_NODE_CACHE.get(sym);
+      if (!nodes || nodes.length === 0 || (nodes[0] && !nodes[0].isConnected)) {
+        nodes = Array.from(document.querySelectorAll(`[data-sym="${sym}"]`));
+        SYM_NODE_CACHE.set(sym, nodes);
+      }
+      return nodes;
+    }
+
     function flushTickUI() {
       for (const sym in TICK_BUFFER) {
         const d = TICK_BUFFER[sym];
@@ -3046,7 +3189,7 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
         const lc = (d.lower_circuit != null && d.lower_circuit !== "") ? Number(d.lower_circuit) : 0;
 
         // ALERTS table: update ALL rows having data-sym=sym
-        const nodes = document.querySelectorAll(`[data-sym="${sym}"]`);
+        const nodes = _getSymNodes(sym);
         nodes.forEach(node => {
           const field = node.getAttribute("data-field");
           if (!field) return;
@@ -3118,6 +3261,7 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
         }
       }
       TICK_BUFFER = {};
+      TICK_FLUSH_LAST = Date.now();
       TICK_FLUSH_TIMER = null;
 
       // ✅ REAL-TIME NET PNL: Recalculate overall PNL on every tick
@@ -3154,7 +3298,211 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
       host.classList.toggle("has-hscroll", hasScroll);
     }
 
-    function initAlertsStickyHeader() { }
+    function initAlertsStickyHScroll() {
+      const wrap = document.getElementById("alerts-fit-wrap");
+      const bar = document.getElementById("alerts-hscroll-bar");
+      const inner = document.getElementById("alerts-hscroll-inner");
+      const table = document.getElementById("alerts-fit-table");
+      if (!wrap || !bar || !inner) return;
+
+      let syncing = false;
+
+      const syncSizes = () => {
+        const width = table ? table.scrollWidth : wrap.scrollWidth;
+        inner.style.width = `${Math.max(width, wrap.clientWidth)}px`;
+      };
+      syncSizes();
+
+      wrap.addEventListener("scroll", () => {
+        if (syncing) return;
+        syncing = true;
+        bar.scrollLeft = wrap.scrollLeft;
+        syncing = false;
+      }, { passive: true });
+
+      bar.addEventListener("scroll", () => {
+        if (syncing) return;
+        syncing = true;
+        wrap.scrollLeft = bar.scrollLeft;
+        syncing = false;
+      }, { passive: true });
+
+      window.addEventListener("resize", syncSizes);
+      if (window.ResizeObserver && table) {
+        const ro = new ResizeObserver(syncSizes);
+        ro.observe(table);
+      }
+    }
+
+    function initAlertsStickyHeader() {
+      const header = document.querySelector("header");
+      if (!header) return;
+      const h = Math.max(0, header.offsetHeight || 0);
+      if (h > 0) {
+        document.documentElement.style.setProperty("--alerts-sticky-top", `${h}px`);
+      }
+      window.addEventListener("resize", () => {
+        const nh = Math.max(0, header.offsetHeight || 0);
+        if (nh > 0) document.documentElement.style.setProperty("--alerts-sticky-top", `${nh}px`);
+      });
+    }
+
+    // Add Stock quick panel
+    let ADD_STOCK_TIMER = null;
+    function toggleAddStockPanel(forceOpen) {
+      const panel = document.getElementById("add-stock-panel");
+      if (!panel) return;
+      const show = (forceOpen != null) ? forceOpen : panel.classList.contains("hidden");
+      panel.classList.toggle("hidden", !show);
+      if (show) {
+        const input = document.getElementById("add-stock-symbol");
+        if (input) input.focus();
+      }
+    }
+
+    async function fetchSymbolSuggestions(q) {
+      if (!q || q.length < 1) return;
+      try {
+        const res = await fetch(`/api/symbols?q=${encodeURIComponent(q)}&limit=30`);
+        const data = await res.json();
+        const list = document.getElementById("add-stock-list");
+        if (!list) return;
+        list.innerHTML = "";
+        (data.symbols || []).forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s;
+          list.appendChild(opt);
+        });
+      } catch { }
+    }
+
+    function initAddStockUI() {
+      const btn = document.getElementById("add-stock-btn");
+      const panel = document.getElementById("add-stock-panel");
+      const input = document.getElementById("add-stock-symbol");
+      const submit = document.getElementById("add-stock-submit");
+      const settingsBtn = document.getElementById("add-stock-settings");
+      const closeBtn = document.getElementById("add-stock-close");
+      if (!btn || !panel || !input || !submit) return;
+
+        btn.addEventListener("click", () => {
+
+          const rect = btn.getBoundingClientRect();
+
+          panel.style.position = "fixed";
+          panel.style.top = (rect.bottom + 4) + "px";
+          panel.style.left = rect.left + "px";
+          panel.style.zIndex = "99999";
+
+          panel.classList.toggle("hidden");
+
+        });
+
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => toggleAddStockPanel(false));
+      }
+      document.addEventListener("click", (e) => {
+        if (!panel.contains(e.target) && !btn.contains(e.target)) {
+          panel.classList.add("hidden");
+        }
+      });
+      input.addEventListener("input", () => {
+        if (ADD_STOCK_TIMER) clearTimeout(ADD_STOCK_TIMER);
+        ADD_STOCK_TIMER = setTimeout(() => fetchSymbolSuggestions(input.value.trim().toUpperCase()), 200);
+      });
+      if (settingsBtn) {
+        settingsBtn.addEventListener("click", () => {
+          const symbol = input.value.trim().toUpperCase();
+          const side = (document.getElementById("add-stock-side")?.value || "BUY").toUpperCase();
+          const mode = (document.getElementById("add-stock-mode")?.value || "UNIVERSAL").toUpperCase();
+          if (!symbol) {
+            showMsg("⚠️ Enter symbol first", true);
+            return;
+          }
+          openTradeModal(symbol, side);
+          selectSettingsMode(mode === "STOCK" ? "STOCK" : "UNIVERSAL");
+          if (mode === "STOCK") loadStockSettingsToTradeModal(symbol);
+        });
+      }
+      const doSubmit = async () => {
+        const symbol = input.value.trim().toUpperCase();
+        const side = (document.getElementById("add-stock-side")?.value || "BUY").toUpperCase();
+        const mode = (document.getElementById("add-stock-mode")?.value || "UNIVERSAL").toUpperCase();
+        if (!symbol) return;
+        const alreadyInTable = (typeof subscribed !== "undefined") && subscribed.has(symbol);
+        if (mode === "STOCK") {
+          try {
+            const res = await fetch(`/api/stock-settings?symbol=${encodeURIComponent(symbol)}`);
+            const data = await res.json();
+            if (!data.settings) {
+              showMsg("⚠️ Stock settings missing. Please configure.", true);
+              openTradeModal(symbol, side);
+              selectSettingsMode("STOCK");
+              return;
+            }
+          } catch (e) {
+            showMsg("⚠️ Failed to check stock settings", true);
+            openTradeModal(symbol, side);
+            selectSettingsMode("STOCK");
+            return;
+          }
+        }
+        try {
+          // Add to alerts list only if not already present
+          if (!alreadyInTable) {
+            const addRes = await fetch("/api/alerts/add", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ symbol, scan: "MANUAL" })
+            });
+            if (!addRes.ok) {
+              const addErr = await addRes.json().catch(() => ({}));
+              showMsg("⚠️ Alerts add failed: " + (addErr?.error || addRes.status), true);
+            }
+          }
+
+          const settingsOverride = (mode === "UNIVERSAL")
+            ? { entry_threshold_enabled: false }
+            : null;
+          const res = await fetch("/api/ladder/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              symbol,
+              side,
+              settings_mode: mode,
+              settings: settingsOverride || undefined
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            showMsg("❌ " + (data?.error || "Ladder start failed"), true);
+            return;
+          }
+          if (data?.error) {
+            showMsg("❌ " + data.error, true);
+            return;
+          }
+          if (data?.status === "waiting_for_feed" || data?.status === "waiting_for_ltp") {
+            showMsg("⏳ Added: " + symbol + " (waiting for live feed)", false);
+          } else {
+            showMsg("✅ Added: " + symbol, false);
+          }
+          toggleAddStockPanel(false);
+          setTimeout(loadLadderState, 500);
+          setTimeout(loadAlerts, 300);
+        } catch (e) {
+          showMsg("❌ Add failed", true);
+        }
+      };
+      submit.addEventListener("click", doSubmit);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doSubmit();
+        }
+      });
+    }
 
     function initFastVerticalScroll() {
       const speed = 1.45;
@@ -3180,17 +3528,17 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
       for (let c = 1; c <= maxCycles; c += 1) {
         for (let i = 1; i <= maxAdds; i += 1) {
-          const th = document.createElement("th");
-          th.setAttribute("data-add-col", `C${c}B${i}`);
-          th.setAttribute("draggable", "true");
-          th.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
-          th.textContent = `C${c}B${i}`;
-          headRow.insertBefore(th, cycleTh);
+          const thB = document.createElement("th");
+          thB.setAttribute("data-add-col", `C${c}B${i}`);
+          thB.setAttribute("draggable", "true");
+          thB.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
+          thB.textContent = `C${c}B${i}`;
+          headRow.insertBefore(thB, cycleTh);
 
           const thEB = document.createElement("th");
           thEB.setAttribute("data-add-col", `C${c}EB${i}`);
           thEB.setAttribute("draggable", "true");
-          thEB.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
+          thEB.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
           thEB.textContent = `C${c}EB${i}`;
           headRow.insertBefore(thEB, cycleTh);
         }
@@ -3198,29 +3546,29 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
         const thBTsl = document.createElement("th");
         thBTsl.setAttribute("data-add-col", `C${c}BTSL`);
         thBTsl.setAttribute("draggable", "true");
-        thBTsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thBTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
         thBTsl.textContent = `C${c}BTSL`;
         headRow.insertBefore(thBTsl, cycleTh);
 
         const thEBTsl = document.createElement("th");
         thEBTsl.setAttribute("data-add-col", `C${c}EBTSL`);
         thEBTsl.setAttribute("draggable", "true");
-        thEBTsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thEBTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
         thEBTsl.textContent = `C${c}EBTSL`;
         headRow.insertBefore(thEBTsl, cycleTh);
 
         for (let i = 1; i <= maxAdds; i += 1) {
-          const th = document.createElement("th");
-          th.setAttribute("data-add-col", `C${c}S${i}`);
-          th.setAttribute("draggable", "true");
-          th.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
-          th.textContent = `C${c}S${i}`;
-          headRow.insertBefore(th, cycleTh);
+          const thS = document.createElement("th");
+          thS.setAttribute("data-add-col", `C${c}S${i}`);
+          thS.setAttribute("draggable", "true");
+          thS.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
+          thS.textContent = `C${c}S${i}`;
+          headRow.insertBefore(thS, cycleTh);
 
           const thES = document.createElement("th");
           thES.setAttribute("data-add-col", `C${c}ES${i}`);
           thES.setAttribute("draggable", "true");
-          thES.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
+          thES.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
           thES.textContent = `C${c}ES${i}`;
           headRow.insertBefore(thES, cycleTh);
         }
@@ -3228,14 +3576,14 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
         const thSTsl = document.createElement("th");
         thSTsl.setAttribute("data-add-col", `C${c}STSL`);
         thSTsl.setAttribute("draggable", "true");
-        thSTsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thSTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
         thSTsl.textContent = `C${c}STSL`;
         headRow.insertBefore(thSTsl, cycleTh);
 
         const thESTsl = document.createElement("th");
         thESTsl.setAttribute("data-add-col", `C${c}ESTSL`);
         thESTsl.setAttribute("draggable", "true");
-        thESTsl.className = "w-[56px] px-1.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thESTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
         thESTsl.textContent = `C${c}ESTSL`;
         headRow.insertBefore(thESTsl, cycleTh);
       }
@@ -3294,54 +3642,63 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
         const c = cIdx + 1;
         const bCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
           `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col" data-sym="${sym}" data-lfield="c${c}_b${idx + 1}">--</td>`
-        ).join("");
+        );
         const ebCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
           `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col" data-sym="${sym}" data-lfield="c${c}_eb${idx + 1}">--</td>`
-        ).join("");
+        );
         const sCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
           `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${sym}" data-lfield="c${c}_s${idx + 1}">--</td>`
-        ).join("");
+        );
         const esCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
           `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${sym}" data-lfield="c${c}_es${idx + 1}">--</td>`
-        ).join("");
-        const tslCols =
+        );
+
+        let out = "";
+        for (let i = 0; i < MAX_ADDS_UI; i += 1) {
+          out += bCols[i] + ebCols[i];
+        }
+        out +=
           `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_btsl">--</td>` +
-          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_ebtsl">--</td>` +
+          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_ebtsl">--</td>`;
+        for (let i = 0; i < MAX_ADDS_UI; i += 1) {
+          out += sCols[i] + esCols[i];
+        }
+        out +=
           `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_stsl">--</td>` +
           `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_estsl">--</td>`;
-        return bCols + ebCols + sCols + esCols + tslCols;
+        return out;
       }).join("");
     }
 
     function buildAlertRowHtml(sym, key) {
       const cycleColsHtml = buildCycleColsHtmlForRow(sym);
       return `
-<tr class="hover:bg-slate-800/40 transition-colors duration-200 border-b border-slate-800/50 group row-entrance" draggable="true" data-row-key="${key}">
+<tr class="hover:bg-slate-800/40 transition-colors duration-200 border-b border-slate-800/50 group row-entrance row-virtual" draggable="true" data-row-key="${key}">
   <td class="w-14 px-0.5 py-0.5 font-bold text-slate-200 text-xs font-mono tracking-wide whitespace-nowrap"
       data-sym="${sym}" data-field="symbol">${sym}</td>
 
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${sym}" data-field="ltp">--</td>
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-mono" data-sym="${sym}" data-field="open">--</td>
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-mono" data-sym="${sym}" data-field="pclose">--</td>
-  <td class="w-[48px] px-1 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${sym}" data-field="pct">--</td>
+  <td class="w-[58px] px-1.5 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${sym}" data-field="ltp">--</td>
+  <td class="w-[58px] px-1.5 py-0.5 text-right tabular-nums text-slate-400 font-semibold text-[10px] font-mono" data-sym="${sym}" data-field="open">--</td>
+  <td class="w-[58px] px-1.5 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-mono" data-sym="${sym}" data-field="pclose">--</td>
+  <td class="w-[52px] px-1.5 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${sym}" data-field="pct">--</td>
   
-  <td class="w-[46px] px-1 py-0.5 text-right tabular-nums text-slate-300 text-[10px] font-extrabold font-mono tracking-tight" data-sym="${sym}" data-field="fo">--</td>
-  <td class="w-[60px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${sym}" data-field="fh">--</td>
-  <td class="w-[60px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${sym}" data-field="fl">--</td>
+  <td class="w-[52px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[11px] font-extrabold font-mono tracking-tight" data-sym="${sym}" data-field="fo">--</td>
+  <td class="w-[52px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${sym}" data-field="fh">--</td>
+  <td class="w-[52px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${sym}" data-field="fl">--</td>
 
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${sym}" data-field="lc">--</td>
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${sym}" data-field="uc">--</td>
-  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${sym}" data-field="tbq">--</td>
-  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${sym}" data-field="tsq">--</td>
-  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-extrabold font-mono" data-sym="${sym}" data-field="tcr">--</td>
+  <td class="w-[58px] px-1.5 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${sym}" data-field="lc">--</td>
+  <td class="w-[58px] px-1.5 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${sym}" data-field="uc">--</td>
+  <td class="w-[50px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${sym}" data-field="tbq">--</td>
+  <td class="w-[50px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${sym}" data-field="tsq">--</td>
+  <td class="w-[50px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-extrabold font-mono" data-sym="${sym}" data-field="tcr">--</td>
 
-  <td class="w-12 px-1 py-0.5 text-center" data-col="action">
-  <div class="flex items-center justify-center gap-1">
+  <td class="w-10 px-0.5 py-0.5 text-center" data-col="action">
+  <div class="flex items-center justify-center gap-[1px]">
     <!-- BUY -->
     <button
-      class="w-4 h-4 text-[8px] font-bold
-             text-emerald-600 border border-emerald-600
-             rounded-sm hover:text-emerald-700 hover:border-emerald-700
+      class="w-3 h-3 text-[6px] font-normal leading-none tracking-tight
+             text-emerald-200 bg-emerald-800 border border-emerald-700
+             rounded-sm hover:bg-emerald-700 hover:border-emerald-600
              active:scale-95 trade-buy"
       data-symbol="${sym}" data-side="BUY">
       B
@@ -3349,9 +3706,9 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
     <!-- SELL -->
     <button
-      class="w-4 h-4 text-[8px] font-bold
-             text-red-600 border border-red-600
-             rounded-sm hover:text-red-700 hover:border-red-700
+      class="w-3 h-3 text-[6px] font-normal leading-none tracking-tight
+             text-rose-200 bg-rose-800 border border-rose-700
+             rounded-sm hover:bg-rose-700 hover:border-rose-600
              active:scale-95 trade-sell"
       data-symbol="${sym}" data-side="SELL">
       S
@@ -3359,9 +3716,9 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
     <!-- SQUARE OFF -->
     <button
-      class="w-5 h-4 text-[8px] font-bold
-             text-slate-600 border border-slate-500
-             rounded-sm hover:text-slate-700 hover:border-slate-700
+      class="w-4 h-3.5 text-[4px] font-normal leading-none
+            text-amber-400 bg-amber-950 border border-amber-500
+             rounded-sm hover:bg-amber-700 hover:border-amber-600
              active:scale-95 squareoff-btn"
       onclick="squareoffLadder('${sym}')">
       SQ
@@ -3369,9 +3726,9 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
   </div>
 </td>
   ${cycleColsHtml}
-  <td class="w-[56px] px-1 py-0.5 text-right text-slate-400 text-[11px] font-semibold font-mono" data-sym="${sym}" data-lfield="cycle">--</td>
-  <td class="w-[50px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono" data-sym="${sym}" data-lfield="pnl">--</td>
-  <td class="w-[40px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono status-cell" data-sym="${sym}" data-lfield="status">--</td>
+  <td class="w-[38px] px-0.5 py-0.5 text-right text-slate-400 text-[11px] font-semibold font-mono" data-sym="${sym}" data-lfield="cycle">--</td>
+  <td class="w-[50px] px-0.5 py-0.5 text-right text-emerald-400 text-[13px] font-extrabold font-mono" data-sym="${sym}" data-lfield="pnl">--</td>
+  <td class="w-[32px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono status-cell" data-sym="${sym}" data-lfield="status">--</td>
 </tr>`;
     }
 
@@ -3382,6 +3739,7 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
     function enqueueAutoTrade(scanKey, symbolsSet) {
       if (!scanKey || !symbolsSet || symbolsSet.size === 0) return;
+      if (window.AUTO_TRADE_BLOCKED_REASON) return;
       const key = normalizeScanKey(scanKey);
       if (!AUTO_TRADE_PENDING.has(key)) AUTO_TRADE_PENDING.set(key, new Set());
       const pending = AUTO_TRADE_PENDING.get(key);
@@ -3403,7 +3761,9 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
     async function handleAutoTradeForScan(scanKeyRaw, symbolsSet) {
       if (!(automationMode === "AUTO" && MARKET_OPEN && symbolsSet && symbolsSet.size > 0)) return;
+      if (window.AUTO_TRADE_BLOCKED_REASON) return;
       const scanKey = normalizeScanKey(scanKeyRaw);
+      let autoBlocked = false;
 
       try {
         const settingsRes = await fetch("/api/universal-settings");
@@ -3424,6 +3784,7 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
         const tryStart = async (symbol) => {
           if (manuallySquaredOffSymbols.has(symbol)) return;
+          if (window.AUTO_TRADE_BLOCKED_REASON || autoBlocked) return;
 
           const scanCount = processedAutoTradeScans.get(scanKey) || 0;
           if (scanCount >= globalLimit) return;
@@ -3444,6 +3805,16 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
             });
 
             const result = await response.json();
+            if (!response.ok && (result?.error === "DAILY_TRADE_CAP_REACHED" || String(result?.error || "").startsWith("AUTO_SQUAREOFF_DONE"))) {
+              window.AUTO_TRADE_BLOCKED_REASON = result?.error || "AUTO_BLOCKED";
+              autoBlocked = true;
+              try {
+                AUTO_TRADE_PENDING.clear();
+                AUTO_TRADE_RUNNING.clear();
+              } catch { }
+              showMsg("⚠️ Auto trades blocked: " + (result?.error || "LIMIT"), true);
+              return;
+            }
 
             if (!result.error && result.status !== "already_running") {
               showMsg(`🤖 Auto - started: ${symbol} `, false);
@@ -3460,9 +3831,11 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
           const batch = symbols.slice(i, i + batchSize);
           for (const sym of batch) {
             await tryStart(sym);
+            if (autoBlocked || window.AUTO_TRADE_BLOCKED_REASON) break;
             const scanCountNow = processedAutoTradeScans.get(scanKey) || 0;
             if (scanCountNow >= globalLimit) break;
           }
+          if (autoBlocked || window.AUTO_TRADE_BLOCKED_REASON) break;
           const scanCountNow = processedAutoTradeScans.get(scanKey) || 0;
           if (scanCountNow >= globalLimit) break;
         }
@@ -3543,18 +3916,16 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
         const data = await r.json();
         renderCycleHeaders(MAX_CYCLES_UI, MAX_ADDS_UI);
 
-        // signature to avoid needless rebuild
+        // signature to avoid needless work
         const sig = JSON.stringify(data || []);
         if (LAST_ALERTS_RENDER === sig) {
           return;
         }
         LAST_ALERTS_RENDER = sig;
 
-        // rebuild only on change
+        // incremental update: append only new rows
         const tbody = $("alerts-body");
-        let html = "";
         const oldSyms = new Set(subscribed);
-        subscribed.clear();
 
         // if empty, keep last visible rows (don't blank => no blink)
         if (!data || data.length === 0) {
@@ -3564,9 +3935,9 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
         }
 
         // unique rows by (scan|time|symbol)
-        ALERT_ROW_KEYS.clear();
         let liveCount = 0;
         const keysInRender = [];
+        let addedCount = 0;
 
         // ✅ Track NEW symbols for auto-trading
         const newSymbols = new Set();
@@ -3579,10 +3950,21 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
             subscribed.add(s);
             const key = `${a.scan}|${a.time}|${s}`;
-            if (ALERT_ROW_KEYS.has(key)) return;
-            ALERT_ROW_KEYS.add(key);
             keysInRender.push(key);
             liveCount += 1;   // ✅ count each unique alert row
+
+            if (!ALERT_ROW_KEYS.has(key)) {
+              ALERT_ROW_KEYS.add(key);
+              const rowHtml = buildAlertRowHtml(s, key);
+              const frag = document.createElement("tbody");
+              frag.innerHTML = rowHtml;
+              const row = frag.firstElementChild;
+              if (row && tbody) {
+                tbody.prepend(row);
+                addedCount += 1;
+              }
+              SYM_NODE_CACHE.delete(s);
+            }
 
             // ✅ Check if this is a NEW symbol (not in old set)
             if (!oldSyms.has(s)) {
@@ -3591,119 +3973,21 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
               if (!newSymbolsByScan.has(scanKey)) newSymbolsByScan.set(scanKey, new Set());
               newSymbolsByScan.get(scanKey).add(s);
             }
-
-            // Helper for formatted numbers or placeholder
-            const fmt = (n) => (n && !isNaN(n)) ? Number(n).toLocaleString('en-IN') : '--';
-            const fmtDec = (n) => (n && !isNaN(n)) ? Number(n).toFixed(2) : '--';
-
-            const cycleColsHtml = Array.from({ length: MAX_CYCLES_UI }, (_, cIdx) => {
-              const c = cIdx + 1;
-              const bCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
-                `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col" data-sym="${s}" data-lfield="c${c}_b${idx + 1}">--</td>`
-              ).join("");
-              const ebCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
-                `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col" data-sym="${s}" data-lfield="c${c}_eb${idx + 1}">--</td>`
-              ).join("");
-              const sCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
-                `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${s}" data-lfield="c${c}_s${idx + 1}">--</td>`
-              ).join("");
-              const esCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
-                `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${s}" data-lfield="c${c}_es${idx + 1}">--</td>`
-              ).join("");
-              const tslCols =
-                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_btsl">--</td>` +
-                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_ebtsl">--</td>` +
-                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_stsl">--</td>` +
-                `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${s}" data-lfield="c${c}_estsl">--</td>`;
-              return bCols + ebCols + sCols + esCols + tslCols;
-            }).join("");
-
-            html += `
-<tr class="hover:bg-slate-800/40 transition-colors duration-200 border-b border-slate-800/50 group row-entrance" draggable="true" data-row-key="${key}">
-  <td class="w-14 px-0.5 py-0.5 font-bold text-slate-200 text-xs font-mono tracking-wide whitespace-nowrap"
-      data-sym="${s}" data-field="symbol">${s}</td>
-
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${s}" data-field="ltp">--</td>
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-400 font-bold text-[10px] font-mono" data-sym="${s}" data-field="open">--</td>
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-300 text-[10px] font-mono" data-sym="${s}" data-field="pclose">--</td>
-  <td class="w-[48px] px-1 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${s}" data-field="pct">--</td>
-  
-  <td class="w-[46px] px-1 py-0.5 text-right tabular-nums text-slate-300 text-[11px] font-extrabold font-mono tracking-tight" data-sym="${s}" data-field="fo">--</td>
-  <td class="w-[60px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${s}" data-field="fh">--</td>
-  <td class="w-[60px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${s}" data-field="fl">--</td>
-
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-extrabold text-[10px] font-mono" data-sym="${s}" data-field="lc">--</td>
-  <td class="w-[52px] px-1 py-0.5 text-right tabular-nums text-slate-500 font-extrabold text-[10px] font-mono" data-sym="${s}" data-field="uc">--</td>
-  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${s}" data-field="tbq">--</td>
-  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${s}" data-field="tsq">--</td>
-  <td class="w-[54px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-extrabold font-mono" data-sym="${s}" data-field="tcr">--</td>
-
-  <td class="w-12 px-1 py-0.5 text-center" data-col="action">
-  <div class="flex items-center justify-center gap-1">
-    <!-- BUY -->
-    <button
-      class="w-4 h-4 text-[7px] font-bold
-             text-emerald-600 border border-emerald-600
-             rounded-sm hover:text-emerald-700 hover:border-emerald-700
-             active:scale-95 trade-buy"
-      data-symbol="${s}" data-side="BUY">
-      B
-    </button>
-
-    <!-- SELL -->
-    <button
-      class="w-4 h-4 text-[7px] font-bold
-             text-red-600 border border-red-600
-             rounded-sm hover:text-red-700 hover:border-red-700
-             active:scale-95 trade-sell"
-      data-symbol="${s}" data-side="SELL">
-      S
-    </button>
-
-    <!-- SQUARE OFF -->
-    <button
-class="w-5 h-4 text-[7px] font-semibold
-flex items-center justify-center
-leading-none
-text-slate-600 border border-slate-400
-rounded-[3px]
-hover:text-slate-800 hover:border-slate-600
-active:scale-95 transition-all duration-150
-squareoff-btn"
-onclick="squareoffLadder('${s}')">
-SQ
-</button>
-
-  </div>
-</td>
-  ${cycleColsHtml}
-  <td class="w-[56px] px-1 py-0.5 text-right text-slate-400 text-[10px] font-mono" data-sym="${s}" data-lfield="cycle">--</td>
-  <td class="w-[50px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono" data-sym="${s}" data-lfield="pnl">--</td>
-  <td class="w-[40px] px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-mono status-cell" data-sym="${s}" data-lfield="status">--</td>
-</tr>`;
           });
         });
-        tbody.innerHTML = html;
-        updateAlertsRowOrderWith(keysInRender, true);
-        applyAlertsRowOrder(tbody);
-        ensureAlertsHeaderDraggable();
-        applyAlertsColumnOrder();
-        try { initAlertsWheelHorizontalScroll(); } catch { }
-        try { initAlertsRowDrag(); } catch { }
-        requestAnimationFrame(fitAlertsTableToWidth);
+        if (addedCount > 0) {
+          updateAlertsRowOrderWith(keysInRender, true);
+          applyAlertsRowOrder(tbody);
+          ensureAlertsHeaderDraggable();
+          applyAlertsColumnOrder();
+          try { initAlertsWheelHorizontalScroll(); } catch { }
+          try { initAlertsRowDrag(); } catch { }
+          requestAnimationFrame(fitAlertsTableToWidth);
+        }
         setAlertCount(liveCount);
 
-        const trulyNewSymbols = new Set(
-          Array.from(newSymbols).filter(s => !automationEnabledSymbols.has(s))
-        );
-        if (trulyNewSymbols.size > 0) {
-          for (const [scanKey, setRef] of newSymbolsByScan.entries()) {
-            const filtered = new Set(Array.from(setRef).filter(s => !automationEnabledSymbols.has(s)));
-            if (filtered.size > 0) {
-              enqueueAutoTrade(scanKey, filtered);
-            }
-          }
-        }
+        // NOTE: Do NOT auto-dispatch from refresh/poll.
+        // Auto-dispatch should only happen from real-time WS alerts.
 
       } catch (e) {
         // ignore
@@ -3847,9 +4131,27 @@ SQ
       try { localStorage.setItem("alertsColOrder", JSON.stringify(ALERTS_COL_ORDER)); } catch { }
     }
 
+    function getCurrentAlertsHeaderOrder() {
+      const headRow = document.querySelector("#alerts-fit-table thead tr");
+      if (!headRow) return [];
+      return Array.from(headRow.children).map(getAlertsHeaderKey);
+    }
+
+    function sanitizeAlertsColumnOrder(orderKeys) {
+      const current = getCurrentAlertsHeaderOrder();
+      if (!current || current.length === 0) return orderKeys || [];
+      const curSet = new Set(current);
+      const cleaned = Array.isArray(orderKeys) ? orderKeys.filter(k => curSet.has(k)) : [];
+      const cleanedSet = new Set(cleaned);
+      const missing = current.filter(k => !cleanedSet.has(k));
+      return cleaned.concat(missing);
+    }
+
     function applyAlertsColumnOrder() {
       const table = document.getElementById("alerts-fit-table");
-      if (!table || !ALERTS_COL_ORDER || ALERTS_COL_ORDER.length === 0) return;
+      if (!table) return;
+      ALERTS_COL_ORDER = sanitizeAlertsColumnOrder(ALERTS_COL_ORDER);
+      if (!ALERTS_COL_ORDER || ALERTS_COL_ORDER.length === 0) return;
       reorderAlertsColumnsByKey(table, ALERTS_COL_ORDER);
     }
 
@@ -3868,6 +4170,10 @@ SQ
           if (saved) ALERTS_COL_ORDER = JSON.parse(saved);
         } catch { }
       }
+      // If saved order doesn't match current header schema, reset
+      const current = getCurrentAlertsHeaderOrder();
+      ALERTS_COL_ORDER = sanitizeAlertsColumnOrder(ALERTS_COL_ORDER);
+      try { localStorage.setItem("alertsColOrder", JSON.stringify(ALERTS_COL_ORDER)); } catch { }
 
       headRow.addEventListener("dragstart", (e) => {
         const th = e.target.closest("th");
@@ -3995,7 +4301,7 @@ SQ
         if (!ALERTS_ROW_ARMED && !ALERTS_ROW_DRAGGING) return;
         if ((e.buttons & 1) !== 1) return; // only while mouse button is held
         if (!ALERTS_ROW_DRAGGING) {
-          if (Math.abs(e.clientY - ALERTS_ROW_START_Y) < 2) return;
+          if (Math.abs(e.clientY - ALERTS_ROW_START_Y) < 1) return;
           ALERTS_ROW_DRAGGING = true;
           ALERTS_ROW_ARMED = false;
           if (ALERTS_ROW_MOUSE_DOWN) tbody.classList.add("row-dnd-active");
@@ -4117,6 +4423,11 @@ SQ
         } else {
           // Clear baseline when disabling
           automationEnabledSymbols.clear();
+          // Clear any pending auto-trade queue immediately
+          try {
+            AUTO_TRADE_PENDING.clear();
+            AUTO_TRADE_RUNNING.clear();
+          } catch { }
           console.log("🔄 Automation DISABLED");
         }
 
@@ -4220,15 +4531,14 @@ SQ
 
         $("us-qtymode").value = s.qty_mode || "CAPITAL";
         $("us-entry-enabled").checked = s.entry_threshold_enabled || false;
-        $("us-entry-pct").value = s.entry_threshold_pct || 0.5;
+        $("us-entry-pct").value = s.entry_threshold_pct || 1.5;
         $("us-capital").value = s.per_trade_capital || 1000;
         $("us-qty").value = s.per_trade_qty || 1;
-        $("us-threshold").value = s.threshold_pct || 1;
-        $("us-sl").value = s.stop_loss_pct || 1;
-        $("us-tsl").value = s.trailing_sl_pct || 1;
-        $("us-cycles").value = s.ladder_cycles || 1;
-        $("us-cycles").value = s.ladder_cycles || 1;
-        $("us-maxadds").value = s.max_adds_per_leg || 2;
+        $("us-threshold").value = s.threshold_pct || 1.5;
+        $("us-sl").value = s.stop_loss_pct || 1.5;
+        $("us-tsl").value = s.trailing_sl_pct || 1.5;
+        $("us-cycles").value = s.ladder_cycles || 3;
+        $("us-maxadds").value = s.max_adds_per_leg || 4;
         $("us-maxtrades").value = parseInt(s.max_trades_per_symbol || "1");
       } catch (e) {
         console.error("Failed to load universal settings:", e);
@@ -4239,15 +4549,14 @@ SQ
       const settings = {
         qty_mode: $("us-qtymode").value,
         entry_threshold_enabled: $("us-entry-enabled").checked,
-        entry_threshold_pct: parseFloat($("us-entry-pct").value || "0.5"),
+        entry_threshold_pct: parseFloat($("us-entry-pct").value || "1.5"),
         per_trade_capital: clampRange($("us-capital").value || "1000", 100, 4000, 1000),
         per_trade_qty: parseInt($("us-qty").value || "1"),
-        threshold_pct: parseFloat($("us-threshold").value || "1"),
-        stop_loss_pct: parseFloat($("us-sl").value || "1"),
-        trailing_sl_pct: parseFloat($("us-tsl").value || "1"),
-        ladder_cycles: parseInt($("us-cycles").value || "1"),
-        ladder_cycles: parseInt($("us-cycles").value || "1"),
-        max_adds_per_leg: parseInt($("us-maxadds").value || "2"),
+        threshold_pct: parseFloat($("us-threshold").value || "1.5"),
+        stop_loss_pct: parseFloat($("us-sl").value || "1.5"),
+        trailing_sl_pct: parseFloat($("us-tsl").value || "1.5"),
+        ladder_cycles: parseInt($("us-cycles").value || "3"),
+        max_adds_per_leg: parseInt($("us-maxadds").value || "4"),
         max_trades_per_symbol: parseInt($("us-maxtrades").value || "1"),
       };
 
@@ -4363,8 +4672,8 @@ SQ
     function openTradeModal(s, side) {
       // Check automation mode
       if (automationMode === "AUTO") {
-        showMsg("⚠️ Full Automation is enabled. Disable automation to manually configure trades.", true);
-        return;
+        const ok = confirm("Full Automation is enabled. Start manual trade anyway?");
+        if (!ok) return;
       }
 
       tmSymbol = s;
@@ -4593,6 +4902,10 @@ SQ
             // Show RUNNING positions even if qty=0 (order pending)
             if (st === "RUNNING" || st === "EXITING") return true;
 
+            // Show WAIT_* states so user can see pending ladders (e.g., WAIT_FEED / WAIT_LTP)
+            const reason = String(ls.reason || "").toUpperCase();
+            if (st === "IDLE" && reason.startsWith("WAIT")) return true;
+
             // Show any other status if we have qty
             if (qty > 0) return true;
 
@@ -4610,8 +4923,11 @@ SQ
           // ✅ FIX: Count only REAL running positions for the header badge
           // Filter out REJECTED/ERROR from the "count", even though we show them in table.
           const realCount = filtered.filter(s => {
-            const st = (s.leg_state?.status || "");
-            return !st.startsWith("REJECT") && !st.startsWith("ERROR") && !st.startsWith("DONE");
+            const st = String(s.leg_state?.status || "").toUpperCase();
+            const qty = Number(s.leg_state?.qty || 0);
+            if (st.startsWith("REJECT") || st.startsWith("ERROR") || st.startsWith("DONE")) return false;
+            // Count only real live positions (qty>0)
+            return qty > 0;
           }).length;
 
           setLadderCount(realCount);
@@ -4688,6 +5004,9 @@ SQ
               }
               st += " (" + r + ")";
             }
+
+            // Show AUTO_RETRY limit reached in status when remaining=0
+            // Keep status minimal (no extra tags in status)
             let stColor = "text-slate-400";
             if (st.includes("WAIT")) stColor = "text-yellow-400";
             else if (st.startsWith("RUNNING")) stColor = "text-green-400";
@@ -4699,6 +5018,7 @@ SQ
             if (st.startsWith("RUNNING")) st = "RUN";
             if (st.startsWith("REJECT")) st = "REJT";
             if (st.startsWith("ERROR")) st = "ERR";
+            if (st.startsWith("IDLE (WAIT") || st.startsWith("WAIT")) st = "WAIT_LTP";
             if (st.startsWith("COMPLETE") || st.startsWith("DONE")) st = "✅";
 
             const symKey = String(s.symbol).toUpperCase();
@@ -4741,6 +5061,13 @@ SQ
                   sEstVal = "--";
                   sExecVal = "--";
                 }
+
+                // ✅ Hard guard: only show if value exists in history arrays
+                if (i > (bEst.length || 0)) bEstVal = "--";
+                if (i > (bExec.length || 0)) bExecVal = "--";
+                if (i > (sEst.length || 0)) sEstVal = "--";
+                if (i > (sExec.length || 0)) sExecVal = "--";
+
 
                 setL(`c${c}_b${i}`, bEstVal);
                 setL(`c${c}_eb${i}`, bExecVal);
@@ -5009,6 +5336,7 @@ SQ
       try { initAlertsColumnDrag(); } catch (e) { console.error("initAlertsColumnDrag failed:", e); }
       try { initAlertsWheelHorizontalScroll(); } catch (e) { console.error("initAlertsWheelHorizontalScroll failed:", e); }
       try { initAlertsStickyHeader(); } catch (e) { console.error("initAlertsStickyHeader failed:", e); }
+      try { initAlertsStickyHScroll(); } catch (e) { console.error("initAlertsStickyHScroll failed:", e); }
       try { initFastVerticalScroll(); } catch (e) { console.error("initFastVerticalScroll failed:", e); }
       try { initAlertsRowDrag(); } catch (e) { console.error("initAlertsRowDrag failed:", e); }
       try {
@@ -5043,6 +5371,7 @@ SQ
       try { updateAutomationUI(); } catch (e) { console.error("updateAutomationUI failed:", e); }
 
       try { startTickWS(); } catch (e) { console.error("startTickWS failed:", e); }
+      try { initAddStockUI(); } catch (e) { console.error("initAddStockUI failed:", e); }
       try { await refreshLadderUIConfig(); } catch (e) { console.error("refreshLadderUIConfig failed:", e); }
       window.addEventListener("resize", () => requestAnimationFrame(fitAlertsTableToWidth));
       window.addEventListener("resize", () => requestAnimationFrame(updateAlertsScrollArrows));

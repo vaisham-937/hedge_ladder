@@ -350,6 +350,7 @@ class LadderEngine:
 
         # Hot path memory:
         self.ticks: Dict[int, float] = {}             # token -> ltp
+        self.opens: Dict[str, float] = {}            # symbol -> open
         self.sessions: Dict[str, LadderSession] = {}  # symbol -> session
         self.circuits: Dict[str, Circuit] = {}        # symbol -> Circuit
 
@@ -378,14 +379,14 @@ class LadderEngine:
         return ("insufficient" in m and "fund" in m) or ("insufficient" in m and "balance" in m) or ("insufficient capital" in m)
 
     async def _get_open_price(self, symbol: str) -> float:
+        """
+        Open price is sourced from live ticks only (no Redis dependency).
+        """
         try:
-            day = datetime.now().strftime("%Y%m%d")
-            raw = await self.redis.get(f"open:{day}:{symbol}")
-            if raw not in (None, ""):
-                return float(raw)
+            val = float(self.opens.get(symbol, 0.0) or 0.0)
+            return val if val > 0 else 0.0
         except Exception:
-            pass
-        return 0.0
+            return 0.0
 
     def _sym_lock(self, symbol: str) -> asyncio.Lock:
         symbol = (symbol or "").strip().upper()
@@ -634,6 +635,13 @@ class LadderEngine:
         settings_mode = (settings_mode or "UNIVERSAL").strip().upper()  # type: ignore
         if settings_mode not in ("UNIVERSAL", "STOCK"):
             return {"error": "BAD_SETTINGS_MODE"}
+
+        # Cache open hint from WS (no Redis dependency)
+        try:
+            if open_hint and float(open_hint) > 0:
+                self.opens[symbol] = float(open_hint)
+        except Exception:
+            pass
 
         # 1) ✅ Already running OR completed? (Prevent duplicate ladder per session)
         existing = self.sessions.get(symbol)
@@ -1528,7 +1536,7 @@ class LadderEngine:
                              {"side": side, "qty": qty, "err": str(e)})
             raise
 
-    async def ingest_tick(self, token: int, ltp: float) -> None:
+    async def ingest_tick(self, token: int, ltp: float, open_price: Optional[float] = None) -> None:
         """Called by FastAPI (in-memory). NO Redis here."""
         if not self._running:
             return
@@ -1539,6 +1547,15 @@ class LadderEngine:
                 return
 
             self.ticks[token] = ltp
+
+            # Cache open from ticks (symbol-level)
+            try:
+                opn = float(open_price or 0.0)
+            except Exception:
+                opn = 0.0
+            if opn > 0:
+                for sym in list(self._token_sessions.get(token, set())):
+                    self.opens[sym] = opn
 
             # evaluate only sessions that match this token
             await self._eval_token(token)
@@ -1556,6 +1573,8 @@ class LadderEngine:
                         sess.token = int(t)
                         self._register_session_token(sess)
                         logger.info("FEED_READY user=%s symbol=%s token=%s", self.user_id, sess.symbol, sess.token)
+                        if opn > 0:
+                            self.opens[sess.symbol] = opn
 
                 # If this tick matches session, start ladder
                 if sess.token == token and sess.leg_state and sess.leg_state.status == "IDLE":

@@ -178,8 +178,7 @@ load_instruments_file()
 
 
 # ============================================================
-# ✅ WS Tokens Control (if your kite_ws_worker reads tokens list)
-# NOTE: if your worker still reads redis ws:{user_id}:tokens, keep that logic too.
+# ✅ WS Tokens Control (kite_ws_worker reads this via /api/ws-tokens)
 # ============================================================
 
 WS_TOKENS_RAM: Dict[int, set] = defaultdict(set)
@@ -188,6 +187,21 @@ TIMING_TICK_SEEN: Dict[int, set] = defaultdict(set)
 def add_ws_token(user_id: int, token: int):
     if token and token > 0:
         WS_TOKENS_RAM[user_id].add(int(token))
+
+def remove_ws_token(user_id: int, token: int):
+    if token and token > 0:
+        WS_TOKENS_RAM[user_id].discard(int(token))
+
+def _resolve_token(user_id: int, symbol: str) -> Optional[int]:
+    symbol = (symbol or "").strip().upper()
+    # Prefer RAM mapping, fallback to global instruments
+    tok = SYMBOL_TOKEN_RAM.get(int(user_id), {}).get(symbol)
+    if tok:
+        return int(tok)
+    tok = GLOBAL_SYMBOL_TOKEN.get(symbol)
+    if tok:
+        return int(tok)
+    return None
 
 
 @app.get("/api/ws-tokens")
@@ -770,7 +784,7 @@ async def _process_tick(uid: int, t: Dict[str, Any]) -> None:
     eng = ENGINE_HUB.get(uid)
     if eng:
         try:
-            await eng.ingest_tick(token, ltp)
+            await eng.ingest_tick(token, ltp, op)
         except Exception:
             lad_log.exception("Ladder ingest failed")
 
@@ -2444,13 +2458,12 @@ async def execute_squareoff_all(user_id: int):
         if del_keys:
             await r.delete(*del_keys)
 
-        # 4) Optional: remove tokens from ws set (if you want WS to stop tracking these)
+        # 4) Optional: remove tokens from WS RAM set (worker reads /api/ws-tokens)
         # If you want this, only remove tokens for symbols cleanup.
-        # (depends on how you manage symbol->token mapping)
         for sym in symbols_to_cleanup:
-            token = await r.get(f"symbol_token:{sym}")
-            if token and str(token).isdigit():
-                await r.srem(f"ws:{user_id}:tokens", int(token))
+            token = _resolve_token(user_id, sym)
+            if token:
+                remove_ws_token(user_id, int(token))
 
         # 5) Reset Trade Counts (Server-Side) so "Fresh Auto-Start" works seamlessly
         # This allows re-trading same symbols if user explicitly resets via Kill Switch
@@ -2654,7 +2667,6 @@ async def daily_reset_loop():
     """
     triggered_today = None
     patterns = [
-        "zerodha:keys:*",
         "automation:mode:*",
         "universal:settings:*",
         "stock:settings:*",
@@ -2752,10 +2764,10 @@ async def delete_ladder(request: Request, symbol: str = Query(...)):
         f"ladder:settings:stock:{user_id}:{symbol}",
     )
 
-    # 2) remove token from ws set (control set)
-    token = await r.get(f"symbol_token:{symbol}")
-    if token and str(token).isdigit():
-        await r.srem(f"ws:{user_id}:tokens", int(token))
+    # 2) remove token from WS RAM set (worker reads /api/ws-tokens)
+    token = _resolve_token(int(user_id), symbol)
+    if token:
+        remove_ws_token(int(user_id), int(token))
 
     # 3) also remove in-memory ladder session (IMPORTANT)
     eng = ENGINE_HUB.get(int(user_id))

@@ -126,7 +126,10 @@ log.info("🔐 Zerodha token loaded from Redis")
 # -------------------------------------------------
 # KITE WS
 # -------------------------------------------------
-kws = KiteTicker(API_KEY, ACCESS_TOKEN)
+def _build_kws(api_key: str, access_token: str) -> KiteTicker:
+    return KiteTicker(api_key, access_token)
+
+kws = _build_kws(API_KEY, ACCESS_TOKEN)
 
 SUBSCRIBED = set()
 LOCK = threading.Lock()
@@ -137,6 +140,7 @@ LAST_TICK_TS = 0.0
 LAST_RECONNECT_TS = 0.0
 STALE_TICK_SEC = 6.0
 RECONNECT_COOLDOWN_SEC = 30.0
+TOKEN_REFRESH_SEC = 30.0
 
 
 # -------------------------------------------------
@@ -364,6 +368,14 @@ def on_ticks(ws, ticks):
         log.error("❌ on_ticks crashed", exc_info=True)
 
 
+def _bind_callbacks(k):
+    k.on_ticks = on_ticks
+    k.on_connect = on_connect
+    k.on_close = on_close
+    k.on_error = on_error
+    k.on_order_update = on_order_update
+
+
 # -------------------------------------------------
 # TOKEN SUBSCRIBE LOOP
 # -------------------------------------------------
@@ -454,6 +466,38 @@ def tick_watchdog():
         time.sleep(5.0)
 
 
+def refresh_tokens_loop():
+    """
+    Periodically reload API key/access token from Redis.
+    If changed, rebuild KiteTicker without full service restart.
+    """
+    global API_KEY, ACCESS_TOKEN, kws, WS_CONNECTED
+    while True:
+        if r.get(f"kill:{USER_ID}"):
+            return
+        try:
+            new_key = r.get(f"api_key:{USER_ID}")
+            new_token = r.get(f"access_token:{USER_ID}")
+            if new_key and new_token:
+                if new_key != API_KEY or new_token != ACCESS_TOKEN:
+                    log.warning("🔁 Zerodha token changed → rebuilding WS client")
+                    API_KEY = new_key
+                    ACCESS_TOKEN = new_token
+                    try:
+                        kws.close()
+                    except Exception:
+                        pass
+                    WS_CONNECTED = False
+                    with LOCK:
+                        SUBSCRIBED.clear()
+                    kws = _build_kws(API_KEY, ACCESS_TOKEN)
+                    _bind_callbacks(kws)
+                    kws.connect(threaded=True)
+        except Exception as e:
+            log.error(f"Token refresh error: {e}")
+        time.sleep(TOKEN_REFRESH_SEC)
+
+
 
 
 # -------------------------------------------------
@@ -463,14 +507,11 @@ def start():
     log.info("🚀🚀 Starting Kite WS Worker")
     start_sender_thread()
 
-    kws.on_ticks = on_ticks
-    kws.on_connect = on_connect
-    kws.on_close = on_close
-    kws.on_error = on_error
-    kws.on_order_update = on_order_update  # ✅ ADDED CALLBACK
+    _bind_callbacks(kws)
 
     threading.Thread(target=sync_tokens, daemon=True, name=f"token_sync_user_{USER_ID}").start()
     threading.Thread(target=tick_watchdog, daemon=True, name=f"tick_watchdog_user_{USER_ID}").start()
+    threading.Thread(target=refresh_tokens_loop, daemon=True, name=f"token_refresh_user_{USER_ID}").start()
     kws.connect(threaded=True)
 
 

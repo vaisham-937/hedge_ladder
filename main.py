@@ -55,6 +55,9 @@ async def _run_fetch_circuit_job(user_id: int) -> None:
             logging.info("FETCH_CIRCUIT OUT   | %s", res.stdout.strip()[:500])
         if res.stderr:
             logging.warning("FETCH_CIRCUIT ERR   | %s", res.stderr.strip()[:500])
+        if res.returncode == 0:
+            load_instruments_file()
+            _load_circuit_file_to_ram()
     except Exception as e:
         logging.error("❌ FETCH_CIRCUIT FAIL | %s", e, exc_info=True)
 
@@ -435,7 +438,7 @@ async def auto_retry_loop():
                         except Exception:
                             max_limit = 0
                         if max_limit > 0:
-                            current_active = _count_active_sessions(eng)
+                            current_active = await _get_live_positions_count(int(user_id), fallback=_count_active_sessions(eng))
                             remaining = max(0, max_limit - current_active)
                             # Track latest limit state for UI (show when remaining=0)
                             AUTO_RETRY_LIMIT_STATE[int(user_id)] = {
@@ -536,6 +539,11 @@ async def ladder_stats_loop():
                                 active_cnt += 1
                         if status in ("DONE", "COMPLETE"):
                             exit_cnt += 1
+                    # Use Zerodha live positions count for strict matching
+                    live_cnt = await _get_live_positions_count(uid, fallback=active_cnt)
+                    active_cnt = live_cnt
+                    total_cnt = live_cnt
+                    exit_cnt = 0
                     msg = f"📊 LADDER STATS user={uid} active={active_cnt} exit={exit_cnt} total={total_cnt}"
                     lad_log.info("\033[1m%s\033[0m", msg)
                 except Exception:
@@ -656,8 +664,8 @@ async def _dash_worker(uid: int) -> None:
             batch: List[Dict[str, Any]] = []
             batch.append(payload)
             t0 = time.perf_counter()
-            # up to 50 ticks or 15ms window
-            while len(batch) < 50 and (time.perf_counter() - t0) < 0.015:
+            # up to 20 ticks or 5ms window
+            while len(batch) < 20 and (time.perf_counter() - t0) < 0.005:
                 try:
                     nxt = q.get_nowait()
                     batch.append(nxt)
@@ -875,6 +883,7 @@ async def ws_ingest(ws: WebSocket):
 # Ladder Engine Hub (per-user)
 # ------------------------------------------------
 ENGINE_HUB: Dict[int, LadderEngine] = {}
+POSITIONS_COUNT_CACHE: Dict[int, Dict[str, Any]] = {}
 
 async def get_kite_for_user(user_id: int):
     user_id = int(user_id)
@@ -915,6 +924,36 @@ async def get_engine_for_user(user_id: int):
     await eng.start()
     ENGINE_HUB[user_id] = eng
     return eng
+
+async def _get_live_positions_count(user_id: int, fallback: Optional[int] = None, ttl_sec: int = 5) -> int:
+    """
+    Return Zerodha live positions count (net positions with qty != 0).
+    Uses small RAM cache to avoid frequent API calls.
+    """
+    user_id = int(user_id)
+    now = time.time()
+    cached = POSITIONS_COUNT_CACHE.get(user_id) or {}
+    if cached and (now - float(cached.get("ts", 0) or 0)) < ttl_sec:
+        return int(cached.get("count", fallback or 0) or 0)
+
+    kite = await get_kite_for_user(user_id)
+    if not kite:
+        return int(fallback or 0)
+    try:
+        pos = kite.positions() or {}
+        net = pos.get("net") or []
+        cnt = 0
+        for p in net:
+            qty = p.get("quantity")
+            try:
+                if abs(float(qty or 0)) > 0:
+                    cnt += 1
+            except Exception:
+                continue
+        POSITIONS_COUNT_CACHE[user_id] = {"count": cnt, "ts": now}
+        return cnt
+    except Exception:
+        return int(fallback or 0)
 
 from dotenv import load_dotenv
 import os
@@ -1126,7 +1165,7 @@ async def _fetch_circuit_for_symbol(user_id: int, sym: str) -> None:
 async def get_cached_open_price(user_id: int, sym: str) -> float:
     """
     Fetch and cache day's open price.
-    Priority: RAM -> Redis -> live ticks (no REST quotes).
+    Priority: RAM -> live ticks (no REST quotes).
     """
     sym = (sym or "").upper().strip()
     if not sym:
@@ -1142,27 +1181,13 @@ async def get_cached_open_price(user_id: int, sym: str) -> float:
         except Exception:
             return 0.0
 
-    # 2) Redis cache (date-scoped)
-    day = _now_ist().strftime("%Y%m%d")
-    redis_key = f"open:{day}:{sym}"
-    raw = await r.get(redis_key)
-    if raw not in (None, ""):
-        try:
-            val = float(raw)
-            if val > 0:
-                OPEN_RAM[sym] = {"open": val, "ts": now_ts}
-                return val
-        except Exception:
-            pass
-
-    # 3) Live ticks fallback (no REST quotes)
+    # 2) Live ticks fallback (no REST quotes)
     try:
         snap = TICK_HUB.get_snapshot_for_user(int(user_id), only_symbols={sym})
         t = snap.get(sym, {}) if isinstance(snap, dict) else {}
         val = float(t.get("open") or 0.0)
         if val > 0:
             OPEN_RAM[sym] = {"open": val, "ts": now_ts}
-            await r.set(redis_key, str(val), ex=OPEN_TTL_SEC)
             return val
     except Exception:
         return 0.0
@@ -1615,6 +1640,27 @@ async def get_circuit(symbol: str):
     return json.loads(raw) if raw else {}
 
 
+@app.post("/api/circuit/reload")
+async def reload_circuit_cache(user_id: int = 0):
+    """
+    Reload circuit_cache.json into RAM (API + LadderEngine).
+    If user_id=0, reload for all running engines.
+    """
+    _load_circuit_file_to_ram()
+    if user_id:
+        eng = ENGINE_HUB.get(int(user_id))
+        if eng:
+            eng.reload_circuit_file()
+        return {"status": "ok", "reloaded": int(user_id)}
+
+    for eng in ENGINE_HUB.values():
+        try:
+            eng.reload_circuit_file()
+        except Exception:
+            pass
+    return {"status": "ok", "reloaded": "all"}
+
+
 @app.get("/api/symbols")
 async def api_symbols(q: str = "", limit: int = 30):
     q = (q or "").strip().upper()
@@ -1800,7 +1846,7 @@ async def chartink_webhook(request: Request):
             ltp_open_cache = {}
             side_by_sym = {}
             if entry_enabled and entry_thresh > 0:
-                async def _resolve_ltp_open(sym: str, max_wait: float = 1.0, interval: float = 0.1):
+                async def _resolve_ltp_open(sym: str, max_wait: float = 0.2, interval: float = 0.02):
                     deadline = time.time() + max_wait
                     last_ltp = 0.0
                     last_opn = 0.0
@@ -1821,12 +1867,18 @@ async def chartink_webhook(request: Request):
                 eligible = []
                 skip_missing = 0
                 skip_notmet = 0
+                missing_details = []
+                notmet_details = []
+                eligible_details = []
                 tasks = [asyncio.create_task(_resolve_ltp_open(sym)) for sym in symbols]
                 results = await asyncio.gather(*tasks, return_exceptions=True)
                 for res in results:
                     try:
                         if isinstance(res, Exception):
                             skip_missing += 1
+                            if len(missing_details) < 3:
+                                missing_details.append("ERR")
+                            ws_log.info("THRESHOLD_CHECK result=SKIP reason=ERR")
                             continue
                         sym, ltp, opn, ok = res
                         if ok and opn > 0 and ltp > 0:
@@ -1835,18 +1887,43 @@ async def chartink_webhook(request: Request):
                                 eligible.append(sym)
                                 ltp_open_cache[sym] = (ltp, opn)
                                 side_by_sym[sym] = "BUY"
+                                if len(eligible_details) < 3:
+                                    eligible_details.append(f"{sym} BUY diff={diff_pct:.2f}% open={opn:.2f} ltp={ltp:.2f}")
+                                ws_log.info(
+                                    "THRESHOLD_CHECK symbol=%s side=BUY result=PASS diff=%.2f%% thresh=%.2f open=%.2f ltp=%.2f",
+                                    sym, diff_pct, entry_thresh, opn, ltp
+                                )
                             elif diff_pct <= -entry_thresh:
                                 eligible.append(sym)
                                 ltp_open_cache[sym] = (ltp, opn)
                                 side_by_sym[sym] = "SELL"
+                                if len(eligible_details) < 3:
+                                    eligible_details.append(f"{sym} SELL diff={diff_pct:.2f}% open={opn:.2f} ltp={ltp:.2f}")
+                                ws_log.info(
+                                    "THRESHOLD_CHECK symbol=%s side=SELL result=PASS diff=%.2f%% thresh=%.2f open=%.2f ltp=%.2f",
+                                    sym, diff_pct, entry_thresh, opn, ltp
+                                )
                             else:
                                 skip_notmet += 1
+                                if len(notmet_details) < 3:
+                                    notmet_details.append(f"{sym} diff={diff_pct:.2f}% open={opn:.2f} ltp={ltp:.2f}")
                                 ws_log.debug("AUTO_SKIP threshold not met | user=%s scan=%s symbol=%s diff=%.2f thresh=%.2f",
                                              user_id, scan_name, sym, diff_pct, entry_thresh)
+                                side_hint = "BUY" if diff_pct > 0 else "SELL"
+                                ws_log.info(
+                                    "THRESHOLD_CHECK symbol=%s side=%s result=SKIP reason=NOT_MET diff=%.2f%% thresh=%.2f open=%.2f ltp=%.2f",
+                                    sym, side_hint, diff_pct, entry_thresh, opn, ltp
+                                )
                         else:
                             skip_missing += 1
+                            if len(missing_details) < 3:
+                                missing_details.append(f"{sym} open={opn} ltp={ltp}")
                             ws_log.debug("AUTO_SKIP threshold data missing | user=%s scan=%s symbol=%s ltp=%s open=%s",
                                          user_id, scan_name, sym, ltp, opn)
+                            ws_log.info(
+                                "THRESHOLD_CHECK symbol=%s result=SKIP reason=MISSING open=%s ltp=%s thresh=%.2f",
+                                sym, opn, ltp, entry_thresh
+                            )
                             try:
                                 scan_bucket = re.sub(r"[^A-Z0-9_-]+", "", str(scan_name or "GLOBAL").upper()) or "GLOBAL"
                                 pending_key = f"auto:pending:{user_id}:{scan_bucket}"
@@ -1859,8 +1936,20 @@ async def chartink_webhook(request: Request):
                         ws_log.debug("AUTO_SKIP threshold check failed | user=%s scan=%s symbol=%s",
                                      user_id, scan_name, sym)
                 symbols = eligible
-                ws_log.info("THRESHOLD_SUMMARY user=%s scan=%s eligible=%s skip_missing=%s skip_notmet=%s thresh=%.2f",
-                            user_id, scan_name, len(eligible), skip_missing, skip_notmet, entry_thresh)
+                summary_parts = [
+                    f"eligible={len(eligible)}",
+                    f"skip_missing={skip_missing}",
+                    f"skip_notmet={skip_notmet}",
+                    f"thresh={entry_thresh:.2f}",
+                    "rule=diff>=thresh_BUY|diff<=-thresh_SELL",
+                ]
+                if eligible_details:
+                    summary_parts.append("eligible_sample=" + "; ".join(eligible_details))
+                if missing_details:
+                    summary_parts.append("missing_sample=" + "; ".join(missing_details))
+                if notmet_details:
+                    summary_parts.append("notmet_sample=" + "; ".join(notmet_details))
+                ws_log.info("THRESHOLD_SUMMARY " + " ".join(summary_parts))
             
             if not symbols:
                 return
@@ -1889,7 +1978,7 @@ async def chartink_webhook(request: Request):
             except Exception:
                 max_limit = 0
             if max_limit > 0:
-                current_active = _count_active_sessions(eng)
+                current_active = await _get_live_positions_count(int(user_id), fallback=_count_active_sessions(eng))
                 remaining = max(0, max_limit - current_active)
                 ws_log.info("AUTO_LIMIT_CHECK | user=%s scan=%s active=%s limit=%s remaining=%s",
                             user_id, scan_bucket, current_active, max_limit, remaining)
@@ -2004,6 +2093,8 @@ async def get_alerts(request: Request):
                     SYMBOL_TOKEN_RAM[uid][sym] = int(tok)
                     add_ws_token(uid, int(tok))
                     if eng:
+                        if getattr(eng, "SYMBOL_TOKEN_RAM", None) is None:
+                            eng.SYMBOL_TOKEN_RAM = {}
                         eng.SYMBOL_TOKEN_RAM.setdefault(uid, {})[sym] = int(tok)
     except Exception:
         ws_log.exception("Alerts token ensure failed | user=%s", user_id)
@@ -2045,6 +2136,41 @@ async def add_alert_symbol(request: Request):
     await r.lpush(redis_key, json.dumps(packet))
     await r.ltrim(redis_key, 0, 200)
     return {"status": "added", "symbol": symbol}
+
+@app.post("/api/instruments/refresh")
+async def refresh_instruments(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, status_code=401)
+    try:
+        asyncio.create_task(_run_fetch_circuit_job(int(user_id)))
+        return {"status": "started"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.post("/api/zerodha/refresh")
+async def refresh_zerodha(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Not logged in"}, status_code=401)
+    try:
+        uid = int(user_id)
+        eng = ENGINE_HUB.get(uid)
+        if eng:
+            await eng.stop()
+        ENGINE_HUB.pop(uid, None)
+        eng = await get_engine_for_user(uid)
+        if not eng:
+            return JSONResponse({"error": "No valid api_key/access_token"}, status_code=400)
+        # Ask worker to rebuild WS client immediately
+        try:
+            await r.setex(f"ws:refresh:{uid}", 60, "1")
+        except Exception:
+            pass
+        return {"status": "ok"}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 

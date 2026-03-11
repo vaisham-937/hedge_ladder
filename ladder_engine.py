@@ -46,6 +46,7 @@ except Exception:  # pragma: no cover
 
 
 start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+_CIRCUIT_FILE = "circuit_cache.json"
 
 # ==========================================================
 # Logging (Terminal-friendly)
@@ -353,6 +354,8 @@ class LadderEngine:
         self.opens: Dict[str, float] = {}            # symbol -> open
         self.sessions: Dict[str, LadderSession] = {}  # symbol -> session
         self.circuits: Dict[str, Circuit] = {}        # symbol -> Circuit
+        self._circuit_file_loaded = False
+        self._load_circuit_file_to_ram()
 
         self.SYMBOL_TOKEN_RAM = None
         self.order_worker = OrderWorker()
@@ -395,6 +398,36 @@ class LadderEngine:
             lock = asyncio.Lock()
             self._sym_locks[symbol] = lock
         return lock
+
+    def _load_circuit_file_to_ram(self) -> None:
+        try:
+            if not os.path.exists(_CIRCUIT_FILE):
+                return
+            with open(_CIRCUIT_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f) or {}
+            if not isinstance(data, dict):
+                return
+            for sym, payload in data.items():
+                s = str(sym or "").upper().strip()
+                if not s or not isinstance(payload, dict):
+                    continue
+                upper = payload.get("upper")
+                lower = payload.get("lower")
+                ts = float(payload.get("ts", 0) or 0)
+                self.circuits[s] = Circuit(
+                    upper=float(upper) if upper is not None else None,
+                    lower=float(lower) if lower is not None else None,
+                    ts=ts,
+                )
+            self._circuit_file_loaded = True
+        except Exception:
+            # keep it silent; file may be missing/partial
+            return
+
+    def reload_circuit_file(self) -> None:
+        # Force reload from circuit_cache.json into RAM
+        self._circuit_file_loaded = False
+        self._load_circuit_file_to_ram()
 
     def _register_session_token(self, sess: "LadderSession") -> None:
         try:
@@ -540,19 +573,14 @@ class LadderEngine:
         c = self.circuits.get(symbol)
         if c and not force and (time.time() - c.ts) < 300:
             return c
-        raw = await self.redis.get(k_circuit(symbol))
-        if raw and not force:
-            try:
-                d = json.loads(raw)
-                c = Circuit(upper=d.get("upper"), lower=d.get("lower"), ts=float(d.get("ts", 0)))
-                if (time.time() - c.ts) < 900:
-                    self.circuits[symbol] = c
-                    logger.debug("CIRCUIT cache(redis) symbol=%s upper=%s lower=%s", symbol, c.upper, c.lower)
-                    return c
-            except Exception:
-                pass
+        if not self._circuit_file_loaded:
+            self._load_circuit_file_to_ram()
+            c = self.circuits.get(symbol)
+            if c and not force and (time.time() - c.ts) < 900:
+                return c
 
-        logger.warning("CIRCUIT missing in cache symbol=%s (REST quote disabled)", symbol)
+        # Silence noisy circuit-missing warning; logic unchanged.
+        # logger.warning("CIRCUIT missing in cache symbol=%s (REST quote disabled)", symbol)
         return Circuit()
 
     # ================ *Order average price fetch* =================== #
@@ -944,7 +972,7 @@ class LadderEngine:
                 opn = await self._get_open_price(symbol)
                 if opn > 0:
                     open_pct = ((ltp - opn) / opn) * 100.0
-                    open_pct_str = f" OPEN%={open_pct:.2f} TH={settings.entry_threshold_pct:.2f}"
+                    open_pct_str = f" OPEN={opn:.2f} OPEN%={open_pct:.2f} TH={settings.entry_threshold_pct:.2f}"
             except Exception:
                 pass
             logger.info(
@@ -1088,8 +1116,6 @@ class LadderEngine:
 
         self._waiting_symbols.discard(sess.symbol)
         side = sess.leg
-        logger.info("ENTER_LEG user=%s symbol=%s side=%s token=%s ltp=%s",
-                    self.user_id, symbol, side, sess.token, ltp)
         await push_event(self.redis, self.user_id, symbol, "ENTER_LEG", {"side": side, "token": sess.token, "ltp": ltp})
 
         fast_entry = False
@@ -1174,10 +1200,6 @@ class LadderEngine:
         base_price = exec_avg if (exec_avg and exec_avg > 0) else 0.0
 
         if base_price > 0:
-            logger.info(
-                "ENTRY_FILL user=%s symbol=%s oid=%s ltp=%.2f exec_avg=%s base=%.2f",
-                self.user_id, symbol, oid, float(ltp), str(exec_avg), float(base_price)
-            )
             sess.leg_state.qty = qty
             sess.leg_state.avg_price = float(base_price)         # ✅ real base
             sess.leg_state.entries = 1
@@ -1185,7 +1207,11 @@ class LadderEngine:
             sess.leg_state.highest = float(base_price)
             sess.leg_state.lowest = float(base_price)
             if sess.leg_state.entry_price_internal <= 0:
-                sess.leg_state.entry_price_internal = float(base_price)
+                # Keep expected = trigger price if available; fallback to exec if missing
+                if ltp_for_order and ltp_for_order > 0:
+                    sess.leg_state.entry_price_internal = float(ltp_for_order)
+                else:
+                    sess.leg_state.entry_price_internal = float(base_price)
             sess.leg_state.entry_price_exec = float(base_price)
             sess.leg_state.entry_filled = True
             sess.leg_state.pending_qty = 0
@@ -1246,38 +1272,10 @@ class LadderEngine:
                 open_pct_str = f" open%={open_pct:.2f} th={settings.entry_threshold_pct:.2f}"
         except Exception:
             pass
-        logger.info("ENTRY_PLACED user=%s symbol=%s side=%s qty=%s ltp=%s oid=%s%s",
-                    self.user_id, symbol, side, qty, entry_ltp, oid, open_pct_str)
-        try:
-            if order_sent_ts:
-                logger.info("**ORDER_SEND_TO_PLACED_MS** user=%s symbol=%s ms=%s",
-                            self.user_id, symbol, int((time.time() - order_sent_ts) * 1000))
-        except Exception:
-            pass
-        if sess.alert_ts and sess.alert_ts > 0:
-            try:
-                latency_ms = int((time.time() - float(sess.alert_ts)) * 1000)
-                logger.info("**ALERT_TO_ENTRY_MS** user=%s symbol=%s ms=%s", self.user_id, symbol, latency_ms)
-            except Exception:
-                pass
-        # Single-line timing summary (webhook -> subscribe -> first tick -> entry)
-        try:
-            tkey = f"timing:{self.user_id}:{symbol}"
-            tdata = await self.redis.hgetall(tkey)
-            if tdata:
-                wb = float(tdata.get("webhook_ts") or 0.0)
-                sub = float(tdata.get("subscribe_ts") or 0.0)
-                tick = float(tdata.get("tick_ts") or 0.0)
-                now_ts = time.time()
-                wb_to_sub = int((sub - wb) * 1000) if (wb > 0 and sub > 0) else -1
-                sub_to_tick = int((tick - sub) * 1000) if (sub > 0 and tick > 0) else -1
-                alert_to_entry = int((now_ts - float(sess.alert_ts)) * 1000) if sess.alert_ts else -1
-                logger.info(
-                    "TIMING user=%s symbol=%s webhook->sub=%sms sub->tick=%sms alert->entry=%sms",
-                    self.user_id, symbol, wb_to_sub, sub_to_tick, alert_to_entry
-                )
-        except Exception:
-            pass
+        logger.info(
+            "✅ ORDER ENTRY_PLACED %s [%s] QTY=%s LTP=%.2f",
+            _color_side_word(side), symbol, qty, entry_ltp
+        )
         await push_event(self.redis, self.user_id, symbol, "ENTRY_PLACED",
                          {"side": side, "qty": qty, "ltp": entry_ltp, "order_id": oid, "fast_entry": fast_entry, "pending": (not sess.leg_state.entry_filled)})
 
@@ -1285,53 +1283,6 @@ class LadderEngine:
 
         asyncio.create_task(self.get_circuit(symbol), name=f"circuit_prefetch:{self.user_id}:{symbol}")
 
-
-    # async def _exit_leg(self, sess: LadderSession, reason: str) -> None:
-    #     symbol = sess.symbol
-    #     st = sess.leg_state
-    #     if not st or st.status not in ("RUNNING", "EXITING"):
-    #         return
-
-    #     if st.qty <= 0:
-    #         st.status = "DONE"
-    #         st.reason = reason
-    #         logger.info("EXIT_SKIP qty=0 user=%s symbol=%s reason=%s", self.user_id, symbol, reason)
-    #         await push_event(self.redis, self.user_id, symbol, "EXIT_SKIP_QTY0", {"reason": reason})
-    #         return
-
-    #     lock = await self._lock(symbol, "exit", ttl_ms=1500)
-    #     if lock != 1:
-    #         st.reason = "KILLED" if lock == -2 else "EXIT_LOCKED"
-    #         st.status = "ERROR" if lock == -2 else st.status
-    #         logger.warning("EXIT_BLOCKED user=%s symbol=%s reason=%s", self.user_id, symbol, st.reason)
-    #         await push_event(self.redis, self.user_id, symbol, "EXIT_BLOCKED", {"reason": st.reason})
-    #         await self._snapshot(sess)
-    #         return
-
-    #     logger.warning("EXIT_TRIGGER user=%s symbol=%s reason=%s side=%s qty=%s avg=%s",
-    #                    self.user_id, symbol, reason, st.side, st.qty, st.avg_price)
-    #     await push_event(self.redis, self.user_id, symbol, "EXIT_TRIGGER",
-    #                      {"reason": reason, "side": st.side, "qty": st.qty, "avg": st.avg_price})
-
-    #     st.status = "EXITING"
-    #     st.reason = reason
-    #     await self._snapshot(sess)
-
-    #     exit_side: Side = "SELL" if st.side == "BUY" else "BUY"
-    #     qty = int(st.qty)
-    #     oid = await self._place_mis_market(symbol=symbol, side=exit_side, qty=qty)
-
-    #     logger.info("EXIT_PLACED user=%s symbol=%s exit_side=%s qty=%s oid=%s",
-    #                 self.user_id, symbol, exit_side, qty, oid)
-    #     await push_event(self.redis, self.user_id, symbol, "EXIT_PLACED",
-    #                      {"exit_side": exit_side, "qty": qty, "order_id": oid})
-
-    #     st.status = "DONE"
-    #     st.qty = 0
-    #     await self._snapshot(sess)
-
-    #     logger.info("LEG_DONE user=%s symbol=%s reason=%s", self.user_id, symbol, reason)
-    #     await push_event(self.redis, self.user_id, symbol, "LEG_DONE", {"reason": reason})
 
     async def _exit_leg(self, sess: LadderSession, reason: str, tsl_est: Optional[float] = None) -> None:
         symbol = sess.symbol
@@ -1365,10 +1316,6 @@ class LadderEngine:
             await self._snapshot(sess)
             return
 
-        logger.warning(
-            "EXIT_TRIGGER user=%s symbol=%s reason=%s side=%s qty=%s avg=%s",
-            self.user_id, symbol, reason, st.side, st.qty, st.avg_price
-        )
         await push_event(self.redis, self.user_id, symbol, "EXIT_TRIGGER",
                         {"reason": reason, "side": st.side, "qty": st.qty, "avg": st.avg_price})
 
@@ -1386,7 +1333,7 @@ class LadderEngine:
         )
         st.exit_order_id = str(oid)
 
-        logger.info("EXIT_PLACED user=%s symbol=%s exit_side=%s qty=%s oid=%s",
+        logger.info("ORDER EXIT_PLACED user=%s symbol=%s exit_side=%s qty=%s oid=%s",
                     self.user_id, symbol, exit_side, qty, oid)
         await push_event(self.redis, self.user_id, symbol, "EXIT_PLACED",
                         {"exit_side": exit_side, "qty": qty, "order_id": oid, "reason": reason})
@@ -1413,7 +1360,6 @@ class LadderEngine:
         st.qty = 0
         await self._snapshot(sess)
 
-        logger.info("LEG_DONE user=%s symbol=%s reason=%s", self.user_id, symbol, reason)
         await push_event(self.redis, self.user_id, symbol, "LEG_DONE", {"reason": reason})
 
 
@@ -1478,14 +1424,6 @@ class LadderEngine:
             tag = (order_tag or "ENTRY").upper()
             leg_str = f" LEG={leg}" if leg else ""
             reason_str = f" REASON={reason}" if reason else ""
-            logger.info(
-    "📤 ORDER SENT  "
-    + f"[{tag}] "
-    + f"{_color_side_word(side)} "
-    + f"[{symbol}]  "
-    + f"QTY={qty}{leg_str}{reason_str}  USER={self.user_id}  "
-    + f"TIME={datetime.now().strftime('%H:%M:%S')}"
-)
             t0 = time.perf_counter()
             oid = await self.order_worker.submit(
                 _place,
@@ -1501,16 +1439,6 @@ class LadderEngine:
             tag = (order_tag or "ENTRY").upper()
             leg_str = f" LEG={leg}" if leg else ""
             reason_str = f" REASON={reason}" if reason else ""
-            logger.info(
-            "✅ ORDER PLACED  "
-            + f"[{tag}] "
-            + f"{_color_side_word(side)} "
-            + f"[{symbol}]  "
-            + f"QTY={qty}{leg_str}{reason_str}  "
-            + f"OID={oid}  "
-            + f"LATENCY={latency:.1f}ms  "
-            + f"TIME={datetime.now().strftime('%H:%M:%S')}"
-        )
             return str(oid)
         except Exception as e:
             emsg = str(e)
@@ -1679,10 +1607,6 @@ class LadderEngine:
                     st.entry_filled = True
                     st.pending_qty = 0
                     st.reason = ""
-                    logger.info(
-                        "ENTRY_FILL_WS user=%s symbol=%s oid=%s side=%s qty=%s->%s avg=%s",
-                        self.user_id, symbol, order_id, st.side, prev_qty, st.qty, float(fill_price)
-                    )
                     if not st.entry_hist_recorded:
                         hist = self._get_cycle_hist(sess)
                         side_key = "B" if st.side == "BUY" else "S"
@@ -1725,10 +1649,6 @@ class LadderEngine:
                         hist["tsl_exec"][side_key] = float(st.exit_price_exec or avg_price or 0.0)
                     except Exception:
                         pass
-                logger.info(
-                    "EXIT_FILL_WS user=%s symbol=%s oid=%s qty=%s->0 avg=%s",
-                    self.user_id, symbol, order_id, prev_qty, float(avg_price or 0.0)
-                )
                 sess.updated_ts = time.time()
                 await self._snapshot(sess)
                 await push_event(self.redis, self.user_id, symbol, "EXIT_FILL_WS", {
@@ -1774,7 +1694,7 @@ class LadderEngine:
                         continue
                     await self._update_pnl(sess)
 
-                await asyncio.sleep(0.25)  # ~4Hz
+                await asyncio.sleep(0.05)  # ~20Hz
 
         except asyncio.CancelledError:
             return
@@ -1825,7 +1745,7 @@ class LadderEngine:
                 await self._snapshot(sess)
                 logger.info("SESSION_DONE user=%s symbol=%s cycles=%s",
                             self.user_id, sess.symbol, sess.settings.ladder_cycles)
-                logger.info("CYCLE_COMPLETE user=%s symbol=%s cycles=%s",
+                logger.info(" 🟢 CYCLE_COMPLETE user=%s symbol=%s cycles=%s",
                             self.user_id, sess.symbol, sess.settings.ladder_cycles)
                 await push_event(self.redis, self.user_id, sess.symbol, "SESSION_DONE", {})
                 return
@@ -1946,9 +1866,6 @@ class LadderEngine:
                     f"🔍 ADD CHECK  {_color_side_word('BUY')} [{sym}] LTP={ltp:.2f} LAST={st.last_add_price:.2f} TH={s.threshold_pct:.2f}% NEXT={next_add:.2f}"
                 )
                 if next_add and ltp >= next_add:
-                    logger.info(
-                        f"🚀 ADD EXEC  {_color_side_word('BUY')} [{sym}] LTP={ltp:.2f} NEXT={next_add:.2f}"
-                    )
                     await self._add_position(sess, ltp, target_price=next_add)
                     return
             else:
@@ -1957,9 +1874,6 @@ class LadderEngine:
                     f"🔍 ADD CHECK  {_color_side_word('SELL')} [{sym}] LTP={ltp:.2f} LAST={st.last_add_price:.2f} TH={s.threshold_pct:.2f}% NEXT={next_add:.2f}"
                 )
                 if next_add and ltp <= next_add:
-                    logger.info(
-                        f"🚀 ADD EXEC  {_color_side_word('SELL')} [{sym}] LTP={ltp:.2f} NEXT={next_add:.2f}"
-                    )
                     await self._add_position(sess, ltp, target_price=next_add)
                     return
 
@@ -1976,11 +1890,6 @@ class LadderEngine:
         qty_step = self._calc_step_qty(sess.settings, ltp)
         if qty_step <= 0:
             return
-        logger.info(
-            "➕ ADD PLACE  "
-            + f"{_color_side_word(st.side)} "
-            + f"[{sess.symbol}]  ADD_QTY={qty_step}  LTP={ltp}"
-        )
         try:
             oid = await self._place_mis_market(
                 symbol=sess.symbol,
@@ -2011,6 +1920,7 @@ class LadderEngine:
             await self._snapshot(sess)
             return
         prev_qty = int(st.qty or 0)
+        prev_avg = float(st.avg_price or 0.0)
         new_qty = st.qty + qty_step
         if new_qty > 0:
             st.avg_price = ((st.avg_price * st.qty) + (fill_price * qty_step)) / new_qty
@@ -2018,13 +1928,8 @@ class LadderEngine:
         st.entries += 1
         st.last_add_price = float(fill_price)
         logger.info(
-            "➕ ADD FILL  "
-            + f"[{sess.symbol}]  OID={oid}  LTP={ltp:.2f}  FILL={fill_price:.2f}  "
-            + f"NEW_AVG={st.avg_price:.2f}  QTY={int(st.qty)}  ENTRIES={int(st.entries)}"
-        )
-        logger.info(
-            "➕ ADD QTY   "
-            + f"[{sess.symbol}]  QTY={prev_qty}->{int(st.qty)}  AVG={float(st.avg_price):.2f}"
+            "➕➕ ADD_PLACED %s [%s] QTY %s->%s AVG %.2f->%.2f FILL=%.2f LTP=%.2f REASON=ADD_STEP",
+            _color_side_word(st.side), sess.symbol, prev_qty, int(st.qty), prev_avg, float(st.avg_price), float(fill_price), float(ltp)
         )
         if st.side == "BUY":
             st.highest = max(st.highest, ltp)
@@ -2053,11 +1958,6 @@ class LadderEngine:
         sess.updated_ts = time.time()
         await self._snapshot(sess)
 
-        logger.info(
-            "➕ ADD PLACED "
-            + f"{_color_side_word(st.side)} "
-            + f"[{sess.symbol}]  OID={oid}  NEW_QTY={int(st.qty)}  NEW_AVG={st.avg_price:.2f}  ENTRIES={int(st.entries)}"
-        )
         await push_event(self.redis, self.user_id, sess.symbol, "ADD_PLACED",
                          {"side": st.side, "order_id": oid, "add_qty": qty_step, "new_qty": st.qty, "new_avg": st.avg_price, "ltp": ltp})
 

@@ -7,6 +7,8 @@ import redis
 from kiteconnect import KiteConnect
 from datetime import datetime
 import pytz
+import urllib.request
+import urllib.parse
 
 OUT_FILE = "nse_eq_instruments.json"
 CIRCUIT_TTL_SEC = 24 * 60 * 60
@@ -72,6 +74,8 @@ def fetch_nse_cash():
     print("⬇️ Fetching Zerodha instruments ...")
     data = kite.instruments()  # list[dict]
 
+    etf_keywords = ["BEES", "ETF", "GOLD", "SILVER"]
+
     symbol_to_token = {}
     token_to_symbol = {}
     tokens = []
@@ -86,6 +90,10 @@ def fetch_nse_cash():
             and "NAV" not in ins.get("tradingsymbol", "")
         ):
             symbol = ins["tradingsymbol"].upper().strip()
+
+            # Remove ETF-like symbols (BEES/ETF/GOLD/SILVER)
+            if any(word in symbol for word in etf_keywords):
+                continue
             token = int(ins["instrument_token"])
 
             symbol_to_token[symbol] = token
@@ -159,6 +167,23 @@ def fetch_circuit_prev(symbols):
             pass
 
     print(f"✅ Circuit/Prev cached for {fetched} symbols")
+    _trigger_circuit_reload()
+
+
+def _trigger_circuit_reload():
+    """
+    Notify running API to reload circuit_cache.json into RAM.
+    """
+    base = os.getenv("ALGO_API_URL", "http://127.0.0.1:8000")
+    try:
+        url = f"{base.rstrip('/')}/api/circuit/reload"
+        data = urllib.parse.urlencode({"user_id": USER_ID}).encode("utf-8")
+        req = urllib.request.Request(url, data=data, method="POST")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            _ = resp.read()
+        print("✅ Circuit RAM reload triggered")
+    except Exception as e:
+        print(f"⚠️ Circuit RAM reload trigger failed: {e}")
 
 if __name__ == "__main__":
     fetch_circuit_flag = "--fetch-circuit" in sys.argv

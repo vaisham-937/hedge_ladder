@@ -74,6 +74,42 @@
       position: relative;
     }
 
+    /* Slight horizontal breathing room for ladder columns */
+    .ladder-head,
+    .ladder-cell {
+      padding-left: 6px !important;
+      padding-right: 6px !important;
+    }
+
+    /* Slight horizontal breathing room for value columns (PCL/OPEN/LTP/etc.) */
+    #alerts-fit-table th[data-col="ltp"],
+    #alerts-fit-table th[data-col="open"],
+    #alerts-fit-table th[data-col="pclose"],
+    #alerts-fit-table th[data-col="pct"],
+    #alerts-fit-table th[data-col="fo"],
+    #alerts-fit-table th[data-col="fh"],
+    #alerts-fit-table th[data-col="fl"],
+    #alerts-fit-table th[data-col="lc"],
+    #alerts-fit-table th[data-col="uc"],
+    #alerts-fit-table th[data-col="tbq"],
+    #alerts-fit-table th[data-col="tsq"],
+    #alerts-fit-table th[data-col="tcr"],
+    #alerts-fit-table td[data-field="ltp"],
+    #alerts-fit-table td[data-field="open"],
+    #alerts-fit-table td[data-field="pclose"],
+    #alerts-fit-table td[data-field="pct"],
+    #alerts-fit-table td[data-field="fo"],
+    #alerts-fit-table td[data-field="fh"],
+    #alerts-fit-table td[data-field="fl"],
+    #alerts-fit-table td[data-field="lc"],
+    #alerts-fit-table td[data-field="uc"],
+    #alerts-fit-table td[data-field="tbq"],
+    #alerts-fit-table td[data-field="tsq"],
+    #alerts-fit-table td[data-field="tcr"] {
+      padding-left: 6px !important;
+      padding-right: 6px !important;
+    }
+
     /* --- DEEP SPACE MESH BACKGROUND --- */
     body::before {
       content: "";
@@ -1486,12 +1522,15 @@
     }
 
 #alerts-fit-wrap {
-  overflow-x: auto;
-  overflow-y: visible;
-  max-height: none;
-  scrollbar-width: none; /* Firefox: hide native bar */
-  padding-bottom: 0;     /* no extra space for native bar */
-}
+    overflow-x: auto;
+    overflow-y: visible;
+    max-height: none;
+    scrollbar-width: none; /* Firefox: hide native bar */
+    padding-bottom: 0;     /* no extra space for native bar */
+    overscroll-behavior: contain;
+    contain: layout paint;
+    will-change: transform;
+  }
 #alerts-fit-wrap::-webkit-scrollbar {
   height: 0; /* WebKit: hide native bar */
 }
@@ -1599,6 +1638,12 @@
   z-index: 20;
   background: #0f172a;
 }
+    /* Keep header steady (no hover/drag jitter) */
+    #alerts-fit-table thead tr,
+    #alerts-fit-table thead th {
+      transform: none !important;
+      transition: none !important;
+    }
     #alerts-fit-table {
       border-collapse: collapse;
     }
@@ -2238,12 +2283,15 @@
 
           <div class="h-5 w-px bg-slate-700/50 mx-0.5 hidden lg:block"></div>
 
-          <button onclick="openCred()" class="btn-primary px-1.5 sm:px-2 min-w-[auto] sm:min-w-[70px] py-0 text-[9px]">
-            <i class="fa-solid fa-link text-[12px]"></i> <span class="hidden sm:inline">CON</span>
-          </button>
-          <button onclick="squareoffAll()" class="btn-warning px-1.5 sm:px-2 min-w-[auto] sm:min-w-[70px] py-0 text-[9px]">
-            <i class="fa-solid fa-arrows-rotate text-[12px]"></i> <span class="hidden sm:inline">SQR</span>
-          </button>
+            <button onclick="openCred()" class="btn-primary px-1.5 sm:px-2 min-w-[auto] sm:min-w-[70px] py-0 text-[9px]">
+              <i class="fa-solid fa-link text-[12px]"></i> <span class="hidden sm:inline">CON</span>
+            </button>
+            <button onclick="refreshAuth()" class="btn-primary px-1.5 sm:px-2 min-w-[auto] sm:min-w-[70px] py-0 text-[9px]">
+              <i class="fa-solid fa-key text-[12px]"></i> <span class="hidden sm:inline">AUTH</span>
+            </button>
+            <button onclick="squareoffAll()" class="btn-warning px-1.5 sm:px-2 min-w-[auto] sm:min-w-[70px] py-0 text-[9px]">
+              <i class="fa-solid fa-arrows-rotate text-[12px]"></i> <span class="hidden sm:inline">SQR</span>
+            </button>
           <button onclick="killSwitch()" class="btn-danger px-1.5 sm:px-2 min-w-[auto] sm:min-w-[70px] py-0 text-[9px]">
             <i class="fa-solid fa-power-off text-[12px]"></i> <span class="hidden sm:inline">KIL</span>
           </button>
@@ -2273,7 +2321,7 @@
             <thead
               class="text-[10px] uppercase bg-slate-900/80 text-slate-400 border-b border-slate-700/50">
               <tr>
-                <th scope="col" data-col="symbol" class="w-14 px-0.5 py-2 font-extrabold text-slate-200 text-[11px] font-mono tracking-wide whitespace-nowrap text-left">Symbol</th>
+                <th scope="col" data-col="symbol" class="w-12 px-0.5 py-2 font-extrabold text-slate-200 text-[11px] font-mono tracking-wide whitespace-nowrap text-left">Symbol</th>
               <th scope="col" data-col="ltp" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">LTP</th>
                 <th scope="col" data-col="open" class="w-[52px] px-0 py-2 font-semibold text-center text-[10px] font-mono tracking-tight">Open</th>
                 <th scope="col" data-col="pclose" class="w-[52px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">PCl</th>
@@ -2283,14 +2331,16 @@
                 <th scope="col" data-col="fo" class="w-[48px] px-1 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CO</th>
                 <th scope="col" data-col="fh" class="w-[48px] px-1 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CH</th>
                 <th scope="col" data-col="fl" class="w-[48px] px-1 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-slate-300">%CL</th>
-                <th scope="col" data-col="lc" class="w-[52px] px-0 py-2 font-semibold text-center text-[10px] font-mono text-slate-300">LC</th>
-                <th scope="col" data-col="uc" class="w-[52px] px-0 py-2 font-semibold text-center text-[10px] font-mono text-slate-300">UC</th>
+      <th scope="col" data-col="lc" class="w-[52px] px-0 py-2 font-semibold text-center text-[10px] font-mono text-rose-300">LC</th>
+      <th scope="col" data-col="uc" class="w-[52px] px-0 py-2 font-semibold text-center text-[10px] font-mono text-emerald-300">UC</th>
                 <th scope="col" data-col="tbq" class="w-[44px] px-0 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-emerald-500">TBQ</th>
                 <th scope="col" data-col="tsq" class="w-[44px] px-0 py-2 font-semibold text-center text-[10px] font-mono tracking-tight text-red-500">TSQ</th>
                 <th scope="col" data-col="tcr" class="w-[44px] px-0 py-2 font-bold text-center text-[10px] font-mono tracking-tight">TURN</th>
                 <th scope="col" data-col="action"
                   class="w-10 px-0 py-2 text-center font-extrabold text-[10px] font-mono text-slate-200 bg-slate-900 tracking-tight">
                   Action</th>
+                <th scope="col" data-col="entry_b" class="w-[40px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight text-cyan-300 ladder-head">CB</th>
+                <th scope="col" data-col="entry_eb" class="w-[40px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight text-cyan-300 ladder-head">CEB</th>
                 <th scope="col" data-col="cycle" class="w-[38px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight text-emerald-400">Cycle</th>
                 <th scope="col" data-col="pnl" class="w-[50px] px-0.5 py-2 font-bold text-center text-[10px] font-mono tracking-tight">PnL</th>
                 <th scope="col" data-col="status" class="w-[40px] px-0.5 py-2 font-bold text-center text-[9px] font-mono tracking-tight text-sky-400">Status</th>
@@ -3207,7 +3257,7 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
           if (field === "tcr") {
             const vol = Number(d.volume || 0);
             const tcr = (ltp > 0 && vol > 0) ? ((ltp * vol) / 10000000) : 0;
-            setTextIfChanged(node, tcr > 0 ? tcr.toFixed(2) : "--");
+            setTextIfChanged(node, tcr > 0 ? Math.round(tcr).toString() : "--");
           }
           if (field === "uc") setTextIfChanged(node, uc > 0 ? uc.toFixed(2) : "--");
           if (field === "lc") setTextIfChanged(node, lc > 0 ? lc.toFixed(2) : "--");
@@ -3253,7 +3303,7 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
           // ✅ UPDATE PNL
           const pnlNodes = document.querySelectorAll(`[data-lsym="${sym}"][data-lfield="pnl"]`);
           pnlNodes.forEach(node => {
-            setTextIfChanged(node, pnl.toFixed(2));
+            setTextIfChanged(node, Math.round(pnl).toString());
             paintPnlCell(node, pnl);
           });
 
@@ -3279,8 +3329,44 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
     }
 
     function initAlertsWheelHorizontalScroll() {
-      // Disable wheel-based horizontal scrolling; keep vertical wheel only.
+      // Disabled to avoid interfering with vertical scroll.
       return;
+    }
+
+    function initAlertsVerticalWheelPassthrough() {
+      const wrap = document.getElementById("alerts-fit-wrap");
+      if (!wrap) return;
+      wrap.addEventListener("wheel", (e) => {
+        if (e.ctrlKey) return; // allow browser zoom
+        if (e.shiftKey) return; // keep horizontal scroll with shift
+        window.scrollBy({ top: e.deltaY * 1.8, behavior: "auto" });
+        e.preventDefault();
+      }, { passive: false });
+    }
+
+    function initAlertsAbsSort() {
+      const headRow = document.querySelector("#alerts-fit-table thead tr");
+      const tbody = document.getElementById("alerts-body");
+      if (!headRow || !tbody) return;
+      const cols = new Set(["pct", "fo", "fh", "fl"]);
+      headRow.querySelectorAll("th[data-col]").forEach(th => {
+        const col = th.getAttribute("data-col");
+        if (!cols.has(col)) return;
+        th.style.cursor = "pointer";
+        th.addEventListener("click", () => {
+          const rows = Array.from(tbody.querySelectorAll("tr"));
+          rows.sort((a, b) => {
+            const aCell = a.querySelector(`[data-field="${col}"]`);
+            const bCell = b.querySelector(`[data-field="${col}"]`);
+            const av = parseFloat(aCell?.textContent || "0") || 0;
+            const bv = parseFloat(bCell?.textContent || "0") || 0;
+            return Math.abs(bv) - Math.abs(av);
+          });
+          const frag = document.createDocumentFragment();
+          rows.forEach(r => frag.appendChild(r));
+          tbody.appendChild(frag);
+        });
+      });
     }
 
     function scrollAlertsTable(dir) {
@@ -3505,7 +3591,7 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
     }
 
     function initFastVerticalScroll() {
-      const speed = 1.45;
+      const speed = 2.0;
       document.addEventListener("wheel", (e) => {
         if (e.ctrlKey) return;
         if (e.shiftKey) return;
@@ -3531,14 +3617,14 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
           const thB = document.createElement("th");
           thB.setAttribute("data-add-col", `C${c}B${i}`);
           thB.setAttribute("draggable", "true");
-          thB.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
+          thB.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col ladder-head";
           thB.textContent = `C${c}B${i}`;
           headRow.insertBefore(thB, cycleTh);
 
           const thEB = document.createElement("th");
           thEB.setAttribute("data-add-col", `C${c}EB${i}`);
           thEB.setAttribute("draggable", "true");
-          thEB.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col";
+          thEB.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight b-col ladder-head";
           thEB.textContent = `C${c}EB${i}`;
           headRow.insertBefore(thEB, cycleTh);
         }
@@ -3546,14 +3632,14 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
         const thBTsl = document.createElement("th");
         thBTsl.setAttribute("data-add-col", `C${c}BTSL`);
         thBTsl.setAttribute("draggable", "true");
-        thBTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thBTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight ladder-head";
         thBTsl.textContent = `C${c}BTSL`;
         headRow.insertBefore(thBTsl, cycleTh);
 
         const thEBTsl = document.createElement("th");
         thEBTsl.setAttribute("data-add-col", `C${c}EBTSL`);
         thEBTsl.setAttribute("draggable", "true");
-        thEBTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thEBTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight ladder-head";
         thEBTsl.textContent = `C${c}EBTSL`;
         headRow.insertBefore(thEBTsl, cycleTh);
 
@@ -3561,14 +3647,14 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
           const thS = document.createElement("th");
           thS.setAttribute("data-add-col", `C${c}S${i}`);
           thS.setAttribute("draggable", "true");
-          thS.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
+          thS.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col ladder-head";
           thS.textContent = `C${c}S${i}`;
           headRow.insertBefore(thS, cycleTh);
 
           const thES = document.createElement("th");
           thES.setAttribute("data-add-col", `C${c}ES${i}`);
           thES.setAttribute("draggable", "true");
-          thES.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col";
+          thES.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight s-col ladder-head";
           thES.textContent = `C${c}ES${i}`;
           headRow.insertBefore(thES, cycleTh);
         }
@@ -3576,14 +3662,14 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
         const thSTsl = document.createElement("th");
         thSTsl.setAttribute("data-add-col", `C${c}STSL`);
         thSTsl.setAttribute("draggable", "true");
-        thSTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thSTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight ladder-head";
         thSTsl.textContent = `C${c}STSL`;
         headRow.insertBefore(thSTsl, cycleTh);
 
         const thESTsl = document.createElement("th");
         thESTsl.setAttribute("data-add-col", `C${c}ESTSL`);
         thESTsl.setAttribute("draggable", "true");
-        thESTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight";
+        thESTsl.className = "w-[56px] px-1 py-2 font-bold text-center text-[10px] font-mono tracking-tight ladder-head";
         thESTsl.textContent = `C${c}ESTSL`;
         headRow.insertBefore(thESTsl, cycleTh);
       }
@@ -3641,16 +3727,16 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
       return Array.from({ length: MAX_CYCLES_UI }, (_, cIdx) => {
         const c = cIdx + 1;
         const bCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
-          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col" data-sym="${sym}" data-lfield="c${c}_b${idx + 1}">--</td>`
+          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col ladder-cell" data-sym="${sym}" data-lfield="c${c}_b${idx + 1}">--</td>`
         );
         const ebCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
-          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col" data-sym="${sym}" data-lfield="c${c}_eb${idx + 1}">--</td>`
+          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono b-col ladder-cell" data-sym="${sym}" data-lfield="c${c}_eb${idx + 1}">--</td>`
         );
         const sCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
-          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${sym}" data-lfield="c${c}_s${idx + 1}">--</td>`
+          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col ladder-cell" data-sym="${sym}" data-lfield="c${c}_s${idx + 1}">--</td>`
         );
         const esCols = Array.from({ length: MAX_ADDS_UI }, (_, idx) =>
-          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col" data-sym="${sym}" data-lfield="c${c}_es${idx + 1}">--</td>`
+          `<td class="w-10 px-1 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono s-col ladder-cell" data-sym="${sym}" data-lfield="c${c}_es${idx + 1}">--</td>`
         );
 
         let out = "";
@@ -3658,14 +3744,14 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
           out += bCols[i] + ebCols[i];
         }
         out +=
-          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_btsl">--</td>` +
-          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_ebtsl">--</td>`;
+          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono ladder-cell" data-sym="${sym}" data-lfield="c${c}_btsl">--</td>` +
+          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono ladder-cell" data-sym="${sym}" data-lfield="c${c}_ebtsl">--</td>`;
         for (let i = 0; i < MAX_ADDS_UI; i += 1) {
           out += sCols[i] + esCols[i];
         }
         out +=
-          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_stsl">--</td>` +
-          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="c${c}_estsl">--</td>`;
+          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono ladder-cell" data-sym="${sym}" data-lfield="c${c}_stsl">--</td>` +
+          `<td class="w-10 px-0.5 py-0.5 text-right text-slate-400 text-[10px] font-bold font-mono ladder-cell" data-sym="${sym}" data-lfield="c${c}_estsl">--</td>`;
         return out;
       }).join("");
     }
@@ -3674,7 +3760,7 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
       const cycleColsHtml = buildCycleColsHtmlForRow(sym);
       return `
 <tr class="hover:bg-slate-800/40 transition-colors duration-200 border-b border-slate-800/50 group row-entrance row-virtual" draggable="true" data-row-key="${key}">
-  <td class="w-14 px-0.5 py-0.5 font-bold text-slate-200 text-xs font-mono tracking-wide whitespace-nowrap"
+  <td class="w-12 px-0.5 py-0.5 font-bold text-slate-200 text-xs font-mono tracking-wide whitespace-nowrap"
       data-sym="${sym}" data-field="symbol">${sym}</td>
 
   <td class="w-[58px] px-1.5 py-0.5 text-right tabular-nums font-extrabold text-[11px] font-mono" data-sym="${sym}" data-field="ltp">--</td>
@@ -3686,8 +3772,8 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
   <td class="w-[52px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${sym}" data-field="fh">--</td>
   <td class="w-[52px] px-1.5 py-0.5 text-right tabular-nums text-slate-300 text-[9px] font-mono tracking-tight" data-sym="${sym}" data-field="fl">--</td>
 
-  <td class="w-[58px] px-1.5 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${sym}" data-field="lc">--</td>
-  <td class="w-[58px] px-1.5 py-0.5 text-right tabular-nums text-slate-500 font-bold text-[10px] font-mono" data-sym="${sym}" data-field="uc">--</td>
+  <td class="w-[58px] px-1.5 py-0.5 text-right tabular-nums text-rose-400 font-bold text-[10px] font-mono" data-sym="${sym}" data-field="lc">--</td>
+  <td class="w-[58px] px-1.5 py-0.5 text-right tabular-nums text-emerald-400 font-bold text-[10px] font-mono" data-sym="${sym}" data-field="uc">--</td>
   <td class="w-[50px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${sym}" data-field="tbq">--</td>
   <td class="w-[50px] px-1 py-0.5 text-right tabular-nums text-slate-300 font-semibold text-[10px] font-mono tracking-tight" data-sym="${sym}" data-field="tsq">--</td>
   <td class="w-[50px] px-1 py-0.5 text-right tabular-nums text-slate-400 text-[10px] font-extrabold font-mono" data-sym="${sym}" data-field="tcr">--</td>
@@ -3725,6 +3811,8 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
     </button>
   </div>
 </td>
+  <td class="w-10 px-0.5 py-0.5 text-right text-cyan-200 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="int_entry">--</td>
+  <td class="w-10 px-0.5 py-0.5 text-right text-cyan-200 text-[10px] font-bold font-mono" data-sym="${sym}" data-lfield="exec_entry">--</td>
   ${cycleColsHtml}
   <td class="w-[38px] px-0.5 py-0.5 text-right text-slate-400 text-[11px] font-semibold font-mono" data-sym="${sym}" data-lfield="cycle">--</td>
   <td class="w-[50px] px-0.5 py-0.5 text-right text-emerald-400 text-[13px] font-extrabold font-mono" data-sym="${sym}" data-lfield="pnl">--</td>
@@ -3907,6 +3995,8 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
      */
     let ALERTS_POLLING = false;
     const ALERTS_POLL_MS = 3000;
+    const ALERTS_ROW_LIMIT = 300;
+    const ENABLE_PARTICLES = false;
 
     async function loadAlerts() {
       if (ALERTS_POLLING) return;
@@ -3943,15 +4033,17 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
         const newSymbols = new Set();
         const newSymbolsByScan = new Map();
 
-        data.forEach(a => {
-          (a.stocks || []).forEach(s => {
+        outer: for (const a of (data || [])) {
+          for (const s0 of (a.stocks || [])) {
+            let s = s0;
             s = String(s || "").toUpperCase();
-            if (!s) return;
+            if (!s) continue;
 
             subscribed.add(s);
             const key = `${a.scan}|${a.time}|${s}`;
             keysInRender.push(key);
             liveCount += 1;   // ✅ count each unique alert row
+            if (liveCount > ALERTS_ROW_LIMIT) break outer;
 
             if (!ALERT_ROW_KEYS.has(key)) {
               ALERT_ROW_KEYS.add(key);
@@ -3973,8 +4065,17 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
               if (!newSymbolsByScan.has(scanKey)) newSymbolsByScan.set(scanKey, new Set());
               newSymbolsByScan.get(scanKey).add(s);
             }
-          });
-        });
+          }
+        }
+        if (tbody) {
+          while (tbody.children.length > ALERTS_ROW_LIMIT) {
+            const row = tbody.lastElementChild;
+            if (!row) break;
+            const key = row.getAttribute("data-row-key");
+            if (key) ALERT_ROW_KEYS.delete(key);
+            row.remove();
+          }
+        }
         if (addedCount > 0) {
           updateAlertsRowOrderWith(keysInRender, true);
           applyAlertsRowOrder(tbody);
@@ -4800,11 +4901,11 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
       // top bar (agar aap rakhna chahte ho)
       const elTop = document.getElementById("overall-pnl");
-      if (elTop) elTop.textContent = pnl.toFixed(2);
+      if (elTop) elTop.textContent = Math.round(pnl).toString();
 
       // top bar mini pnl
       const elTopMini = document.getElementById("overall-pnl-top");
-      if (elTopMini) elTopMini.textContent = pnl.toFixed(2);
+      if (elTopMini) elTopMini.textContent = Math.round(pnl).toString();
       if (elTopMini) {
         elTopMini.classList.remove("text-emerald-300", "text-red-300", "text-cyan-300");
         if (pnl > 0) elTopMini.classList.add("text-emerald-300");
@@ -4829,7 +4930,7 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
       // ✅ Active Ladders pill
       const elBox = document.getElementById("overall-pnl-ladders");
-      if (elBox) elBox.textContent = pnl.toFixed(2);
+      if (elBox) elBox.textContent = Math.round(pnl).toString();
 
       // ✅ color logic for pill
       const pill = document.getElementById("ladder-pnl-pill");
@@ -4963,8 +5064,8 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
             overall += pnlNum;
 
             const pnl = (pnlNum < 0)
-              ? `-${Math.abs(pnlNum).toFixed(2)}`
-              : Number(pnlNum).toFixed(2);
+              ? `-${Math.abs(Math.round(pnlNum))}`
+              : String(Math.round(pnlNum));
 
             let nextAdd = "-";
             let sl = "-";
@@ -5022,9 +5123,16 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
             if (st.startsWith("COMPLETE") || st.startsWith("DONE")) st = "✅";
 
             const symKey = String(s.symbol).toUpperCase();
+            const row =
+              document.querySelector(`tr[data-row-key] [data-sym="${symKey}"]`)?.closest("tr") || null;
             const setL = (field, val) => {
-              document.querySelectorAll(`[data-sym="${symKey}"][data-lfield="${field}"]`)
-                .forEach(n => setTextIfChanged(n, val));
+              if (row) {
+                row.querySelectorAll(`[data-sym="${symKey}"][data-lfield="${field}"]`)
+                  .forEach(n => setTextIfChanged(n, val));
+              } else {
+                document.querySelectorAll(`[data-sym="${symKey}"][data-lfield="${field}"]`)
+                  .forEach(n => setTextIfChanged(n, val));
+              }
             };
 
 
@@ -5090,8 +5198,13 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
             setL("tsl", tsl);
             setL("exit_tsl", exitExec);
             setL("pnl", pnl);
-            document.querySelectorAll(`[data-sym="${symKey}"][data-lfield="pnl"]`)
-              .forEach(n => paintPnlCell(n, pnlNum));
+            if (row) {
+              row.querySelectorAll(`[data-sym="${symKey}"][data-lfield="pnl"]`)
+                .forEach(n => paintPnlCell(n, pnlNum));
+            } else {
+              document.querySelectorAll(`[data-sym="${symKey}"][data-lfield="pnl"]`)
+                .forEach(n => paintPnlCell(n, pnlNum));
+            }
             setL("status", st);
 
             // ✅ Cycle complete toast (per symbol)
@@ -5118,8 +5231,13 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
             // ✅ Symbol highlight only when trade actually placed
             const placed = stUpper.startsWith("RUNNING") || stUpper.startsWith("COMPLETE") || stUpper.startsWith("DONE");
-            document.querySelectorAll(`[data-sym="${symKey}"][data-field="symbol"]`)
-              .forEach(n => n.classList.toggle("symbol-active", placed));
+            if (row) {
+              row.querySelectorAll(`[data-sym="${symKey}"][data-field="symbol"]`)
+                .forEach(n => n.classList.toggle("symbol-active", placed));
+            } else {
+              document.querySelectorAll(`[data-sym="${symKey}"][data-field="symbol"]`)
+                .forEach(n => n.classList.toggle("symbol-active", placed));
+            }
           });
 
           Object.keys(LADDER_META).forEach(sym => {
@@ -5205,6 +5323,20 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
           }, 1500);
         })
         .catch(() => showMsg("❌ Squareoff all failed", true));
+    }
+
+    function refreshAuth() {
+      if (!confirm("Refresh Zerodha auth in server now?")) return;
+      fetch("/api/zerodha/refresh", { method: "POST" })
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) {
+            showMsg("❌ " + d.error, true);
+            return;
+          }
+          showMsg("✅ Auth refreshed. If ticks don’t flow, restart worker.", false);
+        })
+        .catch(() => showMsg("❌ Auth refresh failed", true));
     }
 
     /* ================= MSG ================= */
@@ -5332,12 +5464,16 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
 
     /* ================= INIT ================= */
     document.addEventListener("DOMContentLoaded", async () => {
-      try { initParticles(); } catch (e) { console.error("initParticles failed:", e); }
+      if (ENABLE_PARTICLES) {
+        try { initParticles(); } catch (e) { console.error("initParticles failed:", e); }
+      }
       try { initAlertsColumnDrag(); } catch (e) { console.error("initAlertsColumnDrag failed:", e); }
       try { initAlertsWheelHorizontalScroll(); } catch (e) { console.error("initAlertsWheelHorizontalScroll failed:", e); }
       try { initAlertsStickyHeader(); } catch (e) { console.error("initAlertsStickyHeader failed:", e); }
       try { initAlertsStickyHScroll(); } catch (e) { console.error("initAlertsStickyHScroll failed:", e); }
       try { initFastVerticalScroll(); } catch (e) { console.error("initFastVerticalScroll failed:", e); }
+      try { initAlertsVerticalWheelPassthrough(); } catch (e) { console.error("initAlertsVerticalWheelPassthrough failed:", e); }
+      try { initAlertsAbsSort(); } catch (e) { console.error("initAlertsAbsSort failed:", e); }
       try { initAlertsRowDrag(); } catch (e) { console.error("initAlertsRowDrag failed:", e); }
       try {
         const ltpHead = document.querySelector('#alerts-fit-table thead th[data-col="ltp"]');
@@ -5381,7 +5517,7 @@ class="btn-outline-dark w-full py-3 rounded-xl flex items-center justify-center 
       setInterval(() => { try { checkAutoSquareoffEvent(); } catch { } }, 10000);
 
       try { loadLadderState(); } catch (e) { console.error("loadLadderState failed:", e); }
-      setInterval(() => { try { loadLadderState(); } catch { } }, 30000);
+      setInterval(() => { try { loadLadderState(); } catch { } }, 5000);
       try { checkAutoSquareoffEvent(); } catch (e) { console.error("checkAutoSquareoffEvent failed:", e); }
 
       // extra: at exact 09:00 IST window, gate will open automatically on next checkMarketStatus tick

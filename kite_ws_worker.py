@@ -140,7 +140,7 @@ LAST_TICK_TS = 0.0
 LAST_RECONNECT_TS = 0.0
 STALE_TICK_SEC = 6.0
 RECONNECT_COOLDOWN_SEC = 30.0
-TOKEN_REFRESH_SEC = 30.0
+TOKEN_REFRESH_SEC = 5.0
 
 
 # -------------------------------------------------
@@ -151,8 +151,8 @@ ORDER_BUFFER = []  # ✅ New buffer for order updates
 BUF_LOCK = threading.Lock()
 
 MAX_BUF = 8000          # hard upper bound
-BATCH_SIZE = 300        # per ws send
-IDLE_SLEEP = 0.02       # 20ms when no ticks
+BATCH_SIZE = 50         # per ws send (lower = less latency)
+IDLE_SLEEP = 0.002      # 2ms when no ticks
 RECONNECT_SLEEP = 1.0   # seconds
 
 
@@ -476,11 +476,12 @@ def refresh_tokens_loop():
         if r.get(f"kill:{USER_ID}"):
             return
         try:
+            force_refresh = r.get(f"ws:refresh:{USER_ID}")
             new_key = r.get(f"api_key:{USER_ID}")
             new_token = r.get(f"access_token:{USER_ID}")
             if new_key and new_token:
-                if new_key != API_KEY or new_token != ACCESS_TOKEN:
-                    log.warning("🔁 Zerodha token changed → rebuilding WS client")
+                if force_refresh or new_key != API_KEY or new_token != ACCESS_TOKEN:
+                    log.warning("🔁 Zerodha token refresh → rebuilding WS client")
                     API_KEY = new_key
                     ACCESS_TOKEN = new_token
                     try:
@@ -493,6 +494,11 @@ def refresh_tokens_loop():
                     kws = _build_kws(API_KEY, ACCESS_TOKEN)
                     _bind_callbacks(kws)
                     kws.connect(threaded=True)
+                    if force_refresh:
+                        try:
+                            r.delete(f"ws:refresh:{USER_ID}")
+                        except Exception:
+                            pass
         except Exception as e:
             log.error(f"Token refresh error: {e}")
         time.sleep(TOKEN_REFRESH_SEC)
